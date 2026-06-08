@@ -134,6 +134,7 @@ Every cmd response is built ad-hoc in `build_resp()` (a JSON `Value` with `v`/`k
 - **`Store::cleanup_zombies` runs on every startup** and marks any non-terminal session `failed` with reason `daemon restarted`. The three recovery scenarios in `session-lifecycle.md` §"Resume sau restart daemon" are NOT yet implemented.
 - **OpenCode + Codex session-id capture are not implemented.** Only Claude Code's pre-generated `--session-id <uuid>` works (`session.rs` `build_argv()`). The codex `notify`-watch and opencode list-diff approaches in `data-models.md` §4 are still TODO.
 - **`SessionManager::get_activity` uses `block_in_place` + `block_on`** to read activity sync from inside `ListSessions`. Don't call it from a single-threaded runtime.
+- **`SessionHandle::inner` is std::sync::Mutex.** Hot per-session state (ring, activity) lives in `Arc<Mutex<SessionInner>>` separate from the outer `RwLock<HashMap>`. NEVER hold an `inner.lock()` guard across `.await` — `MutexGuard: !Send`. Lock in a block, copy out the data, drop the guard, then await.
 - **Frontend mirrors are hand-written.** No `ts-rs` codegen — every wire change requires touching `gui/src/lib/types.ts` *and* `ipc.ts`.
 
 ## Documentation language
