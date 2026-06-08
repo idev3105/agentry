@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import type {
 	AgentOutputEvent,
+	AgentSessionCapturedEvent,
 	ProjectCreatedEvent,
 	SessionActivityEvent,
 	SessionFailedEvent,
@@ -183,4 +184,8 @@ export function onDaemonConnected(cb: (e: { sock_path: string }) => void): Promi
 
 export function onBootstrapError(cb: (msg: string) => void): Promise<UnlistenFn> {
 	return listen<string>('daemon:bootstrap_error', (ev) => cb(ev.payload));
+}
+
+export function onAgentSessionCaptured(cb: (e: AgentSessionCapturedEvent) => void): Promise<UnlistenFn> {
+	return listen<AgentSessionCapturedEvent>('daemon:agent_session_captured', (ev) => cb(ev.payload));
 }

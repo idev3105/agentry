@@ -97,6 +97,14 @@ export interface SessionStartedEvent {
 	agent_session_name: string | null;
 }
 
+export interface AgentSessionCapturedEvent {
+    v: number;
+    session_id: string;
+    agent_session_id: string;
+    agent_session_name?: string | null;
+    ts: string;
+}
+
 export interface AgentOutputEvent {
 	session_id: string;
 	seq: number;
