@@ -65,6 +65,8 @@ export interface SessionState {
 	 *  derive unread badge deltas when this session is not focused. */
 	lastSeenSeq: number;
 	failReason: string | null;
+	agent_session_id: string | null;
+	agent_session_name: string | null;
 }
 
 export interface Settings {

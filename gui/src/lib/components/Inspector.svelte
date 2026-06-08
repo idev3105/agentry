@@ -165,13 +165,13 @@
 					</button>
 				{/if}
 				{#if session.status === 'finished' || session.status === 'failed'}
-					{@const canResume = session.agent === 'claude'}
+					{@const canResume = session.agent === 'claude' || !!session.agent_session_id}
 					<button
 						class="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary"
 						disabled={!canResume}
 						title={canResume
 							? 'Resume this session'
-							: `Resume not yet supported for ${session.agent}`}
+							: `Session này không capture được id — không resume được`}
 						onclick={() => canResume && resumeSession(session!.id)}
 					>
 						<RotateCcw size={11} /> Resume

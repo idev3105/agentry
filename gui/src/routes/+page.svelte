@@ -41,6 +41,7 @@
 		onSessionActivity,
 		onSessionFinished,
 		onSessionFailed,
+		onAgentSessionCaptured,
 		onDaemonConnected,
 		onBootstrapError
 	} from '$lib/ipc';
@@ -96,7 +97,9 @@
 					activity: ss.activity,
 					unread: 0,
 					lastSeenSeq: 0,
-					failReason: null
+					failReason: null,
+					agent_session_id: ss.agent_session_id,
+					agent_session_name: ss.agent_session_name,
 				});
 				}
 			}
@@ -144,7 +147,9 @@
 					activity: null,
 					unread: 0,
 					lastSeenSeq: 0,
-					failReason: null
+					failReason: null,
+					agent_session_id: e.agent_session_id,
+					agent_session_name: e.agent_session_name,
 				});
 				// Resumed/already-titled sessions should NOT get auto-renamed by
 				// the first prompt — only fresh "<agent> · #N" titles are subject
@@ -243,6 +248,14 @@
 					failReason: e.reason
 				});
 				if (wasActive) maybeUnfocus(e.session_id);
+			})
+		);
+		unlisteners.push(
+			await onAgentSessionCaptured((e) => {
+				updateSession(e.session_id, {
+					agent_session_id: e.agent_session_id,
+					agent_session_name: e.agent_session_name ?? null,
+				});
 			})
 		);
 	}
