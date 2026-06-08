@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, RwLock};
 use agentry_wire::*;
 use base64::Engine;
@@ -15,19 +15,20 @@ pub struct BufferChunk {
     pub data: Vec<u8>,
 }
 
-struct SessionHandle {
-    // PTY write side — send bytes to stdin
-    input_tx: mpsc::UnboundedSender<Vec<u8>>,
-    // PTY resize channel
-    resize_tx: mpsc::UnboundedSender<(u16, u16)>,
-    // Kill signal
-    kill_tx: mpsc::UnboundedSender<()>,
-    // Activity state (runtime only)
+/// Hot per-session state. Locked separately so the PTY reader's per-chunk
+/// updates don't fight read_buffer/send_input/resize on the outer map.
+struct SessionInner {
     activity: ActivityState,
     last_output_at: std::time::Instant,
-    // Ring buffer
     ring: VecDeque<BufferChunk>,
     ring_bytes: usize,
+}
+
+struct SessionHandle {
+    input_tx: mpsc::UnboundedSender<Vec<u8>>,
+    resize_tx: mpsc::UnboundedSender<(u16, u16)>,
+    kill_tx: mpsc::UnboundedSender<()>,
+    inner: Arc<Mutex<SessionInner>>,
 }
 
 pub struct SessionManager {
@@ -42,10 +43,15 @@ impl SessionManager {
     }
 
     pub fn get_activity(&self, session_id: &str) -> Option<String> {
-        // Sync read — returns activity label if running
+        // Sync read — returns activity label if running.
+        // Outer lock is brief (grab inner Arc), then lock inner separately.
         tokio::task::block_in_place(|| {
-            let sessions = futures::executor::block_on(self.sessions.read());
-            sessions.get(session_id).map(|h| match h.activity {
+            let inner = {
+                let sessions = futures::executor::block_on(self.sessions.read());
+                sessions.get(session_id).map(|h| h.inner.clone())?
+            };
+            let g = inner.lock().ok()?;
+            Some(match g.activity {
                 ActivityState::Working => "working".to_string(),
                 ActivityState::Idle => "idle".to_string(),
                 ActivityState::AwaitingInput => "awaiting_input".to_string(),
@@ -60,21 +66,24 @@ impl SessionManager {
         n: u32,
         tail: Option<u32>,
     ) -> Vec<serde_json::Value> {
-        let sessions = self.sessions.read().await;
-        let Some(handle) = sessions.get(session_id) else { return vec![] };
-
+        // Outer read lock briefly to grab the inner Arc, then drop it.
+        let inner = {
+            let sessions = self.sessions.read().await;
+            let Some(handle) = sessions.get(session_id) else { return vec![] };
+            handle.inner.clone()
+        };
+        let g = inner.lock().unwrap();
         let chunks: Vec<&BufferChunk> = match tail {
             Some(t) => {
-                let total = handle.ring.len();
+                let total = g.ring.len();
                 let skip = total.saturating_sub(t as usize);
-                handle.ring.iter().skip(skip).collect()
+                g.ring.iter().skip(skip).collect()
             }
-            None => handle.ring.iter()
+            None => g.ring.iter()
                 .filter(|c| c.seq >= from_seq)
                 .take(n as usize)
                 .collect(),
         };
-
         chunks.into_iter().map(|c| serde_json::json!({
             "seq": c.seq,
             "data_b64": base64::engine::general_purpose::STANDARD.encode(&c.data),
@@ -180,21 +189,25 @@ impl SessionManager {
         let (kill_tx, mut kill_rx) = mpsc::unbounded_channel::<()>();
 
         // Insert handle BEFORE spawning PTY so Focus can queue events
+        let inner = Arc::new(Mutex::new(SessionInner {
+            activity: ActivityState::Working,
+            last_output_at: std::time::Instant::now(),
+            ring: VecDeque::new(),
+            ring_bytes: 0,
+        }));
         {
             let mut sessions = self.sessions.write().await;
             sessions.insert(session_id.clone(), SessionHandle {
                 input_tx,
                 resize_tx,
                 kill_tx,
-                activity: ActivityState::Working,
-                last_output_at: std::time::Instant::now(),
-                ring: VecDeque::new(),
-                ring_bytes: 0,
+                inner: inner.clone(),
             });
         }
 
         // Spawn the PTY in a blocking thread (portable-pty uses blocking reads)
         let session_id_clone = session_id.clone();
+        let inner_for_reader = inner.clone();
         let sessions_arc = self.sessions.clone();
         let event_tx_clone = event_tx.clone();
         let store_clone = store.clone();
@@ -368,23 +381,20 @@ impl SessionManager {
                 let chunk = buf[..n].to_vec();
                 let b64 = base64::engine::general_purpose::STANDARD.encode(&chunk);
 
-                // Append to ring buffer
-                rt_read.block_on(async {
-                    let mut sessions = sessions_arc.write().await;
-                    if let Some(h) = sessions.get_mut(&session_id_clone) {
-                        let chunk_len = chunk.len();
-                        h.ring.push_back(BufferChunk { seq, data: chunk.clone() });
-                        h.ring_bytes += chunk_len;
-                        // Evict old chunks if over budget
-                        while h.ring_bytes > RING_BUFFER_BYTES {
-                            if let Some(old) = h.ring.pop_front() {
-                                h.ring_bytes -= old.data.len();
-                            } else { break; }
-                        }
-                        h.last_output_at = std::time::Instant::now();
-                        h.activity = ActivityState::Working;
+                // Hot path: lock ONLY this session's inner, never the outer map.
+                {
+                    let mut g = inner_for_reader.lock().unwrap();
+                    g.ring.push_back(BufferChunk { seq, data: chunk.clone() });
+                    g.ring_bytes += chunk.len();
+                    // Evict old chunks if over budget
+                    while g.ring_bytes > RING_BUFFER_BYTES {
+                        if let Some(old) = g.ring.pop_front() {
+                            g.ring_bytes -= old.data.len();
+                        } else { break; }
                     }
-                });
+                    g.last_output_at = std::time::Instant::now();
+                    g.activity = ActivityState::Working;
+                }
 
                 let _ = event_tx_clone.send(Event::AgentOutput(AgentOutputEvent {
                     v: WIRE_VERSION,
@@ -416,6 +426,7 @@ impl SessionManager {
         });
 
         // Activity timer — 1s tick per session
+        let inner_for_timer = inner.clone();
         let sessions_arc2 = self.sessions.clone();
         let session_id2 = session_id.clone();
         let event_tx2 = event_tx.clone();
@@ -424,28 +435,30 @@ impl SessionManager {
 
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
-            let mut unread_seq: u64 = 0;
             loop {
                 interval.tick().await;
-                let mut sessions = sessions_arc2.write().await;
-                let Some(h) = sessions.get_mut(&session_id2) else { break };
 
-                let elapsed = h.last_output_at.elapsed().as_secs();
-                let new_activity = if elapsed >= awaiting_threshold as u64 {
-                    ActivityState::AwaitingInput
-                } else if elapsed >= idle_threshold as u64 {
-                    ActivityState::Idle
-                } else {
-                    ActivityState::Working
-                };
-
-                // Get current max seq
-                if let Some(last) = h.ring.back() {
-                    unread_seq = last.seq;
+                // Check liveness via outer map (read lock, cheap). If session was
+                // removed (PTY exited), break.
+                {
+                    let sessions = sessions_arc2.read().await;
+                    if !sessions.contains_key(&session_id2) { break; }
                 }
 
-                h.activity = new_activity.clone();
-                drop(sessions);
+                let (new_activity, unread_seq) = {
+                    let mut g = inner_for_timer.lock().unwrap();
+                    let elapsed = g.last_output_at.elapsed().as_secs();
+                    let na = if elapsed >= awaiting_threshold as u64 {
+                        ActivityState::AwaitingInput
+                    } else if elapsed >= idle_threshold as u64 {
+                        ActivityState::Idle
+                    } else {
+                        ActivityState::Working
+                    };
+                    g.activity = na.clone();
+                    let seq = g.ring.back().map(|c| c.seq).unwrap_or(0);
+                    (na, seq)
+                };
 
                 let _ = event_tx2.send(Event::SessionActivity(SessionActivityEvent {
                     v: WIRE_VERSION,
