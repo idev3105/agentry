@@ -47,6 +47,13 @@
 	import type { UnlistenFn } from '@tauri-apps/api/event';
 
 	let termRef: TerminalView | undefined = $state();
+	// While we're replaying the ring buffer for a freshly-picked session,
+	// queue live agent_output for that same session id and flush AFTER replay
+	// completes. Without this, the live writer races readBuffer: bytes that
+	// arrive between `focusSession` and `readBuffer` resolving get written
+	// BEFORE the older buffered chunks, scrambling the TUI.
+	let replayingSessionId: string | null = $state(null);
+	const pendingChunks: Map<string, Uint8Array[]> = new Map();
 	let connected = $state(false);
 	let bootstrapError: string | null = $state(null);
 	const unlisteners: UnlistenFn[] = [];
@@ -169,7 +176,14 @@
 					updateSession(e.session_id, { unread: ($sessions.get(e.session_id)?.unread ?? 0) + 1 });
 					return;
 				}
-				termRef?.write(b64decode(e.data_b64));
+				const bytes = b64decode(e.data_b64);
+				if (replayingSessionId === e.session_id) {
+					let q = pendingChunks.get(e.session_id);
+					if (!q) { q = []; pendingChunks.set(e.session_id, q); }
+					q.push(bytes);
+					return;
+				}
+				termRef?.write(bytes);
 			})
 		);
 		unlisteners.push(
@@ -233,6 +247,12 @@
 		termRef?.clear();
 		ui.update((u) => ({ ...u, focusedSessionId: id, view: 'terminal' }));
 		updateSession(id, { unread: 0 });
+
+		// Arm the replay gate. Any agent_output that arrives between now and
+		// the finally block gets queued instead of written.
+		replayingSessionId = id;
+		pendingChunks.set(id, []);
+
 		try {
 			await focusSession(id);
 			const s = $sessions.get(id);
@@ -256,6 +276,16 @@
 			for (const e of entries) termRef?.write(b64decode(e.data_b64));
 		} catch (e) {
 			console.error('focus failed:', e);
+		} finally {
+			// Flush queued live chunks for the session we just picked.
+			// Only flush if user hasn't switched away in the meantime —
+			// otherwise we'd write bytes for the wrong session into termRef.
+			const queued = pendingChunks.get(id) ?? [];
+			if ($ui.focusedSessionId === id) {
+				for (const chunk of queued) termRef?.write(chunk);
+			}
+			pendingChunks.delete(id);
+			if (replayingSessionId === id) replayingSessionId = null;
 		}
 	}
 
