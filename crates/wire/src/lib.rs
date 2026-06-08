@@ -105,11 +105,19 @@ pub struct StartSessionCmd {
     pub profile_id: String,
     pub cwd: Option<String>,
     pub initial_input: Option<String>,
+    #[serde(default)]
+    pub cols: Option<u16>,
+    #[serde(default)]
+    pub rows: Option<u16>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResumeSessionCmd {
     pub session_id: String,
+    #[serde(default)]
+    pub cols: Option<u16>,
+    #[serde(default)]
+    pub rows: Option<u16>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

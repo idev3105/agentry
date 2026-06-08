@@ -67,14 +67,18 @@ export async function startSession(
 	projectId: string,
 	profileId: string,
 	cwd?: string,
-	initialInput?: string
+	initialInput?: string,
+	cols?: number,
+	rows?: number,
 ): Promise<{ session_id: string; status: string }> {
 	const r = await rpc({
 		cmd: 'start_session',
 		project_id: projectId,
 		profile_id: profileId,
 		cwd: cwd ?? null,
-		initial_input: initialInput ?? null
+		initial_input: initialInput ?? null,
+		cols: cols ?? null,
+		rows: rows ?? null,
 	});
 	return r as { ok: true; session_id: string; status: string };
 }
@@ -110,9 +114,16 @@ export async function killSessionOptimistic(
 }
 
 export async function resumeSession(
-	sessionId: string
+	sessionId: string,
+	cols?: number,
+	rows?: number,
 ): Promise<{ session_id: string; status: string }> {
-	const r = await rpc({ cmd: 'resume_session', session_id: sessionId });
+	const r = await rpc({
+		cmd: 'resume_session',
+		session_id: sessionId,
+		cols: cols ?? null,
+		rows: rows ?? null,
+	});
 	return r as { ok: true; session_id: string; status: string };
 }
 

@@ -109,14 +109,15 @@ impl SessionManager {
         profile: DbProfile,
         cwd: String,
         initial_input: Option<String>,
+        initial_size: Option<(u16, u16)>,
         store: Arc<Store>,
         event_tx: EventTx,
     ) -> anyhow::Result<()> {
         let argv = build_argv(&profile, None);
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
-        store.set_setting("dummy", "dummy").ok(); // no-op to keep conn warm
-        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, None, store, event_tx, profile.start_script).await
+        store.set_setting("dummy", "dummy").ok();
+        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, None, initial_size, store, event_tx, profile.start_script).await
     }
 
     /// Spawn a resume session (pass agent_session_id to `--resume`)
@@ -126,13 +127,14 @@ impl SessionManager {
         profile: DbProfile,
         cwd: String,
         agent_session_id: Option<String>,
+        initial_size: Option<(u16, u16)>,
         store: Arc<Store>,
         event_tx: EventTx,
     ) -> anyhow::Result<()> {
         let argv = build_argv(&profile, agent_session_id.as_deref());
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
-        self.do_spawn(session_id, argv, env_pairs, cwd, None, None, store, event_tx, profile.start_script).await
+        self.do_spawn(session_id, argv, env_pairs, cwd, None, None, initial_size, store, event_tx, profile.start_script).await
     }
 
     async fn do_spawn(
@@ -143,6 +145,7 @@ impl SessionManager {
         cwd: String,
         initial_input: Option<String>,
         agent_session_id_preset: Option<String>, // for claude_code pre-generated UUID
+        initial_size: Option<(u16, u16)>,
         store: Arc<Store>,
         event_tx: EventTx,
         start_script: Option<String>,
@@ -198,13 +201,17 @@ impl SessionManager {
         let cwd_clone = cwd.clone();
         // Capture tokio handle in async context — `Handle::current()` panics inside std::thread::spawn.
         let rt_handle = tokio::runtime::Handle::current();
+        let (init_cols, init_rows) = initial_size.unwrap_or((80, 24));
 
         std::thread::spawn(move || {
             let rt = rt_handle;
 
             let pty_system = portable_pty::native_pty_system();
             let pair = match pty_system.openpty(portable_pty::PtySize {
-                rows: 24, cols: 80, pixel_width: 0, pixel_height: 0,
+                rows: init_rows,
+                cols: init_cols,
+                pixel_width: 0,
+                pixel_height: 0,
             }) {
                 Ok(p) => p,
                 Err(e) => {

@@ -131,6 +131,11 @@
 		term?.clear();
 		term?.reset();
 	}
+
+	export function size(): { cols: number; rows: number } | null {
+		if (!term || term.cols <= 0 || term.rows <= 0) return null;
+		return { cols: term.cols, rows: term.rows };
+	}
 </script>
 
 <div class="w-full h-full bg-[#282828] p-2 overflow-hidden">

@@ -251,6 +251,10 @@ impl Server {
                 let _ = self.event_tx.send(event);
 
                 if status == "starting" {
+                    let initial_size = match (c.cols, c.rows) {
+                        (Some(c), Some(r)) => Some((c, r)),
+                        _ => None,
+                    };
                     let sessions = self.sessions.clone();
                     let store = self.store.clone();
                     let event_tx = self.event_tx.clone();
@@ -258,7 +262,7 @@ impl Server {
                     let profile_clone = profile;
                     let initial_input = c.initial_input;
                     tokio::spawn(async move {
-                        let _ = sessions.spawn(sid, profile_clone, cwd, initial_input, store, event_tx).await;
+                        let _ = sessions.spawn(sid, profile_clone, cwd, initial_input, initial_size, store, event_tx).await;
                     });
                 }
 
@@ -382,6 +386,10 @@ impl Server {
                 let _ = self.event_tx.send(event);
 
                 if status == "starting" {
+                    let initial_size = match (c.cols, c.rows) {
+                        (Some(c), Some(r)) => Some((c, r)),
+                        _ => None,
+                    };
                     let sessions = self.sessions.clone();
                     let store = self.store.clone();
                     let event_tx = self.event_tx.clone();
@@ -389,7 +397,7 @@ impl Server {
                     let resume_from = original.agent_session_id;
                     let cwd = original.cwd;
                     tokio::spawn(async move {
-                        let _ = sessions.spawn_resume(sid, profile, cwd, resume_from, store, event_tx).await;
+                        let _ = sessions.spawn_resume(sid, profile, cwd, resume_from, initial_size, store, event_tx).await;
                     });
                 }
 
