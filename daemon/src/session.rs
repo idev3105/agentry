@@ -112,6 +112,7 @@ impl SessionManager {
     }
 
     /// Spawn a fresh session
+    #[allow(clippy::too_many_arguments)]
     pub async fn spawn(
         self: Arc<Self>,
         session_id: String,
@@ -130,6 +131,7 @@ impl SessionManager {
     }
 
     /// Spawn a resume session (pass agent_session_id to `--resume`)
+    #[allow(clippy::too_many_arguments)]
     pub async fn spawn_resume(
         self: Arc<Self>,
         session_id: String,
@@ -146,6 +148,7 @@ impl SessionManager {
         self.do_spawn(session_id, argv, env_pairs, cwd, None, None, initial_size, store, event_tx, profile.start_script).await
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn do_spawn(
         self: Arc<Self>,
         session_id: String,
@@ -153,7 +156,7 @@ impl SessionManager {
         env_pairs: Vec<(String, String)>,
         cwd: String,
         initial_input: Option<String>,
-        agent_session_id_preset: Option<String>, // for claude_code pre-generated UUID
+        agent_session_id_preset: Option<String>,
         initial_size: Option<(u16, u16)>,
         store: Arc<Store>,
         event_tx: EventTx,

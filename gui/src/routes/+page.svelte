@@ -308,6 +308,12 @@
 			// surviving history after eviction — not the current TUI state.
 			const entries = await readBuffer(id, 0, 0, 4096);
 			for (const e of entries) termRef?.write(b64decode(e.data_b64));
+			// catch up lastSeenSeq so activity tick after switch
+			// computes delta correctly (avoids spiking unread badge).
+			if (entries.length > 0) {
+				const lastSeq: number = entries[entries.length - 1].seq;
+				updateSession(id, { lastSeenSeq: lastSeq });
+			}
 		} catch (e) {
 			console.error('focus failed:', e);
 		} finally {
