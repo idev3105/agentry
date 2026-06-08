@@ -59,6 +59,9 @@ export interface SessionState {
 	status: SessionStatus;
 	activity: ActivityState | null;
 	unread: number;
+	/** Monotonic seq counter from session_activity.unread_seq; used to
+	 *  derive unread badge deltas when this session is not focused. */
+	lastSeenSeq: number;
 	failReason: string | null;
 }
 

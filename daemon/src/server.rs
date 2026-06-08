@@ -48,17 +48,32 @@ impl Server {
         let (read_half, write_half) = stream.into_split();
         let write_half = Arc::new(tokio::sync::Mutex::new(write_half));
 
-        // Writer task — receives broadcast events, sends to client
         let event_rx = self.event_tx.subscribe();
         let focused_session: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
-        let _focused_clone = focused_session.clone();
         let write_clone = write_half.clone();
+        let focused_for_writer = focused_session.clone();
 
+        // Writer task — receives broadcast events, filters agent_output by
+        // this connection's focused session, sends the rest verbatim.
         let writer_task = tokio::spawn(async move {
             let mut rx = event_rx;
             loop {
                 match rx.recv().await {
                     Ok(event) => {
+                        // Per docs/wire-protocol.md §2.4, agent_output is
+                        // streamed ONLY to the connection whose focused session
+                        // matches. Every other event (session_started,
+                        // session_activity, session_finished, session_failed,
+                        // project_created) goes to every connection — the
+                        // sidebar needs them to render badges/state for
+                        // non-focused sessions.
+                        if let Event::AgentOutput(ref ao) = event {
+                            let f = focused_for_writer.read().await;
+                            match f.as_ref() {
+                                Some(sid) if sid == &ao.session_id => {}
+                                _ => continue,
+                            }
+                        }
                         let line = match serde_json::to_string(&Message::Event(event)) {
                             Ok(mut s) => { s.push('\n'); s }
                             Err(_) => continue,

@@ -45,6 +45,7 @@
 	} from '$lib/ipc';
 	import { bindKeys } from '$lib/utils/keybindings';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
+	import type { SessionState } from '$lib/types';
 
 	let termRef: TerminalView | undefined = $state();
 	// While we're replaying the ring buffer for a freshly-picked session,
@@ -83,18 +84,19 @@
 				addProject({ ...p, sessions: [] });
 				const sess = await listSessions(p.id);
 				for (const ss of sess) {
-					upsertSession({
-						id: ss.id,
-						projectId: p.id,
-						profileId: '',
-						agent: ss.agent,
-						title: ss.title,
-						cwd: ss.cwd,
-						status: ss.status,
-						activity: ss.activity,
-						unread: 0,
-						failReason: null
-					});
+				upsertSession({
+					id: ss.id,
+					projectId: p.id,
+					profileId: '',
+					agent: ss.agent,
+					title: ss.title,
+					cwd: ss.cwd,
+					status: ss.status,
+					activity: ss.activity,
+					unread: 0,
+					lastSeenSeq: 0,
+					failReason: null
+				});
 				}
 			}
 
@@ -140,6 +142,7 @@
 					status: e.status,
 					activity: null,
 					unread: 0,
+					lastSeenSeq: 0,
 					failReason: null
 				});
 				// Resumed/already-titled sessions should NOT get auto-renamed by
@@ -172,10 +175,11 @@
 				if (cur && (cur.status === 'finished' || cur.status === 'failed')) {
 					return;
 				}
-				if (e.session_id !== $ui.focusedSessionId) {
-					updateSession(e.session_id, { unread: ($sessions.get(e.session_id)?.unread ?? 0) + 1 });
-					return;
-				}
+				// Daemon now filters agent_output per-connection by focused session
+				// (server.rs writer task). The guard below is defense-in-depth in case
+				// a Focus cmd is still in-flight when an event races in.
+				if (e.session_id !== $ui.focusedSessionId) return;
+
 				const bytes = b64decode(e.data_b64);
 				if (replayingSessionId === e.session_id) {
 					let q = pendingChunks.get(e.session_id);
@@ -189,14 +193,27 @@
 		unlisteners.push(
 			await onSessionActivity((e) => {
 				const cur = $sessions.get(e.session_id);
-				// Ignore late activity ticks for a session the user already
-				// killed — flipping `activity` would resurrect "working" /
-				// "awaiting_input" labels on a row that should stay in Past.
-				if (cur && (cur.status === 'finished' || cur.status === 'failed')) {
-					return;
-				}
-				const patch: Partial<typeof cur> = { activity: e.state };
+				// Ignore late activity ticks for a session the user already killed —
+				// flipping `activity` would resurrect "working" labels on a Past row.
+				if (cur && (cur.status === 'finished' || cur.status === 'failed')) return;
+
+				const patch: Partial<SessionState> = { activity: e.state };
 				if (cur && cur.status === 'starting') patch.status = 'running';
+
+				if (e.session_id === $ui.focusedSessionId) {
+					// Focused: catch the seq up but don't accumulate unread.
+					patch.unread = 0;
+					patch.lastSeenSeq = e.unread_seq;
+				} else if (cur) {
+					// Non-focused: bump unread by the seq delta. Bounded so a long
+					// backlog after reconnect doesn't render "9999+" badges.
+					const prev = cur.lastSeenSeq ?? 0;
+					const delta = Math.max(0, e.unread_seq - prev);
+					if (delta > 0) {
+						patch.unread = Math.min(999, cur.unread + delta);
+						patch.lastSeenSeq = e.unread_seq;
+					}
+				}
 				updateSession(e.session_id, patch);
 			})
 		);
