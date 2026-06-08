@@ -272,7 +272,10 @@
 				);
 				return;
 			}
-			const entries = await readBuffer(id, 0, 4096);
+			// Pull the LAST 4096 chunks from the ring buffer, not the first.
+			// With from_seq=0 the daemon returns head-of-ring, which is the oldest
+			// surviving history after eviction — not the current TUI state.
+			const entries = await readBuffer(id, 0, 0, 4096);
 			for (const e of entries) termRef?.write(b64decode(e.data_b64));
 		} catch (e) {
 			console.error('focus failed:', e);

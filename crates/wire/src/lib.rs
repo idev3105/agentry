@@ -151,6 +151,11 @@ pub struct ReadBufferCmd {
     pub session_id: String,
     pub from_seq: u64,
     pub n: u32,
+    /// If set, return the last `tail` chunks in the ring buffer and ignore
+    /// from_seq/n. Used by the GUI to reconstruct current TUI state after
+    /// reconnect or session switch — head-of-ring would be stale history.
+    #[serde(default)]
+    pub tail: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

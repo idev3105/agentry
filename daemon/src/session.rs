@@ -53,17 +53,32 @@ impl SessionManager {
         })
     }
 
-    pub async fn read_buffer(&self, session_id: &str, from_seq: u64, n: u32) -> Vec<serde_json::Value> {
+    pub async fn read_buffer(
+        &self,
+        session_id: &str,
+        from_seq: u64,
+        n: u32,
+        tail: Option<u32>,
+    ) -> Vec<serde_json::Value> {
         let sessions = self.sessions.read().await;
         let Some(handle) = sessions.get(session_id) else { return vec![] };
-        handle.ring.iter()
-            .filter(|c| c.seq >= from_seq)
-            .take(n as usize)
-            .map(|c| serde_json::json!({
-                "seq": c.seq,
-                "data_b64": base64::engine::general_purpose::STANDARD.encode(&c.data),
-            }))
-            .collect()
+
+        let chunks: Vec<&BufferChunk> = match tail {
+            Some(t) => {
+                let total = handle.ring.len();
+                let skip = total.saturating_sub(t as usize);
+                handle.ring.iter().skip(skip).collect()
+            }
+            None => handle.ring.iter()
+                .filter(|c| c.seq >= from_seq)
+                .take(n as usize)
+                .collect(),
+        };
+
+        chunks.into_iter().map(|c| serde_json::json!({
+            "seq": c.seq,
+            "data_b64": base64::engine::general_purpose::STANDARD.encode(&c.data),
+        })).collect()
     }
 
     pub async fn send_input(&self, session_id: &str, data: &[u8]) -> anyhow::Result<()> {

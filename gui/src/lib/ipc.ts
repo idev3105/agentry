@@ -124,8 +124,19 @@ export async function resize(sessionId: string, cols: number, rows: number): Pro
 	await rpc({ cmd: 'resize', session_id: sessionId, cols, rows });
 }
 
-export async function readBuffer(sessionId: string, fromSeq = 0, n = 1024) {
-	const r = await rpc({ cmd: 'read_buffer', session_id: sessionId, from_seq: fromSeq, n });
+export async function readBuffer(
+	sessionId: string,
+	fromSeq = 0,
+	n = 1024,
+	tail?: number
+) {
+	const r = await rpc({
+		cmd: 'read_buffer',
+		session_id: sessionId,
+		from_seq: fromSeq,
+		n,
+		tail: tail ?? null,
+	});
 	return (r.entries as { seq: number; data_b64: string }[]) ?? [];
 }
 

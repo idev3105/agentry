@@ -287,7 +287,7 @@ impl Server {
             }
 
             Cmd::ReadBuffer(c) => {
-                let entries = self.sessions.read_buffer(&c.session_id, c.from_seq, c.n).await;
+                let entries = self.sessions.read_buffer(&c.session_id, c.from_seq, c.n, c.tail).await;
                 Ok(serde_json::json!({"ok":true, "entries": entries}))
             }
 
