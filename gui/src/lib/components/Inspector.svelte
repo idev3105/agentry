@@ -210,6 +210,26 @@
 					{session.id}
 				</div>
 			</div>
+			{#if session.agent_session_id}
+				<div>
+					<div class="flex items-center justify-between mb-1">
+						<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Agent ID</span>
+						<button
+							class="text-[10px] text-muted-foreground hover:text-foreground"
+							onclick={() => copy(session!.agent_session_id!)}
+							title="Copy Agent ID"
+						>
+							{copied === session.agent_session_id ? 'copied' : 'copy'}
+						</button>
+					</div>
+					<div class="font-mono text-[10px] break-all text-muted-foreground select-all">
+						{session.agent_session_id}
+					</div>
+				</div>
+			{/if}
+			{#if session.agent_session_name}
+				{@render row('Agent name', session.agent_session_name)}
+			{/if}
 			<div>
 				<div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Working dir</div>
 				<button
