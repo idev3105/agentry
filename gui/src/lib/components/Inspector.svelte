@@ -1,0 +1,261 @@
+<script lang="ts">
+	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
+	import { ui } from '$lib/stores/ui';
+	import type { SessionState } from '$lib/types';
+	import { killSession, resumeSession, sendCmd } from '$lib/ipc';
+	import { cn } from '$lib/utils/cn';
+	import ConfirmDialog from './ConfirmDialog.svelte';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Square from '@lucide/svelte/icons/square';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import Trash from '@lucide/svelte/icons/trash-2';
+
+	let session = $derived<SessionState | undefined>(
+		$ui.focusedSessionId ? $sessions.get($ui.focusedSessionId) : undefined
+	);
+
+	let renaming = $state(false);
+	let renameValue = $state('');
+	let copied = $state<string | null>(null);
+	let confirmTarget = $state<SessionState | null>(null);
+
+	async function copy(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = text;
+			setTimeout(() => {
+				if (copied === text) copied = null;
+			}, 1200);
+		} catch (e) {
+			console.error('clipboard:', e);
+		}
+	}
+
+	function doKill(s: SessionState) {
+		// Optimistic: flip to finished + unfocus immediately so the UI doesn't lag.
+		markSessionEnding(s.id);
+		killSession(s.id).catch((err) => {
+			markSessionEnding(s.id, { failReason: `kill failed: ${err}` });
+		});
+	}
+
+	async function performDelete(s: SessionState) {
+		try {
+			const wasActive = s.status === 'running' || s.status === 'starting' || s.status === 'queued';
+			if (wasActive) {
+				// Ask daemon to stop the PTY. The kill watcher escalates
+				// SIGTERM → SIGKILL within 250ms, so by the time delete_session
+				// runs the row is no longer active.
+				markSessionEnding(s.id);
+				await killSession(s.id).catch(() => {});
+				await new Promise((r) => setTimeout(r, 350));
+			}
+			const r = (await sendCmd({ cmd: 'delete_session', session_id: s.id })) as {
+				ok: boolean;
+				error?: string;
+			};
+			if (!r.ok) throw new Error(r.error);
+			sessions.update((m) => {
+				m.delete(s.id);
+				return m;
+			});
+			if ($ui.focusedSessionId === s.id) {
+				ui.update((u) => ({ ...u, focusedSessionId: null }));
+			}
+		} catch (e) {
+			console.error('delete failed:', e);
+		}
+	}
+
+	function statusColor(s: SessionState): string {
+		if (s.status === 'failed') return 'text-gruvbox-red';
+		if (s.status === 'finished') return 'text-muted-foreground';
+		if (s.activity === 'awaiting_input') return 'text-gruvbox-red';
+		if (s.activity === 'working') return 'text-gruvbox-green';
+		return 'text-gruvbox-yellow';
+	}
+
+	function statusDot(s: SessionState): string {
+		if (s.status === 'failed') return 'bg-gruvbox-red';
+		if (s.status === 'finished') return 'bg-muted-foreground';
+		if (s.activity === 'awaiting_input') return 'bg-gruvbox-red';
+		if (s.activity === 'working') return 'bg-gruvbox-green';
+		return 'bg-gruvbox-yellow';
+	}
+
+	function statusLabel(s: SessionState): string {
+		if (s.status === 'queued') return 'Queued';
+		if (s.status === 'running') return s.activity ? s.activity.replace('_', ' ') : 'running';
+		if (s.status === 'failed') return 'Failed';
+		if (s.status === 'finished') return 'Finished';
+		return s.status;
+	}
+
+	async function startRename(s: SessionState) {
+		renameValue = s.title;
+		renaming = true;
+	}
+
+	async function commitRename(id: string) {
+		if (!renameValue.trim()) {
+			renaming = false;
+			return;
+		}
+		try {
+			await sendCmd({ cmd: 'rename_session', session_id: id, title: renameValue.trim() });
+		} catch (e) {
+			console.error(e);
+		}
+		renaming = false;
+	}
+
+	async function openCwd(path: string) {
+		try {
+			const { openPath } = await import('@tauri-apps/plugin-opener');
+			await openPath(path);
+		} catch (e) {
+			console.error('open cwd failed:', e);
+		}
+	}
+</script>
+
+<aside class="flex flex-col h-full w-full overflow-y-auto text-sm bg-background">
+	{#if !session}
+		<div class="flex items-center justify-center h-full text-muted-foreground text-xs px-4 text-center">
+			Select a session to inspect details.
+		</div>
+	{:else}
+		<!-- Header -->
+		<div class="px-4 pt-4 pb-3 border-b border-border space-y-2">
+			<div class="flex items-center gap-2">
+				<span class={cn('w-2 h-2 rounded-full', statusDot(session))}></span>
+				{#if renaming}
+					<input
+						bind:value={renameValue}
+						class="flex-1 bg-input border border-border rounded px-2 py-0.5 text-sm font-medium"
+						onkeydown={(e) => e.key === 'Enter' && commitRename(session!.id)}
+						onblur={() => commitRename(session!.id)}
+						autofocus
+					/>
+				{:else}
+					<button
+						class="flex-1 text-left font-medium truncate hover:text-gruvbox-yellow"
+						onclick={() => startRename(session!)}
+					>
+						{session.title}
+					</button>
+					<button
+						class="text-muted-foreground hover:text-foreground"
+						onclick={() => startRename(session!)}
+					><Pencil size={12} /></button>
+				{/if}
+			</div>
+			<div class={cn('text-xs', statusColor(session))}>
+				{statusLabel(session)}
+			</div>
+
+			<div class="flex gap-1.5 pt-1">
+				{#if session.status === 'running' || session.status === 'queued'}
+					<button
+						class="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
+						onclick={() => doKill(session!)}
+					>
+						<Square size={11} fill="currentColor" /> Kill
+					</button>
+				{/if}
+				{#if session.status === 'finished' || session.status === 'failed'}
+					{@const canResume = session.agent === 'claude'}
+					<button
+						class="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary"
+						disabled={!canResume}
+						title={canResume
+							? 'Resume this session'
+							: `Resume not yet supported for ${session.agent}`}
+						onclick={() => canResume && resumeSession(session!.id)}
+					>
+						<RotateCcw size={11} /> Resume
+					</button>
+				{/if}
+				<button
+					title="Delete session permanently"
+					class="flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors"
+					onclick={() => (confirmTarget = session!)}
+				>
+					<Trash size={11} />
+				</button>
+			</div>
+		</div>
+
+		<!-- Sections -->
+		<section class="px-4 py-3 border-b border-border space-y-2">
+			<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">General</h3>
+			{@render row('Agent', session.agent)}
+			{@render row('Status', session.status)}
+			{#if session.activity}
+				{@render row('Activity', session.activity)}
+			{/if}
+			<div>
+				<div class="flex items-center justify-between mb-1">
+					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Session ID</span>
+					<button
+						class="text-[10px] text-muted-foreground hover:text-foreground"
+						onclick={() => copy(session!.id)}
+						title="Copy ID"
+					>
+						{copied === session.id ? 'copied' : 'copy'}
+					</button>
+				</div>
+				<div class="font-mono text-[10px] break-all text-muted-foreground select-all">
+					{session.id}
+				</div>
+			</div>
+			<div>
+				<div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Working dir</div>
+				<button
+					class="font-mono text-xs break-all text-left hover:text-gruvbox-yellow flex items-start gap-1.5 group"
+					onclick={() => openCwd(session!.cwd)}
+					title="Open in file manager"
+				>
+					<FolderOpen size={11} class="mt-0.5 text-muted-foreground group-hover:text-gruvbox-yellow flex-shrink-0" />
+					<span>{session.cwd}</span>
+				</button>
+			</div>
+			{@render row('Unread', String(session.unread), session.unread === 0)}
+		</section>
+
+		{#if session.failReason}
+			<section class="px-4 py-3 border-b border-border space-y-2">
+				<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">Fail reason</h3>
+				<pre class="text-xs text-gruvbox-red bg-card rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
+			</section>
+		{/if}
+	{/if}
+</aside>
+
+<ConfirmDialog
+	open={confirmTarget !== null}
+	title="Delete session"
+	message={confirmTarget
+		? (confirmTarget.status === 'running' ||
+			confirmTarget.status === 'starting' ||
+			confirmTarget.status === 'queued'
+			? `"${confirmTarget.title}" is still active. Kill and delete it?\nThis cannot be undone.`
+			: `Delete "${confirmTarget.title}"?\nThis cannot be undone.`)
+		: ''}
+	confirmLabel="Delete"
+	destructive
+	onConfirm={() => {
+		const t = confirmTarget;
+		confirmTarget = null;
+		if (t) performDelete(t);
+	}}
+	onCancel={() => (confirmTarget = null)}
+/>
+
+{#snippet row(label: string, value: string, muted: boolean = false)}
+	<div class="flex items-baseline justify-between gap-2">
+		<span class="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+		<span class={cn('text-xs', muted && 'text-muted-foreground')}>{value}</span>
+	</div>
+{/snippet}

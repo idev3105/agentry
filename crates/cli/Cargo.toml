@@ -1,0 +1,14 @@
+[package]
+name    = "agentry-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "agentry-cli"
+path = "src/main.rs"
+
+[dependencies]
+agentry-wire = { path = "../wire" }
+tokio        = { workspace = true }
+serde_json   = { workspace = true }
+anyhow       = "1"

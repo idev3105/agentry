@@ -1,0 +1,164 @@
+import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import type {
+	AgentOutputEvent,
+	ProjectCreatedEvent,
+	SessionActivityEvent,
+	SessionFailedEvent,
+	SessionFinishedEvent,
+	SessionStartedEvent,
+	ProjectInfo,
+	ProfileInfo,
+	SessionInfo
+} from '$lib/types';
+
+// ── Low-level cmd plumbing ────────────────────────────────────────────────────
+
+interface RespOk {
+	ok: true;
+	[key: string]: unknown;
+}
+interface RespErr {
+	ok: false;
+	error: string;
+}
+type Resp = RespOk | RespErr;
+
+async function rpc(cmd: object): Promise<RespOk> {
+	const r = (await invoke('send_cmd', { cmd })) as Resp;
+	if (!r.ok) throw new Error(r.error);
+	return r;
+}
+
+export function sendCmd(cmd: object): Promise<unknown> {
+	return invoke('send_cmd', { cmd });
+}
+
+export function focusSession(sessionId: string): Promise<void> {
+	return invoke('focus_session', { sessionId });
+}
+
+// ── Typed command wrappers ────────────────────────────────────────────────────
+
+export async function listProjects(): Promise<ProjectInfo[]> {
+	const r = await rpc({ cmd: 'list_projects' });
+	return (r.projects as ProjectInfo[]) ?? [];
+}
+
+export async function listProfiles(): Promise<ProfileInfo[]> {
+	const r = await rpc({ cmd: 'list_profiles' });
+	return (r.profiles as ProfileInfo[]) ?? [];
+}
+
+export async function listSessions(projectId: string): Promise<SessionInfo[]> {
+	const r = await rpc({ cmd: 'list_sessions', project_id: projectId });
+	return (r.sessions as SessionInfo[]) ?? [];
+}
+
+export async function getSettings(): Promise<RespOk> {
+	return rpc({ cmd: 'get_settings' });
+}
+
+export async function createProject(name: string, path: string): Promise<void> {
+	await rpc({ cmd: 'create_project', name, path });
+}
+
+export async function startSession(
+	projectId: string,
+	profileId: string,
+	cwd?: string,
+	initialInput?: string
+): Promise<{ session_id: string; status: string }> {
+	const r = await rpc({
+		cmd: 'start_session',
+		project_id: projectId,
+		profile_id: profileId,
+		cwd: cwd ?? null,
+		initial_input: initialInput ?? null
+	});
+	return r as { ok: true; session_id: string; status: string };
+}
+
+export async function killSession(sessionId: string): Promise<void> {
+	await rpc({ cmd: 'kill_session', session_id: sessionId });
+}
+
+/**
+ * Kill the session AND immediately mark it as finishing in the local store
+ * so the UI doesn't lag while the daemon tears down the PTY (1–2s).
+ * The real `session_finished`/`session_failed` event from the daemon will
+ * arrive shortly after and overwrite this with the authoritative status.
+ */
+export async function killSessionOptimistic(
+	sessionId: string,
+	store: { update: (id: string, patch: object) => void }
+): Promise<void> {
+	store.update(sessionId, {
+		status: 'finished',
+		activity: null
+	});
+	try {
+		await killSession(sessionId);
+	} catch (e) {
+		// rollback: mark as failed so the user knows it didn't go through
+		store.update(sessionId, {
+			status: 'failed',
+			failReason: `kill failed: ${e}`
+		});
+		throw e;
+	}
+}
+
+export async function resumeSession(
+	sessionId: string
+): Promise<{ session_id: string; status: string }> {
+	const r = await rpc({ cmd: 'resume_session', session_id: sessionId });
+	return r as { ok: true; session_id: string; status: string };
+}
+
+export async function sendInput(sessionId: string, data: string): Promise<void> {
+	await rpc({ cmd: 'send_input', session_id: sessionId, data });
+}
+
+export async function resize(sessionId: string, cols: number, rows: number): Promise<void> {
+	await rpc({ cmd: 'resize', session_id: sessionId, cols, rows });
+}
+
+export async function readBuffer(sessionId: string, fromSeq = 0, n = 1024) {
+	const r = await rpc({ cmd: 'read_buffer', session_id: sessionId, from_seq: fromSeq, n });
+	return (r.entries as { seq: number; data_b64: string }[]) ?? [];
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+
+export function onProjectCreated(cb: (e: ProjectCreatedEvent) => void): Promise<UnlistenFn> {
+	return listen<ProjectCreatedEvent>('daemon:project_created', (ev) => cb(ev.payload));
+}
+
+export function onSessionStarted(cb: (e: SessionStartedEvent) => void): Promise<UnlistenFn> {
+	return listen<SessionStartedEvent>('daemon:session_started', (ev) => cb(ev.payload));
+}
+
+export function onAgentOutput(cb: (e: AgentOutputEvent) => void): Promise<UnlistenFn> {
+	return listen<AgentOutputEvent>('daemon:agent_output', (ev) => cb(ev.payload));
+}
+
+export function onSessionActivity(cb: (e: SessionActivityEvent) => void): Promise<UnlistenFn> {
+	return listen<SessionActivityEvent>('daemon:session_activity', (ev) => cb(ev.payload));
+}
+
+export function onSessionFinished(cb: (e: SessionFinishedEvent) => void): Promise<UnlistenFn> {
+	return listen<SessionFinishedEvent>('daemon:session_finished', (ev) => cb(ev.payload));
+}
+
+export function onSessionFailed(cb: (e: SessionFailedEvent) => void): Promise<UnlistenFn> {
+	return listen<SessionFailedEvent>('daemon:session_failed', (ev) => cb(ev.payload));
+}
+
+export function onDaemonConnected(cb: (e: { sock_path: string }) => void): Promise<UnlistenFn> {
+	return listen<{ sock_path: string }>('daemon:connected', (ev) => cb(ev.payload));
+}
+
+export function onBootstrapError(cb: (msg: string) => void): Promise<UnlistenFn> {
+	return listen<string>('daemon:bootstrap_error', (ev) => cb(ev.payload));
+}

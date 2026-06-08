@@ -1,0 +1,98 @@
+# Dev toolchain cho Agentry (xem docs/implementation-plan.md)
+[tools]
+rust = "stable"   # daemon + Tauri shim (cargo, rustc, clippy, rustfmt)
+node = "24"       # SvelteKit frontend (LTS)
+pnpm = "11"       # package manager
+
+# Tauri v2 trên Ubuntu còn cần system libs (apt) — không quản qua mise:
+#   sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
+#     libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+# WebKit/GTK env workarounds cho Ubuntu Wayland (segfault prevention)
+[env]
+GDK_BACKEND = "x11"
+WEBKIT_DISABLE_DMABUF_RENDERER = "1"
+
+[tasks.daemon]
+description = "Build và chạy daemon ở dev mode (watch)"
+run = "cargo watch -x 'run -p agentry-daemon' 2>/dev/null || cargo run -p agentry-daemon"
+dir = "{{cwd}}"
+
+[tasks.gui]
+description = "Chạy SvelteKit frontend dev server (vite)"
+run = "pnpm dev"
+dir = "{{cwd}}/gui"
+
+[tasks.tauri]
+description = "Chạy Tauri app ở dev mode (frontend + shim cùng lúc)"
+run = "pnpm tauri:dev"
+dir = "{{cwd}}/gui"
+
+[tasks.dev]
+description = "Chạy daemon + Tauri GUI cùng lúc (dev mode đầy đủ)"
+run = """
+#!/usr/bin/env bash
+set -e
+echo "Building daemon..."
+cargo build -p agentry-daemon
+echo "Starting daemon in background..."
+cargo run -p agentry-daemon &
+DAEMON_PID=$!
+trap "kill $DAEMON_PID 2>/dev/null" EXIT
+echo "Starting Tauri dev..."
+cd gui && pnpm tauri:dev
+"""
+
+[tasks.build]
+description = "Build toàn bộ project (daemon + GUI)"
+run = """
+#!/usr/bin/env bash
+set -e
+cargo build --release -p agentry-daemon -p agentry-cli
+cd gui && pnpm tauri:build
+"""
+
+[tasks.check]
+description = "Type-check Rust (clippy) + Svelte (svelte-check)"
+run = """
+#!/usr/bin/env bash
+set -e
+cargo clippy -p agentry-wire -p agentry-daemon -p agentry-cli -- -D warnings
+cd gui && pnpm check
+"""
+
+[tasks.cli]
+description = "Chạy CLI test client (AGENTRY_SOCK nếu daemon đang chạy)"
+run = "cargo run -p agentry-cli --"
+dir = "{{cwd}}"
+
+[tasks.kill]
+description = "Kill mọi process Agentry (daemon + GUI shim + Tauri/Vite) và dọn socket/pid"
+run = """
+#!/usr/bin/env bash
+# Best-effort: pkill returns 1 when nothing matched — that's fine.
+pkill -TERM -f 'agentry-daemon'   2>/dev/null || true
+pkill -TERM -f 'agentry-gui'      2>/dev/null || true
+pkill -TERM -f 'tauri.js dev'     2>/dev/null || true
+pkill -TERM -f 'vite.*gui'        2>/dev/null || true
+sleep 0.3
+# Anything still alive after SIGTERM gets SIGKILL.
+pkill -KILL -f 'agentry-daemon'   2>/dev/null || true
+pkill -KILL -f 'agentry-gui'      2>/dev/null || true
+pkill -KILL -f 'tauri.js dev'     2>/dev/null || true
+pkill -KILL -f 'vite.*gui'        2>/dev/null || true
+
+# Remove stale runtime files so the next start spawns cleanly.
+rm -f "$HOME/.agentry/daemon.pid" "$HOME/.agentry/daemon.sock" "$HOME/.agentry/daemon.log"
+
+echo "agentry: killed daemon/GUI/dev processes and cleaned $HOME/.agentry/{daemon.pid,daemon.sock,daemon.log}"
+"""
+
+[tasks.reset]
+description = "Như 'kill' nhưng XÓA cả database — fresh start (mất hết projects/profiles/sessions)"
+run = """
+#!/usr/bin/env bash
+mise run kill
+rm -f "$HOME/.agentry/daemon.db" "$HOME/.agentry/daemon.db-shm" "$HOME/.agentry/daemon.db-wal"
+echo "agentry: database wiped"
+"""

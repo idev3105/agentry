@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "daemon",
+    "gui/src-tauri",
+    "crates/wire",
+    "crates/cli",
+]
+resolver = "2"
+
+[workspace.dependencies]
+tokio       = { version = "1",    features = ["full"] }
+serde       = { version = "1",    features = ["derive"] }
+serde_json  = "1"
+uuid        = { version = "1",    features = ["v4"] }
+base64      = "0.22"

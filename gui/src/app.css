@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Gruvbox Dark — https://github.com/morhetz/gruvbox */
+@theme inline {
+  /* bg */
+  --color-background:    #282828;  /* bg */
+  --color-card:          #3c3836;  /* bg1 */
+  --color-secondary:     #504945;  /* bg2 */
+  --color-muted:         #504945;  /* bg2 */
+  --color-border:        #504945;  /* bg2 */
+  --color-input:         #3c3836;  /* bg1 */
+  --color-popover:       #3c3836;  /* bg1 */
+
+  /* fg */
+  --color-foreground:             #ebdbb2;  /* fg */
+  --color-card-foreground:        #ebdbb2;
+  --color-popover-foreground:     #ebdbb2;
+  --color-secondary-foreground:   #d5c4a1;  /* fg2 */
+  --color-muted-foreground:       #a89984;  /* fg4 / gray */
+  --color-accent:                 #d79921;  /* yellow dark */
+  --color-accent-foreground:      #282828;
+
+  /* primary = fg (light on dark) */
+  --color-primary:            #ebdbb2;
+  --color-primary-foreground: #282828;
+
+  /* semantic */
+  --color-destructive:            #cc241d;  /* red dark */
+  --color-destructive-foreground: #fbf1c7;
+
+  /* gruvbox accent colors — used via arbitrary values */
+  --color-gruvbox-yellow:  #fabd2f;
+  --color-gruvbox-green:   #b8bb26;
+  --color-gruvbox-aqua:    #8ec07c;
+  --color-gruvbox-blue:    #83a598;
+  --color-gruvbox-orange:  #fe8019;
+  --color-gruvbox-purple:  #d3869b;
+  --color-gruvbox-red:     #fb4934;
+  --color-gruvbox-gray:    #928374;
+}
+
+@layer base {
+  body {
+    background-color: #282828;
+    color: #ebdbb2;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+}
