@@ -69,6 +69,13 @@ export interface SessionState {
 	agent_session_name: string | null;
 }
 
+export interface R9StatusResp {
+	resolved: string;
+	running: boolean;
+	pid: number | null;
+	port: number;
+}
+
 export interface Settings {
 	defaultProfileId: string | null;
 	maxConcurrentSessions: number;

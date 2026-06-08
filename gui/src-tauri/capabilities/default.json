@@ -6,6 +6,18 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "dialog:default"
+    "dialog:default",
+    "shell:allow-execute",
+    "shell:allow-spawn",
+    "shell:allow-kill",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "9router", "cmd": "9router", "args": true },
+        { "name": "npx-9router", "cmd": "npx", "args": ["9router"] },
+        { "name": "lsof-port", "cmd": "lsof", "args": ["-t", "-iTCP:20128", "-sTCP:LISTEN"] },
+        { "name": "kill", "cmd": "kill", "args": true }
+      ]
+    }
   ]
 }

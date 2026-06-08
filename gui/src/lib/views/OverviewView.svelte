@@ -5,6 +5,7 @@
 	import { cn } from '$lib/utils/cn';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Terminal from '@lucide/svelte/icons/terminal';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
 
 	let sessionList = $derived(Array.from($sessions.values()));
 	let projectList = $derived(Array.from($projects.values()));
@@ -53,10 +54,11 @@
 			<div class="bg-card border border-border rounded p-6 text-center">
 				<p class="text-sm text-muted-foreground mb-3">No projects yet.</p>
 				<button
-					class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
+					title="Get started"
+					class="inline-flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 					onclick={() => openWizard()}
 				>
-					<Plus size={14} /> Get started
+					<Plus size={14} />
 				</button>
 			</div>
 		{:else}
@@ -69,12 +71,13 @@
 								<div class="text-sm font-medium">{p.name}</div>
 								<div class="text-[11px] text-muted-foreground font-mono truncate">{p.path}</div>
 							</div>
-							<button
-								class="text-xs px-2 py-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary"
-								onclick={() => {
-									ui.update((u) => ({ ...u, activeProjectId: p.id, view: 'terminal' }));
-								}}
-							>Open</button>
+						<button
+							title="Open sessions"
+							class="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary"
+							onclick={() => {
+								ui.update((u) => ({ ...u, activeProjectId: p.id, view: 'terminal' }));
+							}}
+						><ExternalLink size={14} /></button>
 						</div>
 						{#if inProj.length === 0}
 							<div class="px-4 py-3 text-xs text-muted-foreground">No sessions.</div>

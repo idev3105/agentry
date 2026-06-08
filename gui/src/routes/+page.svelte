@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import ActivityBar from '$lib/components/ActivityBar.svelte';
-	import TopBar from '$lib/components/TopBar.svelte';
-	import SessionSidebar from '$lib/components/SessionSidebar.svelte';
-	import TerminalView from '$lib/components/TerminalView.svelte';
-	import Inspector from '$lib/components/Inspector.svelte';
-	import CommandPalette from '$lib/components/CommandPalette.svelte';
-	import SetupWizard from '$lib/components/SetupWizard.svelte';
-	import SplitPane from '$lib/components/SplitPane.svelte';
-	import ProfilesView from '$lib/views/ProfilesView.svelte';
-	import OverviewView from '$lib/views/OverviewView.svelte';
-	import SettingsView from '$lib/views/SettingsView.svelte';
-	import { projects, addProject } from '$lib/stores/projects';
+import { onMount, onDestroy } from 'svelte';
+import ActivityBar from '$lib/components/ActivityBar.svelte';
+import TopBar from '$lib/components/TopBar.svelte';
+import SessionSidebar from '$lib/components/SessionSidebar.svelte';
+import TerminalView from '$lib/components/TerminalView.svelte';
+import Inspector from '$lib/components/Inspector.svelte';
+import CommandPalette from '$lib/components/CommandPalette.svelte';
+import SetupWizard from '$lib/components/SetupWizard.svelte';
+import SplitPane from '$lib/components/SplitPane.svelte';
+import ProfilesView from '$lib/views/ProfilesView.svelte';
+import OverviewView from '$lib/views/OverviewView.svelte';
+import SettingsView from '$lib/views/SettingsView.svelte';
+import R9DashboardView from '$lib/views/R9DashboardView.svelte';
+import { projects, addProject } from '$lib/stores/projects';
+import Play from '@lucide/svelte/icons/play';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
 	import { settings } from '$lib/stores/settings';
@@ -23,6 +25,7 @@
 		closeWizard,
 		setView
 	} from '$lib/stores/ui';
+	import { r9 } from '$lib/stores/r9.svelte';
 	import {
 		listProjects,
 		listProfiles,
@@ -514,6 +517,8 @@
 			}))
 		]);
 		unlisteners.push(unbind as unknown as UnlistenFn);
+
+		r9.startPolling();
 	});
 
 	onDestroy(() => {
@@ -598,10 +603,11 @@
 								<div class="flex flex-col items-center text-muted-foreground text-sm gap-3">
 									<div>No session focused.</div>
 									<button
-										class="text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+										title="Start a session"
+										class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 										onclick={() => openWizard()}
 									>
-										Start a session
+										<Play size={14} fill="currentColor" />
 									</button>
 								</div>
 							{:else}
@@ -621,6 +627,10 @@
 			{:else if $ui.view === 'profiles'}
 				<div class="flex-1 overflow-hidden">
 					<ProfilesView />
+				</div>
+			{:else if $ui.view === 'r9'}
+				<div class="flex-1 overflow-hidden">
+					<R9DashboardView />
 				</div>
 			{:else if $ui.view === 'settings'}
 				<div class="flex-1 overflow-hidden">

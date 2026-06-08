@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-export type View = 'terminal' | 'profiles' | 'settings' | 'overview';
+export type View = 'terminal' | 'profiles' | 'settings' | 'overview' | 'r9';
 
 export interface UiState {
 	activeProjectId: string | null;

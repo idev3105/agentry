@@ -10,6 +10,7 @@
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Trash from '@lucide/svelte/icons/trash-2';
+	import Copy from '@lucide/svelte/icons/copy';
 
 	let session = $derived<SessionState | undefined>(
 		$ui.focusedSessionId ? $sessions.get($ui.focusedSessionId) : undefined
@@ -158,31 +159,32 @@
 			<div class="flex gap-1.5 pt-1">
 				{#if session.status === 'running' || session.status === 'queued'}
 					<button
-						class="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
+						title="Kill session"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
 						onclick={() => doKill(session!)}
 					>
-						<Square size={11} fill="currentColor" /> Kill
+						<Square size={14} fill="currentColor" />
 					</button>
 				{/if}
 				{#if session.status === 'finished' || session.status === 'failed'}
 					{@const canResume = session.agent === 'claude' || !!session.agent_session_id}
 					<button
-						class="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary"
 						disabled={!canResume}
 						title={canResume
-							? 'Resume this session'
+							? 'Resume session'
 							: `Session này không capture được id — không resume được`}
 						onclick={() => canResume && resumeSession(session!.id)}
 					>
-						<RotateCcw size={11} /> Resume
+						<RotateCcw size={14} />
 					</button>
 				{/if}
 				<button
 					title="Delete session permanently"
-					class="flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors"
+					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors"
 					onclick={() => (confirmTarget = session!)}
 				>
-					<Trash size={11} />
+					<Trash size={14} />
 				</button>
 			</div>
 		</div>
@@ -199,11 +201,11 @@
 				<div class="flex items-center justify-between mb-1">
 					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Session ID</span>
 					<button
-						class="text-[10px] text-muted-foreground hover:text-foreground"
+						class="p-0.5 text-muted-foreground hover:text-foreground"
 						onclick={() => copy(session!.id)}
 						title="Copy ID"
 					>
-						{copied === session.id ? 'copied' : 'copy'}
+						<Copy size={10} />
 					</button>
 				</div>
 				<div class="font-mono text-[10px] break-all text-muted-foreground select-all">
@@ -215,11 +217,11 @@
 					<div class="flex items-center justify-between mb-1">
 						<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Agent ID</span>
 						<button
-							class="text-[10px] text-muted-foreground hover:text-foreground"
+							class="p-0.5 text-muted-foreground hover:text-foreground"
 							onclick={() => copy(session!.agent_session_id!)}
 							title="Copy Agent ID"
 						>
-							{copied === session.agent_session_id ? 'copied' : 'copy'}
+							<Copy size={10} />
 						</button>
 					</div>
 					<div class="font-mono text-[10px] break-all text-muted-foreground select-all">

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import X from '@lucide/svelte/icons/x';
+	import Check from '@lucide/svelte/icons/check';
 
 	const {
 		open,
@@ -59,23 +61,25 @@
 		>
 			<div class="text-sm font-semibold mb-2">{title}</div>
 			<div class="text-xs text-muted-foreground mb-4 whitespace-pre-line">{message}</div>
-			<div class="flex justify-end gap-2">
-				<button
-					class="text-xs px-3 py-1.5 rounded bg-secondary hover:bg-secondary/80"
-					onclick={onCancel}
-				>
-					{cancelLabel}
-				</button>
-				<button
-					bind:this={confirmBtn}
-					class={destructive
-						? 'text-xs px-3 py-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80'
-						: 'text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90'}
-					onclick={onConfirm}
-				>
-					{confirmLabel}
-				</button>
-			</div>
+		<div class="flex justify-end gap-2">
+			<button
+				title={cancelLabel}
+				class="flex items-center justify-center p-2 rounded bg-secondary hover:bg-secondary/80"
+				onclick={onCancel}
+			>
+				<X size={14} />
+			</button>
+			<button
+				bind:this={confirmBtn}
+				title={confirmLabel}
+				class={destructive
+					? 'flex items-center justify-center p-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80'
+					: 'flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90'}
+				onclick={onConfirm}
+			>
+				<Check size={14} />
+			</button>
+		</div>
 		</div>
 	</div>
 {/if}

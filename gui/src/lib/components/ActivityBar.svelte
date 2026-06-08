@@ -2,9 +2,11 @@
 	import Home from '@lucide/svelte/icons/home';
 	import Folders from '@lucide/svelte/icons/folders';
 	import User from '@lucide/svelte/icons/user-cog';
+	import Router from '@lucide/svelte/icons/router';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Plus from '@lucide/svelte/icons/plus';
 	import { ui, setView, openWizard } from '$lib/stores/ui';
+	import { r9 } from '$lib/stores/r9.svelte';
 	import { cn } from '$lib/utils/cn';
 	import type { View } from '$lib/stores/ui';
 
@@ -12,6 +14,7 @@
 		{ id: 'overview', icon: Home, label: 'Overview' },
 		{ id: 'terminal', icon: Folders, label: 'Sessions' },
 		{ id: 'profiles', icon: User, label: 'Profiles' },
+		{ id: 'r9', icon: Router, label: '9Router' },
 		{ id: 'settings', icon: Settings, label: 'Settings' }
 	];
 </script>
@@ -29,6 +32,9 @@
 			onclick={() => setView(item.id)}
 		>
 			<item.icon size={20} />
+			{#if item.id === 'r9' && r9.status.running}
+				<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+			{/if}
 			{#if $ui.view === item.id}
 				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-gruvbox-yellow rounded-r"></span>
 			{/if}

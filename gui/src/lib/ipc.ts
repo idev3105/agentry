@@ -10,6 +10,7 @@ import type {
 	SessionStartedEvent,
 	ProjectInfo,
 	ProfileInfo,
+	R9StatusResp,
 	SessionInfo
 } from '$lib/types';
 
@@ -151,6 +152,31 @@ export async function readBuffer(
 	});
 	return (r.entries as { seq: number; data_b64: string }[]) ?? [];
 }
+
+// ── 9Router IPC wrappers ─────────────────────────────────────────────────
+
+export async function r9Status(): Promise<R9StatusResp> {
+	const r = (await invoke('r9_status')) as R9StatusResp;
+	if (typeof r !== 'object') throw new Error('invalid response');
+	return r;
+}
+
+export async function r9Start(): Promise<R9StatusResp> {
+	const r = (await invoke('r9_start')) as R9StatusResp;
+	if (!r.running) throw new Error('start failed');
+	return r;
+}
+
+export async function r9Stop(): Promise<R9StatusResp> {
+	const r = (await invoke('r9_stop')) as R9StatusResp;
+	return r;
+}
+
+export async function r9OpenDashboard(): Promise<void> {
+	await invoke('r9_open_dashboard');
+}
+
+// ── Event listeners ────────────────────────────────────────────────────────
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 

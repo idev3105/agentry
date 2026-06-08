@@ -11,10 +11,12 @@
     } from "$lib/ipc";
     import { addProject } from "$lib/stores/projects";
     import { cn } from "$lib/utils/cn";
-    import FolderOpen from "@lucide/svelte/icons/folder-open";
-    import Sparkles from "@lucide/svelte/icons/sparkles";
-    import ArrowRight from "@lucide/svelte/icons/arrow-right";
-    import Check from "@lucide/svelte/icons/check";
+	import FolderOpen from "@lucide/svelte/icons/folder-open";
+	import Sparkles from "@lucide/svelte/icons/sparkles";
+	import ArrowRight from "@lucide/svelte/icons/arrow-right";
+	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+	import Terminal from "@lucide/svelte/icons/terminal";
+	import Check from "@lucide/svelte/icons/check";
     import type { AgentType } from "$lib/types";
 
     type Step = "welcome" | "folder" | "agent" | "creating" | "done";
@@ -183,10 +185,11 @@
                             </p>
                         </div>
                         <button
-                            class="w-full py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium flex items-center justify-center gap-2"
+                            title="Get started"
+                            class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
                             onclick={() => (step = "folder")}
                         >
-                            Get started <ArrowRight size={14} />
+                            <ArrowRight size={18} />
                         </button>
                     </div>
                 {:else if step === "folder"}
@@ -233,16 +236,17 @@
                         </div>
                         <div class="flex justify-between">
                             <button
-                                class="text-sm px-3 py-1.5 rounded text-muted-foreground hover:text-foreground"
-                                onclick={() => (step = "welcome")}>Back</button
+                                title="Back"
+                                class="flex items-center justify-center p-1.5 rounded text-muted-foreground hover:text-foreground"
+                                onclick={() => (step = "welcome")}
+                            ><ArrowLeft size={14} /></button
                             >
                             <button
-                                class="text-sm px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
+                                title="Next"
+                                class="flex items-center justify-center p-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                                 disabled={!folder.trim() || !projectName.trim()}
                                 onclick={() => (step = "agent")}
-                            >
-                                Next <ArrowRight size={14} />
-                            </button>
+                            ><ArrowRight size={14} /></button>
                         </div>
                     </div>
                 {:else if step === "agent"}
@@ -281,15 +285,16 @@
                         {/if}
                         <div class="flex justify-between">
                             <button
-                                class="text-sm px-3 py-1.5 rounded text-muted-foreground hover:text-foreground"
-                                onclick={() => (step = "folder")}>Back</button
+                                title="Back"
+                                class="flex items-center justify-center p-1.5 rounded text-muted-foreground hover:text-foreground"
+                                onclick={() => (step = "folder")}
+                            ><ArrowLeft size={14} /></button
                             >
                             <button
-                                class="text-sm px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
+                                title="Create & start"
+                                class="flex items-center justify-center p-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 flex items-center"
                                 onclick={finish}
-                            >
-                                Create & start <ArrowRight size={14} />
-                            </button>
+                            ><ArrowRight size={14} /></button>
                         </div>
                     </div>
                 {:else if step === "creating"}
@@ -312,10 +317,11 @@
                             </p>
                         </div>
                         <button
-                            class="w-full py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
+                            title="Open terminal"
+                            class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
                             onclick={close}
                         >
-                            Open terminal
+                            <Terminal size={18} />
                         </button>
                     </div>
                 {/if}

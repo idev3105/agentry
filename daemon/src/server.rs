@@ -354,10 +354,7 @@ impl Server {
                 // unrelated session — pretending to resume. Refuse loudly
                 // instead so the UI surfaces the limitation.
                 if profile.agent_type != "claude_code" && original.agent_session_id.is_none() {
-                    return Err(format!(
-                        "resume_not_supported_for_agent: {}",
-                        agent_display_name(&profile.agent_type)
-                    ));
+                    return Err("Session này không có agent_session_id (capture timeout). Không resume được.".to_string());
                 }
 
                 let settings = self.store.get_settings_all().map_err(|e| e.to_string())?;

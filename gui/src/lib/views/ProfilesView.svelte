@@ -9,6 +9,7 @@
 	import Star from '@lucide/svelte/icons/star';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import X from '@lucide/svelte/icons/x';
+	import Check from '@lucide/svelte/icons/check';
 
 	let editingId = $state<string | null>(null);
 	let creating = $state(false);
@@ -149,10 +150,11 @@
 		</div>
 		{#if !creating && !editingId}
 			<button
-				class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
+				title="New profile"
+				class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 				onclick={startNew}
 			>
-				<Plus size={14} /> New profile
+				<Plus size={14} />
 			</button>
 		{/if}
 	</header>
@@ -236,13 +238,15 @@
 
 				<div class="flex justify-end gap-2 pt-2">
 					<button
-						class="text-sm px-3 py-1.5 rounded text-muted-foreground hover:text-foreground"
+						title="Cancel"
+						class="flex items-center justify-center p-2 rounded text-muted-foreground hover:text-foreground"
 						onclick={cancel}
-					>Cancel</button>
+					><X size={14} /></button>
 					<button
-						class="text-sm px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+						title={creating ? 'Create profile' : 'Save profile'}
+						class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 						onclick={save}
-					>{creating ? 'Create' : 'Save'}</button>
+					><Check size={14} /></button>
 				</div>
 			</div>
 		{:else if $profiles.length === 0}

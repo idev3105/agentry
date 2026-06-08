@@ -180,10 +180,11 @@
             </div>
         {/if}
         <button
-            class="w-full flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded bg-secondary hover:bg-secondary/80 transition-colors"
+            title="New session"
+            class="w-full flex items-center justify-center p-2 rounded bg-secondary hover:bg-secondary/80 transition-colors"
             onclick={() => (menuOpen = !menuOpen)}
         >
-            <Plus size={12} /> New session
+            <Plus size={14} />
         </button>
     </div>
 </div>
