@@ -10,6 +10,7 @@ use crate::session::SessionManager;
 const BROADCAST_CAPACITY: usize = 512;
 
 pub type EventTx = broadcast::Sender<Event>;
+#[allow(dead_code)]
 pub type EventRx = broadcast::Receiver<Event>;
 
 pub struct Server {
@@ -24,6 +25,7 @@ impl Server {
         Server { store, sessions, event_tx }
     }
 
+    #[allow(dead_code)]
     pub fn event_sender(&self) -> EventTx {
         self.event_tx.clone()
     }
@@ -180,10 +182,10 @@ impl Server {
                 self.store.update_profile(
                     &c.profile_id,
                     c.name.as_deref(),
-                    agent_type_str_opt.as_deref(),
+                    agent_type_str_opt,
                     params_json.as_deref(),
                     env_json.as_deref(),
-                    Some(c.start_script.as_ref().map(|s| s.as_str())),
+                    Some(c.start_script.as_deref()),
                     &now,
                 ).map_err(|e| e.to_string())?;
                 Ok(serde_json::json!({"ok":true}))
@@ -247,6 +249,8 @@ impl Server {
                     pid: None,
                     status: if status == "queued" { SessionStatus::Queued } else { SessionStatus::Starting },
                     ts: now,
+                    agent_session_id: None,
+                    agent_session_name: None,
                 });
                 let _ = self.event_tx.send(event);
 
@@ -322,6 +326,8 @@ impl Server {
                         "status": s.status,
                         "activity": activity,
                         "cwd": s.cwd,
+                        "agent_session_id": s.agent_session_id,
+                        "agent_session_name": s.agent_session_name,
                     })
                 }).collect();
                 Ok(serde_json::json!({"ok":true, "sessions": sessions}))
@@ -382,6 +388,8 @@ impl Server {
                     pid: None,
                     status: if status == "queued" { SessionStatus::Queued } else { SessionStatus::Starting },
                     ts: now,
+                    agent_session_id: original.agent_session_id.clone(),
+                    agent_session_name: original.agent_session_name.clone(),
                 });
                 let _ = self.event_tx.send(event);
 
@@ -457,7 +465,7 @@ fn agent_display_name(agent_type: &str) -> String {
 }
 
 fn build_resp(id: &str, result: Result<serde_json::Value, String>) -> String {
-    let mut obj = match result {
+    let obj = match result {
         Ok(mut v) => {
             v["v"] = serde_json::json!(WIRE_VERSION);
             v["kind"] = serde_json::json!("resp");

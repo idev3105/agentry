@@ -123,11 +123,11 @@ impl SessionManager {
         store: Arc<Store>,
         event_tx: EventTx,
     ) -> anyhow::Result<()> {
-        let argv = build_argv(&profile, None);
+        let (argv, captured_id) = build_argv(&profile, None);
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
         store.set_setting("dummy", "dummy").ok();
-        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, None, initial_size, store, event_tx, profile.start_script).await
+        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, captured_id, initial_size, store, event_tx, profile.start_script).await
     }
 
     /// Spawn a resume session (pass agent_session_id to `--resume`)
@@ -142,7 +142,7 @@ impl SessionManager {
         store: Arc<Store>,
         event_tx: EventTx,
     ) -> anyhow::Result<()> {
-        let argv = build_argv(&profile, agent_session_id.as_deref());
+        let (argv, _captured_id) = build_argv(&profile, agent_session_id.as_deref());
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
         self.do_spawn(session_id, argv, env_pairs, cwd, None, None, initial_size, store, event_tx, profile.start_script).await
@@ -156,7 +156,7 @@ impl SessionManager {
         env_pairs: Vec<(String, String)>,
         cwd: String,
         initial_input: Option<String>,
-        agent_session_id_preset: Option<String>,
+        captured_id: Option<String>,
         initial_size: Option<(u16, u16)>,
         store: Arc<Store>,
         event_tx: EventTx,
@@ -247,12 +247,16 @@ impl SessionManager {
             cmd.cwd(&cwd_clone);
             for (k, v) in &env_pairs { cmd.env(k, v); }
 
-            // For claude_code, store agent_session_id from argv (pre-generated UUID)
-            // Find --session-id in argv
-            if let Some(pos) = argv.iter().position(|a| a == "--session-id") {
-                if let Some(sid) = argv.get(pos + 1) {
-                    let _ = store_clone.set_agent_session_id(&session_id_clone, sid);
-                }
+            // Store captured agent session ID if pre-generated (only claude_code does this now)
+            if let Some(aid) = captured_id.as_deref() {
+                let _ = store_clone.set_agent_session_id(&session_id_clone, aid);
+                let _ = event_tx_clone.send(Event::AgentSessionCaptured(AgentSessionCapturedEvent {
+                    v: WIRE_VERSION,
+                    session_id: session_id_clone.clone(),
+                    agent_session_id: aid.to_string(),
+                    agent_session_name: None,
+                    ts: chrono_now(),
+                }));
             }
 
             let mut child = match pair.slave.spawn_command(cmd) {
@@ -304,22 +308,17 @@ impl SessionManager {
             let sid_r = session_id_clone.clone();
             let rt_r = rt.clone();
             std::thread::spawn(move || {
-                loop {
-                    match rt_r.block_on(resize_rx.recv()) {
-                        Some((cols, rows)) => {
-                            let size = portable_pty::PtySize {
-                                rows,
-                                cols,
-                                pixel_width: 0,
-                                pixel_height: 0,
-                            };
-                            if let Ok(m) = master_resize.lock() {
-                                if let Err(e) = m.resize(size) {
-                                    eprintln!("[session {sid_r}] resize failed: {e}");
-                                }
-                            }
+                while let Some((cols, rows)) = rt_r.block_on(resize_rx.recv()) {
+                    let size = portable_pty::PtySize {
+                        rows,
+                        cols,
+                        pixel_width: 0,
+                        pixel_height: 0,
+                    };
+                    if let Ok(m) = master_resize.lock() {
+                        if let Err(e) = m.resize(size) {
+                            eprintln!("[session {sid_r}] resize failed: {e}");
                         }
-                        None => break,
                     }
                 }
             });
@@ -479,7 +478,7 @@ impl SessionManager {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> Vec<String> {
+fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> (Vec<String>, Option<String>) {
     let binary = match profile.agent_type.as_str() {
         "claude_code" => "claude",
         "open_code" => "opencode",
@@ -489,6 +488,7 @@ fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> Vec<String> {
 
     let params: Vec<serde_json::Value> = serde_json::from_str(&profile.params).unwrap_or_default();
     let mut argv = vec![binary.to_string()];
+    let mut captured: Option<String> = None;
 
     // For claude_code: pre-generate session id
     if profile.agent_type == "claude_code" {
@@ -498,7 +498,8 @@ fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> Vec<String> {
         } else {
             let uuid = uuid::Uuid::new_v4().to_string();
             argv.push("--session-id".to_string());
-            argv.push(uuid);
+            argv.push(uuid.clone());
+            captured = Some(uuid);
         }
     } else if profile.agent_type == "codex" {
         if let Some(rid) = resume_id {
@@ -524,7 +525,7 @@ fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> Vec<String> {
         }
     }
 
-    argv
+    (argv, captured)
 }
 
 fn parse_env(env_json: &str) -> Vec<(String, String)> {

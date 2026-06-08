@@ -79,6 +79,7 @@ impl Store {
 
     // ── Profiles ──────────────────────────────────────────────────────────────
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_profile(
         &self, id: &str, name: &str, agent_type: &str,
         params_json: &str, env_json: &str, start_script: Option<&str>, ts: &str,
@@ -92,6 +93,7 @@ impl Store {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_profile(
         &self, id: &str,
         name: Option<&str>, agent_type: Option<&str>,
@@ -169,6 +171,7 @@ impl Store {
 
     // ── Sessions ──────────────────────────────────────────────────────────────
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_session(
         &self, id: &str, project_id: &str, profile_id: &str,
         title: &str, cwd: &str, resolved_argv: &str,
@@ -176,8 +179,7 @@ impl Store {
     ) -> anyhow::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT INTO sessions (id, project_id, profile_id, title, cwd, resolved_argv, status, created_at, parent_session_id)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO sessions (id, project_id, profile_id, title, cwd, resolved_argv, status, created_at, parent_session_id)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![id, project_id, profile_id, title, cwd, resolved_argv, status, ts, parent_session_id],
         )?;
         Ok(())

@@ -36,6 +36,8 @@ export interface SessionInfo {
 	status: SessionStatus;
 	activity: ActivityState | null;
 	cwd: string;
+	agent_session_id: string | null;
+	agent_session_name: string | null;
 }
 
 export interface BufferEntry {
@@ -91,6 +93,8 @@ export interface SessionStartedEvent {
 	pid: number | null;
 	status: SessionStatus;
 	ts: string;
+	agent_session_id: string | null;
+	agent_session_name: string | null;
 }
 
 export interface AgentOutputEvent {

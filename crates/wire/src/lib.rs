@@ -187,6 +187,7 @@ pub enum Event {
     SessionActivity(SessionActivityEvent),
     SessionFinished(SessionFinishedEvent),
     SessionFailed(SessionFailedEvent),
+    AgentSessionCaptured(AgentSessionCapturedEvent),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,6 +210,10 @@ pub struct SessionStartedEvent {
     pub pid: Option<u32>,
     pub status: SessionStatus,
     pub ts: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_session_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_session_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -242,6 +247,16 @@ pub struct SessionFailedEvent {
     pub session_id: String,
     pub reason: String,
     pub exit_code: i32,
+    pub ts: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentSessionCapturedEvent {
+    pub v: u32,
+    pub session_id: String,
+    pub agent_session_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_session_name: Option<String>,
     pub ts: String,
 }
 
@@ -375,6 +390,10 @@ pub struct SessionInfo {
     pub status: SessionStatus,
     pub activity: Option<ActivityState>,
     pub cwd: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_session_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_session_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
