@@ -5,6 +5,7 @@ pub struct Store {
     conn: std::sync::Mutex<Connection>,
 }
 
+#[allow(dead_code)]
 impl Store {
     pub fn open(path: &str) -> anyhow::Result<Self> {
         let conn = Connection::open(path)?;
@@ -255,11 +256,18 @@ impl Store {
         Ok(())
     }
 
+    #[allow(dead_code)]
+    pub fn set_agent_session_name(&self, id: &str, name: &str) -> anyhow::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("UPDATE sessions SET agent_session_name=?1 WHERE id=?2", params![name, id])?;
+        Ok(())
+    }
+
     pub fn list_sessions(&self, project_id: &str) -> anyhow::Result<Vec<DbSession>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, project_id, profile_id, title, cwd, resolved_argv, pid, status, exit_code,
-                    agent_session_id, parent_session_id, fail_reason, created_at, finished_at
+                    agent_session_id, agent_session_name, parent_session_id, fail_reason, created_at, finished_at
              FROM sessions WHERE project_id=?1 ORDER BY created_at"
         )?;
         let rows = stmt.query_map(params![project_id], |row| {
@@ -274,10 +282,11 @@ impl Store {
                 status: row.get(7)?,
                 exit_code: row.get(8)?,
                 agent_session_id: row.get(9)?,
-                parent_session_id: row.get(10)?,
-                fail_reason: row.get(11)?,
-                created_at: row.get(12)?,
-                finished_at: row.get(13)?,
+                agent_session_name: row.get(10)?,
+                parent_session_id: row.get(11)?,
+                fail_reason: row.get(12)?,
+                created_at: row.get(13)?,
+                finished_at: row.get(14)?,
             })
         })?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
@@ -287,7 +296,7 @@ impl Store {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, project_id, profile_id, title, cwd, resolved_argv, pid, status, exit_code,
-                    agent_session_id, parent_session_id, fail_reason, created_at, finished_at
+                    agent_session_id, agent_session_name, parent_session_id, fail_reason, created_at, finished_at
              FROM sessions WHERE id=?1"
         )?;
         let mut rows = stmt.query_map(params![id], |row| {
@@ -302,10 +311,11 @@ impl Store {
                 status: row.get(7)?,
                 exit_code: row.get(8)?,
                 agent_session_id: row.get(9)?,
-                parent_session_id: row.get(10)?,
-                fail_reason: row.get(11)?,
-                created_at: row.get(12)?,
-                finished_at: row.get(13)?,
+                agent_session_name: row.get(10)?,
+                parent_session_id: row.get(11)?,
+                fail_reason: row.get(12)?,
+                created_at: row.get(13)?,
+                finished_at: row.get(14)?,
             })
         })?;
         Ok(rows.next().transpose()?)
@@ -383,6 +393,7 @@ pub struct DbProfile {
     pub start_script: Option<String>,
 }
 
+#[allow(dead_code)]
 pub struct DbSession {
     pub id: String,
     pub project_id: String,
@@ -394,6 +405,7 @@ pub struct DbSession {
     pub status: String,
     pub exit_code: Option<i32>,
     pub agent_session_id: Option<String>,
+    pub agent_session_name: Option<String>,
     pub parent_session_id: Option<String>,
     pub fail_reason: Option<String>,
     pub created_at: String,
