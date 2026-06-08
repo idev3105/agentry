@@ -4,6 +4,7 @@ mod server;
 mod session;
 mod profile;
 mod codex_watch;
+mod opencode_capture;
 
 use std::sync::Arc;
 

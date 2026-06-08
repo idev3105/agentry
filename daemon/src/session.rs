@@ -33,12 +33,14 @@ struct SessionHandle {
 
 pub struct SessionManager {
     sessions: Arc<RwLock<HashMap<String, SessionHandle>>>,
+    opencode_lock: Arc<tokio::sync::Mutex<()>>,
 }
 
 impl SessionManager {
     pub fn new() -> Arc<Self> {
         Arc::new(SessionManager {
             sessions: Arc::new(RwLock::new(HashMap::new())),
+            opencode_lock: Arc::new(tokio::sync::Mutex::new(())),
         })
     }
 
@@ -220,6 +222,17 @@ impl SessionManager {
                 ts: chrono_now(),
             }));
         }
+
+        // Post-spawn capture for opencode: snapshot session list before spawn, poll after
+        let opencode_capture: Option<(_, _)> = if _agent_type == "open_code" && captured_id.is_none()
+            && !argv.iter().any(|a| a == "-s")
+        {
+            let guard = self.opencode_lock.clone().lock_owned().await;
+            let before = crate::opencode_capture::snapshot().await;
+            Some((guard, before))
+        } else {
+            None
+        };
 
         // Post-spawn capture for codex: watch filesystem for rollout file
         if _agent_type == "codex" && captured_id.is_none() {
@@ -452,6 +465,34 @@ impl SessionManager {
                 sessions_arc.write().await.remove(&session_id_clone);
             });
         });
+
+        // Opencode capture: poll session list for new session id
+        if let Some((guard, before)) = opencode_capture {
+            let store_c = store.clone();
+            let event_tx_c = event_tx.clone();
+            let sid_c = session_id.clone();
+            tokio::spawn(async move {
+                let _hold = guard; // hold lock until done
+                if let Some((aid, name)) = crate::opencode_capture::capture_new(
+                    before,
+                    std::time::Duration::from_secs(5),
+                ).await {
+                    let _ = store_c.set_agent_session_id(&sid_c, &aid);
+                    if let Some(ref n) = name {
+                        let _ = store_c.set_agent_session_name(&sid_c, n);
+                    }
+                    let _ = event_tx_c.send(Event::AgentSessionCaptured(AgentSessionCapturedEvent {
+                        v: WIRE_VERSION,
+                        session_id: sid_c,
+                        agent_session_id: aid,
+                        agent_session_name: name,
+                        ts: chrono_now(),
+                    }));
+                } else {
+                    eprintln!("[opencode] timeout capturing session id");
+                }
+            });
+        }
 
         // Activity timer — 1s tick per session
         let inner_for_timer = inner.clone();
