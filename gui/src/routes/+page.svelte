@@ -33,6 +33,7 @@
 		readBuffer,
 		killSession,
 		startSession,
+		resize,
 		sendCmd,
 		onProjectCreated,
 		onSessionStarted,
@@ -288,6 +289,19 @@
 					)
 				);
 				return;
+			}
+			// Push the current xterm viewport to the PTY BEFORE we ask for the
+			// ring buffer. The PTY's pre-existing size may be 80x24 (initial spawn)
+			// or a stale value from a previous focus on a different window. Without
+			// this, the agent TUI re-renders into the wrong geometry and flickers
+			// when ResizeObserver eventually catches up.
+			const sz = await termRef?.ensureFit();
+			if (sz) {
+				try {
+					await resize(id, sz.cols, sz.rows);
+				} catch (err) {
+					console.warn('pre-replay resize failed (non-fatal):', err);
+				}
 			}
 			// Pull the LAST 4096 chunks from the ring buffer, not the first.
 			// With from_seq=0 the daemon returns head-of-ring, which is the oldest

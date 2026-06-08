@@ -136,6 +136,18 @@
 		if (!term || term.cols <= 0 || term.rows <= 0) return null;
 		return { cols: term.cols, rows: term.rows };
 	}
+
+	// Force a synchronous fit and wait one rAF for layout to commit, then
+	// return the resulting xterm dimensions. Used by callers that need to
+	// push the PTY size to the daemon BEFORE replaying the ring buffer.
+	export async function ensureFit(): Promise<{ cols: number; rows: number } | null> {
+		if (!fitAddon || !term) return null;
+		syncSize();
+		await new Promise<void>((r) => requestAnimationFrame(() => r()));
+		syncSize();
+		if (term.cols <= 0 || term.rows <= 0) return null;
+		return { cols: term.cols, rows: term.rows };
+	}
 </script>
 
 <div class="w-full h-full bg-[#282828] p-2 overflow-hidden">
