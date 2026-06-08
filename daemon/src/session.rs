@@ -127,7 +127,7 @@ impl SessionManager {
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
         store.set_setting("dummy", "dummy").ok();
-        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, captured_id, initial_size, store, event_tx, profile.start_script).await
+        self.do_spawn(session_id, argv, env_pairs, cwd, initial_input, captured_id, initial_size, store, event_tx, profile.start_script, profile.agent_type.clone()).await
     }
 
     /// Spawn a resume session (pass agent_session_id to `--resume`)
@@ -145,7 +145,7 @@ impl SessionManager {
         let (argv, _captured_id) = build_argv(&profile, agent_session_id.as_deref());
         let env_pairs = parse_env(&profile.env);
         store.update_session_status(&session_id, "running")?;
-        self.do_spawn(session_id, argv, env_pairs, cwd, None, None, initial_size, store, event_tx, profile.start_script).await
+        self.do_spawn(session_id, argv, env_pairs, cwd, None, None, initial_size, store, event_tx, profile.start_script, profile.agent_type.clone()).await
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -161,6 +161,7 @@ impl SessionManager {
         store: Arc<Store>,
         event_tx: EventTx,
         start_script: Option<String>,
+        _agent_type: String,
     ) -> anyhow::Result<()> {
         // Run start_script if present (blocking in thread)
         if let Some(script) = start_script {
@@ -208,6 +209,43 @@ impl SessionManager {
             });
         }
 
+        // Store captured agent session ID if pre-generated (only claude_code does this now)
+        if let Some(aid) = captured_id.as_deref() {
+            let _ = store.set_agent_session_id(&session_id, aid);
+            let _ = event_tx.send(Event::AgentSessionCaptured(AgentSessionCapturedEvent {
+                v: WIRE_VERSION,
+                session_id: session_id.clone(),
+                agent_session_id: aid.to_string(),
+                agent_session_name: None,
+                ts: chrono_now(),
+            }));
+        }
+
+        // Post-spawn capture for codex: watch filesystem for rollout file
+        if _agent_type == "codex" && captured_id.is_none() {
+            let store_c = store.clone();
+            let event_tx_c = event_tx.clone();
+            let sid_c = session_id.clone();
+            tokio::spawn(async move {
+                let spawn_ts = std::time::SystemTime::now();
+                if let Some(aid) = crate::codex_watch::capture_codex_session_id(
+                    spawn_ts,
+                    std::time::Duration::from_secs(10),
+                ).await {
+                    let _ = store_c.set_agent_session_id(&sid_c, &aid);
+                    let _ = event_tx_c.send(Event::AgentSessionCaptured(AgentSessionCapturedEvent {
+                        v: WIRE_VERSION,
+                        session_id: sid_c,
+                        agent_session_id: aid,
+                        agent_session_name: None,
+                        ts: chrono_now(),
+                    }));
+                } else {
+                    eprintln!("[codex] timeout capturing session id");
+                }
+            });
+        }
+
         // Spawn the PTY in a blocking thread (portable-pty uses blocking reads)
         let session_id_clone = session_id.clone();
         let inner_for_reader = inner.clone();
@@ -246,18 +284,6 @@ impl SessionManager {
             for arg in &argv[1..] { cmd.arg(arg); }
             cmd.cwd(&cwd_clone);
             for (k, v) in &env_pairs { cmd.env(k, v); }
-
-            // Store captured agent session ID if pre-generated (only claude_code does this now)
-            if let Some(aid) = captured_id.as_deref() {
-                let _ = store_clone.set_agent_session_id(&session_id_clone, aid);
-                let _ = event_tx_clone.send(Event::AgentSessionCaptured(AgentSessionCapturedEvent {
-                    v: WIRE_VERSION,
-                    session_id: session_id_clone.clone(),
-                    agent_session_id: aid.to_string(),
-                    agent_session_name: None,
-                    ts: chrono_now(),
-                }));
-            }
 
             let mut child = match pair.slave.spawn_command(cmd) {
                 Ok(c) => c,

@@ -3,6 +3,7 @@ mod pid;
 mod server;
 mod session;
 mod profile;
+mod codex_watch;
 
 use std::sync::Arc;
 
