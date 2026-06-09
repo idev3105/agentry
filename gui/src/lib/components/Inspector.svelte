@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
-	import { density } from '$lib/stores/settings';
 	import { ui } from '$lib/stores/ui';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { SessionState } from '$lib/types';
@@ -218,7 +217,7 @@
 					</button>
 				{/if}
 				{#if session.status === 'finished' || session.status === 'failed'}
-					{@const canResume = session.agent === 'claude' || !!session.agent_session_id}
+					{@const canResume = session.agent === 'claude_code' || !!session.agent_session_id}
 					<button
 						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 						disabled={!canResume}

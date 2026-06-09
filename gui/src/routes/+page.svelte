@@ -24,7 +24,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 	import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
-	import { settings } from '$lib/stores/settings';
+	import { settings, density } from '$lib/stores/settings';
 	import {
 		ui,
 		togglePalette,
@@ -127,6 +127,8 @@ import { listen } from '@tauri-apps/api/event';
 			}
 		} catch (e) {
 			console.error('bootstrap rpc failed:', e);
+			toasts.error('Bootstrap failed', String(e));
+			bootstrapError = String(e);
 		}
 	}
 
@@ -571,7 +573,7 @@ import { listen } from '@tauri-apps/api/event';
 	let sidebarDefault = $state(260);
 </script>
 
-<div class="flex h-screen bg-background text-foreground overflow-hidden">
+<div class="flex h-screen bg-background text-foreground overflow-hidden" data-density={$density}>
 	<ActivityBar />
 	
 	<div class="flex flex-col flex-1 min-w-0">
@@ -617,7 +619,7 @@ import { listen } from '@tauri-apps/api/event';
 							maxRightWindowRatio={0.3}
 						>
 							{#snippet left()}
-								<div data-tour="terminal" class="h-full w-full overflow-hidden bg-[#282828]">
+								<div data-tour="terminal" class="h-full w-full overflow-hidden bg-background">
 									<SessionTabs />
 									<TerminalHeader />
 									{#if findOpen}

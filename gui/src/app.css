@@ -93,6 +93,20 @@
   --color-accent-info:   #61afef;
 }
 
+/* Density — switched via data-density attribute on root <div> in +page.svelte.
+   Default (no attribute or "comfortable") = py-1.5 equiv. "compact" = py-1 equiv.
+   Components opt-in by using py-[var(--row-py)] instead of hardcoded py-1/py-1.5. */
+:root,
+[data-density="comfortable"] {
+	--row-py: 0.375rem;  /* matches Tailwind py-1.5 */
+	--row-gap: 0.5rem;   /* matches Tailwind gap-2 */
+}
+
+[data-density="compact"] {
+	--row-py: 0.25rem;   /* matches Tailwind py-1 */
+	--row-gap: 0.375rem; /* matches Tailwind gap-1.5 */
+}
+
 @layer base {
   body {
     background-color: var(--color-background);

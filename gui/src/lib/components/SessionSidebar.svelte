@@ -2,7 +2,7 @@
     import { sessions } from "$lib/stores/sessions";
     import { ui, openWizard, setView } from "$lib/stores/ui";
     import { profiles } from "$lib/stores/profiles";
-    import { settings, density } from "$lib/stores/settings";
+    import { settings } from "$lib/stores/settings";
     import { agentMeta } from "$lib/utils/agent";
     import { startSession, killSession, sendCmd } from "$lib/ipc";
     import { markSessionEnding } from "$lib/stores/sessions";
@@ -253,8 +253,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class={cn(
-                "group flex items-center gap-2 pl-3 pr-1 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors",
-                $density === 'compact' ? 'py-1' : 'py-1.5',
+                "group flex items-center gap-2 pl-3 pr-1 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors py-[var(--row-py)]",
                 $ui.focusedSessionId === s.id
                     ? "bg-secondary border-gruvbox-yellow"
                     : "border-transparent",

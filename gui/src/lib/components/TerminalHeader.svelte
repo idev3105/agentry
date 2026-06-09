@@ -26,7 +26,7 @@
         <Square size={12} fill="currentColor" />
       </button>
     {/if}
-    {#if (s.status === 'finished' || s.status === 'failed') && (s.agent === 'claude' || s.agent_session_id)}
+    {#if (s.status === 'finished' || s.status === 'failed') && (s.agent === 'claude_code' || s.agent_session_id)}
       <button class="p-1 rounded hover:bg-secondary" title="Resume"
               onclick={() => resumeSession(s!.id)}>
         <RotateCcw size={12} />
