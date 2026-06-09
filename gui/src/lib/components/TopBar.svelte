@@ -94,7 +94,7 @@ import Check from '@lucide/svelte/icons/check';
 	<div class="flex items-center gap-2 text-xs">
 		{#if counts.working === 0 && counts.awaiting === 0 && counts.queued === 0 && counts.total > 0}
 			<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground border border-border">
-				<Check size={11} class="text-gruvbox-green" /> All idle
+				<Check size={11} class="text-accent-ok" /> All idle
 			</span>
 		{:else if counts.total === 0}
 			<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground">
@@ -102,20 +102,20 @@ import Check from '@lucide/svelte/icons/check';
 			</span>
 		{:else}
 			{#if counts.working > 0}
-				<span class="flex items-center gap-1 text-gruvbox-green">
-					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-green"></span>
+				<span class="flex items-center gap-1 text-accent-ok">
+					<span class="w-1.5 h-1.5 rounded-full bg-accent-ok"></span>
 					{counts.working}
 				</span>
 			{/if}
 			{#if counts.awaiting > 0}
-				<span class="flex items-center gap-1 text-gruvbox-red">
-					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-red"></span>
+				<span class="flex items-center gap-1 text-accent-error">
+					<span class="w-1.5 h-1.5 rounded-full bg-accent-error"></span>
 					{counts.awaiting} awaiting
 				</span>
 			{/if}
 			{#if counts.queued > 0}
-				<span class="flex items-center gap-1 text-gruvbox-gray">
-					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-gray"></span>
+				<span class="flex items-center gap-1 text-accent-info">
+					<span class="w-1.5 h-1.5 rounded-full bg-accent-info"></span>
 					{counts.queued} queued
 				</span>
 			{/if}
@@ -126,13 +126,13 @@ import Check from '@lucide/svelte/icons/check';
 	<span
 		class={cn(
 			'flex items-center gap-1 text-xs',
-			connected ? 'text-gruvbox-green' : 'text-gruvbox-red'
+			connected ? 'text-accent-ok' : 'text-accent-error'
 		)}
 	>
 		<span
 			class={cn(
 				'w-1.5 h-1.5 rounded-full',
-				connected ? 'bg-gruvbox-green' : 'bg-gruvbox-red'
+				connected ? 'bg-accent-ok' : 'bg-accent-error'
 			)}
 		></span>
 		{connected ? 'online' : 'offline'}

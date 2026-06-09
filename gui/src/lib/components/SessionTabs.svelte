@@ -43,7 +43,7 @@
         {#if s.unread > 0 && !active}
           <span class="text-[9px] px-1 rounded bg-gruvbox-yellow text-background font-mono">{s.unread}</span>
         {/if}
-        <button class="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-secondary"
+        <button class="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-secondary focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
                 onclick={(e) => closeTab(e, s.id)}
                 aria-label="Close session">
           <X size={10} />

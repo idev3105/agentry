@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
-/* Gruvbox Dark — default theme */
-:root[data-theme="gruvbox"] {
+/* Tailwind v4: @theme inline registers vars as utility classes (bg-background, text-foreground,
+   border-border, text-gruvbox-*, etc.). These are the gruvbox defaults.
+   Per-theme overrides below swap the var values at runtime — utilities stay valid. */
+@theme inline {
   /* bg */
   --color-background:    #282828;
   --color-card:          #3c3836;
@@ -37,9 +39,16 @@
   --color-gruvbox-purple:  #d3869b;
   --color-gruvbox-red:     #fb4934;
   --color-gruvbox-gray:    #928374;
+
+  /* semantic status colors (cross-theme safe) */
+  --color-accent-ok:     #b8bb26;
+  --color-accent-warn:   #d79921;
+  --color-accent-error:  #fb4934;
+  --color-accent-info:   #83a598;
 }
 
-/* One Dark — https://github.com/atom/one-dark-syntax */
+/* One Dark — runtime override via data-theme attribute on <html>.
+   Reuses the same --color-* var names so all utility classes update automatically. */
 :root[data-theme="one-dark"] {
   /* bg */
   --color-background:    #282c34;
@@ -67,7 +76,7 @@
   --color-destructive:            #e06c75;
   --color-destructive-foreground: #282c34;
 
-  /* one-dark accent colors */
+  /* one-dark accent colors (mapped to gruvbox var names for compatibility) */
   --color-gruvbox-yellow:  #e5c07b;
   --color-gruvbox-green:   #98c379;
   --color-gruvbox-aqua:    #56b6c2;
@@ -76,6 +85,12 @@
   --color-gruvbox-purple:  #c678dd;
   --color-gruvbox-red:     #e06c75;
   --color-gruvbox-gray:    #5c6370;
+
+  /* semantic overrides for one-dark */
+  --color-accent-ok:     #98c379;
+  --color-accent-warn:   #e5c07b;
+  --color-accent-error:  #e06c75;
+  --color-accent-info:   #61afef;
 }
 
 @layer base {

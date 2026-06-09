@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
+	import { density } from '$lib/stores/settings';
 	import { ui } from '$lib/stores/ui';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { SessionState } from '$lib/types';
@@ -110,19 +111,19 @@
 	}
 
 	function statusColor(s: SessionState): string {
-		if (s.status === 'failed') return 'text-gruvbox-red';
+		if (s.status === 'failed') return 'text-accent-error';
 		if (s.status === 'finished') return 'text-muted-foreground';
-		if (s.activity === 'awaiting_input') return 'text-gruvbox-red';
-		if (s.activity === 'working') return 'text-gruvbox-green';
-		return 'text-gruvbox-yellow';
+		if (s.activity === 'awaiting_input') return 'text-accent-error';
+		if (s.activity === 'working') return 'text-accent-ok';
+		return 'text-accent-warn';
 	}
 
 	function statusDot(s: SessionState): string {
-		if (s.status === 'failed') return 'bg-gruvbox-red';
+		if (s.status === 'failed') return 'bg-accent-error';
 		if (s.status === 'finished') return 'bg-muted-foreground';
-		if (s.activity === 'awaiting_input') return 'bg-gruvbox-red';
-		if (s.activity === 'working') return 'bg-gruvbox-green';
-		return 'bg-gruvbox-yellow';
+		if (s.activity === 'awaiting_input') return 'bg-accent-error';
+		if (s.activity === 'working') return 'bg-accent-ok';
+		return 'bg-accent-warn';
 	}
 
 	function statusLabel(s: SessionState): string {
@@ -195,14 +196,14 @@
 			<div class="flex gap-1.5 pt-1">
 				<button
 					title="Rename (F2)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 					onclick={() => startRename(session!)}
 				>
 					<Pencil size={12} /> Rename
 				</button>
 				<button
 					title="Duplicate (same profile + cwd)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 					onclick={() => duplicate(session!)}
 				>
 					<Copy size={12} /> Duplicate
@@ -210,7 +211,7 @@
 				{#if session.status === 'running' || session.status === 'queued'}
 					<button
 						title="Kill session"
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 						onclick={() => doKill(session!)}
 					>
 						<Square size={14} fill="currentColor" />
@@ -219,7 +220,7 @@
 				{#if session.status === 'finished' || session.status === 'failed'}
 					{@const canResume = session.agent === 'claude' || !!session.agent_session_id}
 					<button
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 						disabled={!canResume}
 						title={canResume
 							? 'Resume session'
@@ -231,14 +232,14 @@
 				{/if}
 				<button
 					title="Copy as CLI command"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 					onclick={() => copyAsCli(session!)}
 				>
 					<Terminal size={12} /> CLI
 				</button>
 				<button
 					title="Delete session permanently"
-					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors"
+					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 					onclick={() => (confirmTarget = session!)}
 				>
 					<Trash size={14} />

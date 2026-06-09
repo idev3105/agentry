@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { settings } from '$lib/stores/settings';
+	import { settings, density } from '$lib/stores/settings';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { theme } from '$lib/stores/theme.svelte';
 	import { cn, fmtChord } from '$lib/utils/cn';
@@ -116,8 +116,18 @@
 			<h2 class="text-sm font-semibold">Theme</h2>
 			<div class="flex gap-2">
 				{#each ['gruvbox','one-dark'] as t}
-					<button class={cn('px-3 py-1.5 rounded text-xs border', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+					<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
 							onclick={() => theme.set(t as 'gruvbox' | 'one-dark')}>{t}</button>
+				{/each}
+			</div>
+		</section>
+
+		<section class="bg-card border border-border rounded p-4 space-y-3">
+			<h2 class="text-sm font-semibold">Density</h2>
+			<div class="flex gap-2">
+				{#each (['comfortable', 'compact'] as const) as d}
+					<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', $density === d ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+							onclick={() => density.set(d)}>{d}</button>
 				{/each}
 			</div>
 		</section>

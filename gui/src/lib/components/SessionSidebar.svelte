@@ -2,7 +2,7 @@
     import { sessions } from "$lib/stores/sessions";
     import { ui, openWizard, setView } from "$lib/stores/ui";
     import { profiles } from "$lib/stores/profiles";
-    import { settings } from "$lib/stores/settings";
+    import { settings, density } from "$lib/stores/settings";
     import { agentMeta } from "$lib/utils/agent";
     import { startSession, killSession, sendCmd } from "$lib/ipc";
     import { markSessionEnding } from "$lib/stores/sessions";
@@ -10,6 +10,7 @@
     import type { SessionState } from "$lib/types";
     import { cn, fmtChord } from "$lib/utils/cn";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import { slide } from 'svelte/transition';
     import Plus from "@lucide/svelte/icons/plus";
     import Search from "@lucide/svelte/icons/search";
     import X from "@lucide/svelte/icons/x";
@@ -85,12 +86,12 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
     );
 
     function activityDot(s: SessionState): string {
-        if (s.status === "failed") return "bg-gruvbox-red";
+        if (s.status === "failed") return "bg-accent-error";
         if (s.status === "finished") return "bg-muted-foreground";
-        if (s.status === "queued") return "bg-gruvbox-gray";
-        if (s.activity === "awaiting_input") return "bg-gruvbox-red";
-        if (s.activity === "working") return "bg-gruvbox-green animate-pulse";
-        return "bg-gruvbox-yellow";
+        if (s.status === "queued") return "bg-accent-info";
+        if (s.activity === "awaiting_input") return "bg-accent-error";
+        if (s.activity === "working") return "bg-accent-ok animate-pulse";
+        return "bg-accent-warn";
     }
 
     function statusLabel(s: SessionState): string {
@@ -131,7 +132,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 ui.update((u) => ({ ...u, focusedSessionId: null }));
             }
         } catch (e) {
-            console.error("delete failed:", e);
+            toasts.error('Delete failed', String(e));
         }
     }
 </script>
@@ -252,12 +253,14 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class={cn(
-                "group flex items-center gap-2 pl-3 pr-1 py-1.5 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors",
+                "group flex items-center gap-2 pl-3 pr-1 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors",
+                $density === 'compact' ? 'py-1' : 'py-1.5',
                 $ui.focusedSessionId === s.id
                     ? "bg-secondary border-gruvbox-yellow"
                     : "border-transparent",
             )}
             onclick={() => pick(s.id)}
+            transition:slide={{ duration: 120 }}
         >
             <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
             <div class="flex-1 min-w-0">
@@ -279,25 +282,25 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 </span>
             {/if}
             {#if s.status === "running" || s.status === "queued"}
-                <button
-                    title="Kill session"
-                    aria-label="Kill session"
-                    class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0"
-                    onclick={(e) => {
-                        e.stopPropagation();
-                        markSessionEnding(s.id);
-                        killSession(s.id).catch((err) => {
-                            toasts.error('Kill failed', String(err));
-                            markSessionEnding(s.id, {
-                                failReason: `kill failed: ${err}`,
-                            });
-                        });
-                    }}><X size={14} /></button>
-            {/if}
             <button
-                title="Delete session"
-                aria-label="Delete session"
-                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                title="Kill session"
+                aria-label="Kill session"
+                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+                onclick={(e) => {
+                    e.stopPropagation();
+                    markSessionEnding(s.id);
+                    killSession(s.id).catch((err) => {
+                        toasts.error('Kill failed', String(err));
+                        markSessionEnding(s.id, {
+                            failReason: `kill failed: ${err}`,
+                        });
+                    });
+                }}><X size={14} /></button>
+        {/if}
+        <button
+            title="Delete session"
+            aria-label="Delete session"
+            class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
                 onclick={(e) => {
                     e.stopPropagation();
                     confirmTarget = s;

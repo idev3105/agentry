@@ -13,6 +13,7 @@ import SessionTabs from '$lib/components/SessionTabs.svelte';
 import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
 import ReconnectBanner from '$lib/components/ReconnectBanner.svelte';
 import OnboardingTour from '$lib/components/OnboardingTour.svelte';
+import { toasts } from '$lib/stores/toasts.svelte';
 	import ProfilesView from '$lib/views/ProfilesView.svelte';
 	import OverviewView from '$lib/views/OverviewView.svelte';
 	import SettingsView from '$lib/views/SettingsView.svelte';
@@ -348,7 +349,7 @@ import { listen } from '@tauri-apps/api/event';
 				updateSession(id, { lastSeenSeq: lastSeq });
 			}
 		} catch (e) {
-			console.error('focus failed:', e);
+			toasts.error('Focus failed', String(e));
 		} finally {
 			// Flush queued live chunks for the session we just picked.
 			// Only flush if user hasn't switched away in the meantime —
@@ -369,7 +370,7 @@ import { listen } from '@tauri-apps/api/event';
 		try {
 			await sendInput(sid, data);
 		} catch (e) {
-			console.error('send_input failed:', e);
+			toasts.error('Send input failed', String(e));
 		}
 	}
 

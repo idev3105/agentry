@@ -24,7 +24,7 @@
 		<button
 			title={item.label}
 			class={cn(
-				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group',
+				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none',
 				$ui.view === item.id
 					? 'text-foreground bg-secondary/60'
 					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
@@ -46,7 +46,7 @@
 
 	<button
 		title="New session"
-		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
 		onclick={() => openWizard()}
 	>
 		<Plus size={18} />
