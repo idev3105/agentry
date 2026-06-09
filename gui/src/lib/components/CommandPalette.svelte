@@ -7,14 +7,22 @@
 	import { startSession, killSession, focusSession } from '$lib/ipc';
 	import { markSessionEnding } from '$lib/stores/sessions';
 	import { cn, fmtChord } from '$lib/utils/cn';
-import Terminal from '@lucide/svelte/icons/terminal';
-import FolderOpen from '@lucide/svelte/icons/folder-open';
-import User from '@lucide/svelte/icons/user-cog';
-import Settings from '@lucide/svelte/icons/settings';
-import Plus from '@lucide/svelte/icons/plus';
-import X from '@lucide/svelte/icons/x';
-import Copy from '@lucide/svelte/icons/copy';
-import Home from '@lucide/svelte/icons/home';
+
+	const MRU_KEY = 'agentry:palette:mru';
+	function loadMru(): string[] { try { return JSON.parse(localStorage.getItem(MRU_KEY) ?? '[]'); } catch { return []; } }
+	function pushMru(id: string) {
+		const cur = loadMru().filter(x => x !== id);
+		cur.unshift(id);
+		localStorage.setItem(MRU_KEY, JSON.stringify(cur.slice(0, 20)));
+	}
+	import Terminal from '@lucide/svelte/icons/terminal';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
+	import User from '@lucide/svelte/icons/user-cog';
+	import Settings from '@lucide/svelte/icons/settings';
+	import Plus from '@lucide/svelte/icons/plus';
+	import X from '@lucide/svelte/icons/x';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Home from '@lucide/svelte/icons/home';
 
 	type ActionItem = {
 		id: string;
@@ -153,18 +161,22 @@ import Home from '@lucide/svelte/icons/home';
 
 	let filtered = $derived.by<ActionItem[]>(() => {
 		const q = query.trim().toLowerCase();
-		if (!q) return allActions;
-		// Subsequence fuzzy: keep ones whose title or subtitle contains all chars in order.
-		return allActions.filter((a) => {
-			const hay = `${a.title} ${a.subtitle ?? ''}`.toLowerCase();
-			let i = 0;
-			for (const ch of q) {
-				const at = hay.indexOf(ch, i);
-				if (at < 0) return false;
-				i = at + 1;
-			}
-			return true;
-		});
+		const base = !q
+			? allActions
+			: allActions.filter((a) => {
+				const hay = `${a.title} ${a.subtitle ?? ''}`.toLowerCase();
+				let i = 0;
+				for (const ch of q) {
+					const at = hay.indexOf(ch, i);
+					if (at < 0) return false;
+					i = at + 1;
+				}
+				return true;
+			});
+		if (q) return base;
+		const mru = loadMru();
+		const rank = new Map(mru.map((id, i) => [id, i]));
+		return [...base].sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99));
 	});
 
 	let groups = $derived.by(() => {
@@ -194,6 +206,7 @@ import Home from '@lucide/svelte/icons/home';
 	async function runItem(item: ActionItem | undefined) {
 		if (!item) return;
 		closePalette();
+		pushMru(item.id);
 		await item.run();
 	}
 

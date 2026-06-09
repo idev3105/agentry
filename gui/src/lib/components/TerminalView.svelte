@@ -1,16 +1,21 @@
 <script lang="ts">
-import { onMount, onDestroy } from 'svelte';
-import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { SearchAddon } from '@xterm/addon-search';
-import '@xterm/xterm/css/xterm.css';
-import { resize as resizeCmd } from '$lib/ipc';
+	import { onMount, onDestroy } from 'svelte';
+	import { Terminal } from '@xterm/xterm';
+	import { FitAddon } from '@xterm/addon-fit';
+	import { SearchAddon } from '@xterm/addon-search';
+	import '@xterm/xterm/css/xterm.css';
+	import { resize as resizeCmd } from '$lib/ipc';
+	import { theme } from '$lib/stores/theme.svelte';
 
-let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(q:string)=>void} | null>(null) }: {
-    sessionId: string | null;
-    onInput: (data: string) => void;
-    ctl?: { findNext: (q: string) => void; findPrev: (q: string) => void } | null;
-} = $props();
+	const FONT_KEY = 'agentry:term:fontsize';
+	function loadFont(): number { return Number(localStorage.getItem(FONT_KEY) ?? '13') || 13; }
+	function saveFont(n: number) { localStorage.setItem(FONT_KEY, String(n)); }
+
+	let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(q:string)=>void} | null>(null) }: {
+		sessionId: string | null;
+		onInput: (data: string) => void;
+		ctl?: { findNext: (q: string) => void; findPrev: (q: string) => void } | null;
+	} = $props();
 
 	let containerEl: HTMLDivElement;
 	let term: Terminal | null = null;
@@ -46,35 +51,13 @@ let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(
 
 	onMount(() => {
 		term = new Terminal({
-			theme: {
-				background:    '#282828',
-				foreground:    '#ebdbb2',
-				cursor:        '#fabd2f',
-				cursorAccent:  '#282828',
-				selectionBackground: '#504945',
-				black:         '#282828',
-				red:           '#cc241d',
-				green:         '#98971a',
-				yellow:        '#d79921',
-				blue:          '#458588',
-				magenta:       '#b16286',
-				cyan:          '#689d6a',
-				white:         '#a89984',
-				brightBlack:   '#928374',
-				brightRed:     '#fb4934',
-				brightGreen:   '#b8bb26',
-				brightYellow:  '#fabd2f',
-				brightBlue:    '#83a598',
-				brightMagenta: '#d3869b',
-				brightCyan:    '#8ec07c',
-				brightWhite:   '#ebdbb2',
-			},
+			theme: THEMES[theme.value],
 			// Font chain prefers monospace families with better Vietnamese
 			// diacritic placement (stacked tones like ấ ầ ữ). Fallback to
 			// generic 'monospace' so the user's system pick still works.
 			fontFamily:
 				'"JetBrains Mono", "Fira Code", "Cascadia Code", "Source Code Pro", "Noto Sans Mono", "DejaVu Sans Mono", "Liberation Mono", monospace',
-			fontSize: 13,
+			fontSize: loadFont(),
 			cursorBlink: true,
 			// Lets xterm use newer Unicode/IME APIs (composition positioning,
 			// width calculations) — needed for cleaner CJK/Vietnamese input.
@@ -125,6 +108,81 @@ let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(
 	$effect(() => {
 		void sessionId;
 		scheduleFit();
+	});
+
+	$effect(() => {
+		function onKey(e: KeyboardEvent) {
+			const mod = e.metaKey || e.ctrlKey;
+			if (!mod || !term) return;
+			if (e.key === '=' || e.key === '+') {
+				e.preventDefault();
+				term.options.fontSize = Math.min(28, (term.options.fontSize ?? 13) + 1);
+				saveFont(term.options.fontSize!); scheduleFit();
+			} else if (e.key === '-') {
+				e.preventDefault();
+				term.options.fontSize = Math.max(8, (term.options.fontSize ?? 13) - 1);
+				saveFont(term.options.fontSize!); scheduleFit();
+			} else if (e.key === '0') {
+				e.preventDefault();
+				term.options.fontSize = 13; saveFont(13); scheduleFit();
+			}
+		}
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	});
+
+	const THEMES = {
+		gruvbox: {
+			background:    '#282828',
+			foreground:    '#ebdbb2',
+			cursor:        '#fabd2f',
+			cursorAccent:  '#282828',
+			selectionBackground: '#504945',
+			black:         '#282828',
+			red:           '#cc241d',
+			green:         '#98971a',
+			yellow:        '#d79921',
+			blue:          '#458588',
+			magenta:       '#b16286',
+			cyan:          '#689d6a',
+			white:         '#a89984',
+			brightBlack:   '#928374',
+			brightRed:     '#fb4934',
+			brightGreen:   '#b8bb26',
+			brightYellow:  '#fabd2f',
+			brightBlue:    '#83a598',
+			brightMagenta: '#d3869b',
+			brightCyan:    '#8ec07c',
+			brightWhite:   '#ebdbb2',
+		},
+		'one-dark': {
+			background:    '#282c34',
+			foreground:    '#abb2bf',
+			cursor:        '#e06c75',
+			cursorAccent:  '#282c34',
+			selectionBackground: '#3a3f4b',
+			black:         '#282c34',
+			red:           '#e06c75',
+			green:         '#98c379',
+			yellow:        '#e5c07b',
+			blue:          '#61afef',
+			magenta:       '#c678dd',
+			cyan:          '#56b6c2',
+			white:         '#abb2bf',
+			brightBlack:   '#5c6370',
+			brightRed:     '#e06c75',
+			brightGreen:   '#98c379',
+			brightYellow:  '#e5c07b',
+			brightBlue:    '#61afef',
+			brightMagenta: '#c678dd',
+			brightCyan:    '#56b6c2',
+			brightWhite:   '#fff',
+		}
+	};
+
+	$effect(() => {
+		if (!term) return;
+		term.options.theme = THEMES[theme.value as 'gruvbox' | 'one-dark'];
 	});
 
 	onDestroy(() => {

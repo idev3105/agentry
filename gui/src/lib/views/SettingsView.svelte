@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { settings } from '$lib/stores/settings';
 	import { r9 } from '$lib/stores/r9.svelte';
-	import { fmtChord } from '$lib/utils/cn';
+	import { theme } from '$lib/stores/theme.svelte';
+	import { cn, fmtChord } from '$lib/utils/cn';
 	import Play from '@lucide/svelte/icons/play';
 	import Square from '@lucide/svelte/icons/square';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
@@ -12,6 +13,9 @@
 		{ keys: ['mod', 't'], desc: 'New session' },
 		{ keys: ['mod', 'p'], desc: 'Switch project' },
 		{ keys: ['mod', 'f'], desc: 'Find in terminal' },
+		{ keys: ['mod', '='], desc: 'Increase terminal font size' },
+		{ keys: ['mod', '-'], desc: 'Decrease terminal font size' },
+		{ keys: ['mod', '0'], desc: 'Reset terminal font size' },
 		{ keys: ['mod', '1'], desc: 'Focus session 1' },
 		{ keys: ['mod', '2'], desc: 'Focus session 2' },
 		{ keys: ['mod', '9'], desc: 'Focus last session' },
@@ -106,6 +110,16 @@
 					{r9.lastError}
 				</div>
 			{/if}
+		</section>
+
+		<section class="bg-card border border-border rounded p-4 space-y-3">
+			<h2 class="text-sm font-semibold">Theme</h2>
+			<div class="flex gap-2">
+				{#each ['gruvbox','one-dark'] as t}
+					<button class={cn('px-3 py-1.5 rounded text-xs border', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+							onclick={() => theme.set(t as 'gruvbox' | 'one-dark')}>{t}</button>
+				{/each}
+			</div>
 		</section>
 
 		<section class="bg-card border border-border rounded p-4 space-y-3">

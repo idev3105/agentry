@@ -178,6 +178,29 @@ export async function r9OpenDashboard(): Promise<void> {
 
 // ── Event listeners ────────────────────────────────────────────────────────
 
+export function waitForSessionStart(sessionId: string, timeoutMs = 3000): Promise<{ ok: boolean; ms: number; error?: string }> {
+	const start = Date.now();
+	return new Promise((resolve) => {
+		const timer = setTimeout(() => resolve({ ok: false, ms: Date.now() - start, error: 'timeout' }), timeoutMs);
+		const unsubStarted = listen('daemon:session_started', (ev: { payload: { session_id: string } }) => {
+			if (ev.payload.session_id === sessionId) {
+				clearTimeout(timer);
+				unsubStarted.then(f => f());
+				unsubFailed.then(f => f());
+				resolve({ ok: true, ms: Date.now() - start });
+			}
+		});
+		const unsubFailed = listen('daemon:session_failed', (ev: { payload: { session_id: string; reason?: string } }) => {
+			if (ev.payload.session_id === sessionId) {
+				clearTimeout(timer);
+				unsubStarted.then(f => f());
+				unsubFailed.then(f => f());
+				resolve({ ok: false, ms: Date.now() - start, error: ev.payload.reason ?? 'session failed' });
+			}
+		});
+	});
+}
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 
 export function onProjectCreated(cb: (e: ProjectCreatedEvent) => void): Promise<UnlistenFn> {

@@ -136,7 +136,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
     }
 </script>
 
-<div class="flex flex-col h-full overflow-hidden bg-card">
+<div data-tour="sidebar" class="flex flex-col h-full overflow-hidden bg-card">
     <!-- Filter -->
     <div class="p-2 border-b border-border">
         <div class="relative">

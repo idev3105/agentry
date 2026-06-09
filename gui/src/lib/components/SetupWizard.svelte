@@ -124,7 +124,10 @@
 
     function close() {
         closeWizard();
-        // reset for next time
+        if (step === 'done' && !localStorage.getItem('agentry:onboarded')) {
+            localStorage.setItem('agentry:onboarded', '1');
+            setTimeout(() => window.dispatchEvent(new CustomEvent('tour:start')), 400);
+        }
         setTimeout(() => {
             step = "welcome";
             folder = "";

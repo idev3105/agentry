@@ -19,7 +19,7 @@
 	];
 </script>
 
-<div class="flex flex-col items-center gap-1 py-2 w-16 bg-card border-r border-border flex-shrink-0">
+<div data-tour="activity" class="flex flex-col items-center gap-1 py-2 w-16 bg-card border-r border-border flex-shrink-0">
 	{#each items as item (item.id)}
 		<button
 			title={item.label}

@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { profiles } from '$lib/stores/profiles';
 	import { settings } from '$lib/stores/settings';
-	import { sendCmd, listProfiles } from '$lib/ipc';
+	import { projects } from '$lib/stores/projects';
+	import { sendCmd, listProfiles, startSession, killSession, waitForSessionStart } from '$lib/ipc';
 	import { toasts } from '$lib/stores/toasts.svelte';
+	import { get } from 'svelte/store';
 	import type { AgentType, ProfileInfo } from '$lib/types';
 	import { cn } from '$lib/utils/cn';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import Star from '@lucide/svelte/icons/star';
+	import Play from '@lucide/svelte/icons/play';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import X from '@lucide/svelte/icons/x';
 	import Check from '@lucide/svelte/icons/check';
@@ -138,6 +141,21 @@
 	async function setDefault(id: string) {
 		await sendCmd({ cmd: 'set_default_profile', profile_id: id });
 		settings.update((s) => ({ ...s, defaultProfileId: id }));
+	}
+
+	async function testProfile(p: ProfileInfo) {
+		const toastId = toasts.info(`Testing ${p.name}…`);
+		try {
+			const projs = Array.from(get(projects).values());
+			const proj = projs[0];
+			if (!proj) { toasts.error('Test failed', 'Create a project first'); return; }
+			const r = await startSession(proj.id, p.id) as { session_id: string };
+			const res = await waitForSessionStart(r.session_id, 3000);
+			toasts.dismiss(toastId);
+			if (res.ok) toasts.success(`${p.name}: OK`, `Started in ${res.ms}ms`);
+			else        toasts.error(`${p.name}: failed`, res.error ?? 'unknown');
+			await killSession(r.session_id).catch(() => {});
+		} catch (e) { toasts.error('Test failed', String(e)); }
 	}
 </script>
 
@@ -278,6 +296,11 @@
 										onclick={() => setDefault(p.id)}
 									><Star size={14} /></button>
 								{/if}
+								<button
+									title="Test"
+									class="p-1 rounded text-muted-foreground hover:text-gruvbox-green hover:bg-secondary"
+									onclick={() => testProfile(p)}
+								><Play size={14} /></button>
 								<button
 									title="Edit"
 									class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary"

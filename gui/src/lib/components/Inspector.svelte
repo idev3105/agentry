@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
+	import { profiles } from '$lib/stores/profiles';
 	import { ui } from '$lib/stores/ui';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { SessionState } from '$lib/types';
 	import { killSession, resumeSession, sendCmd, startSession } from '$lib/ipc';
 	import { cn } from '$lib/utils/cn';
+	import { shellQuote } from '$lib/utils/shell';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import Square from '@lucide/svelte/icons/square';
@@ -12,6 +14,7 @@
 	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import Copy from '@lucide/svelte/icons/copy';
+	import Terminal from '@lucide/svelte/icons/terminal';
 
 	let session = $derived<SessionState | undefined>(
 		$ui.focusedSessionId ? $sessions.get($ui.focusedSessionId) : undefined
@@ -95,6 +98,17 @@
 		}
 	}
 
+	function copyAsCli(s: SessionState) {
+		const p = $profiles.find(x => x.id === s.profileId);
+		if (!p) { toasts.error('Profile not found'); return; }
+		const env = p.env.map(e => `${e.key}=${shellQuote(e.value)}`).join(' ');
+		const flags = p.params.map(x => x.value !== null ? `${x.flag}=${shellQuote(x.value)}` : x.flag).join(' ');
+		const bin = p.agent_type === 'claude_code' ? 'claude' : p.agent_type === 'codex' ? 'codex' : 'opencode';
+		const cmd = `cd ${shellQuote(s.cwd)} && ${env} ${bin} ${flags}`.replace(/\s+/g, ' ').trim();
+		navigator.clipboard.writeText(cmd);
+		toasts.success('Copied CLI command');
+	}
+
 	function statusColor(s: SessionState): string {
 		if (s.status === 'failed') return 'text-gruvbox-red';
 		if (s.status === 'finished') return 'text-muted-foreground';
@@ -147,7 +161,7 @@
 	}
 </script>
 
-<aside class="flex flex-col h-full w-full overflow-y-auto text-sm bg-background">
+<aside data-tour="inspector" class="flex flex-col h-full w-full overflow-y-auto text-sm bg-background">
 	{#if !session}
 		<div class="flex items-center justify-center h-full text-muted-foreground text-xs px-4 text-center">
 			Select a session to inspect details.
@@ -215,6 +229,13 @@
 						<RotateCcw size={14} />
 					</button>
 				{/if}
+				<button
+					title="Copy as CLI command"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					onclick={() => copyAsCli(session!)}
+				>
+					<Terminal size={12} /> CLI
+				</button>
 				<button
 					title="Delete session permanently"
 					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors"

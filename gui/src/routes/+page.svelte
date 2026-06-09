@@ -4,6 +4,7 @@
 	import TopBar from '$lib/components/TopBar.svelte';
 	import SessionSidebar from '$lib/components/SessionSidebar.svelte';
 	import TerminalView from '$lib/components/TerminalView.svelte';
+	import TerminalHeader from '$lib/components/TerminalHeader.svelte';
 	import Inspector from '$lib/components/Inspector.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import SetupWizard from '$lib/components/SetupWizard.svelte';
@@ -11,6 +12,7 @@ import SplitPane from '$lib/components/SplitPane.svelte';
 import SessionTabs from '$lib/components/SessionTabs.svelte';
 import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
 import ReconnectBanner from '$lib/components/ReconnectBanner.svelte';
+import OnboardingTour from '$lib/components/OnboardingTour.svelte';
 	import ProfilesView from '$lib/views/ProfilesView.svelte';
 	import OverviewView from '$lib/views/OverviewView.svelte';
 	import SettingsView from '$lib/views/SettingsView.svelte';
@@ -614,8 +616,9 @@ import { listen } from '@tauri-apps/api/event';
 							maxRightWindowRatio={0.3}
 						>
 							{#snippet left()}
-								<div class="h-full w-full overflow-hidden bg-[#282828]">
+								<div data-tour="terminal" class="h-full w-full overflow-hidden bg-[#282828]">
 									<SessionTabs />
+									<TerminalHeader />
 									{#if findOpen}
 									<TerminalFindBar
 										ctl={termCtl}
@@ -692,3 +695,4 @@ import { listen } from '@tauri-apps/api/event';
 
 <CommandPalette onPickSession={pickSession} />
 <SetupWizard />
+<OnboardingTour />
