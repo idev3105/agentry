@@ -11,11 +11,13 @@
 		{ keys: ['mod', 'k'], desc: 'Open command palette' },
 		{ keys: ['mod', 't'], desc: 'New session' },
 		{ keys: ['mod', 'p'], desc: 'Switch project' },
+		{ keys: ['mod', 'f'], desc: 'Find in terminal' },
 		{ keys: ['mod', '1'], desc: 'Focus session 1' },
 		{ keys: ['mod', '2'], desc: 'Focus session 2' },
 		{ keys: ['mod', '9'], desc: 'Focus last session' },
 		{ keys: ['mod', 'shift', 'k'], desc: 'Kill focused session' },
-		{ keys: ['Escape'], desc: 'Close dialogs' }
+		{ keys: ['Escape'], desc: 'Close dialogs' },
+		{ keys: ['/'], desc: 'Focus session filter' }
 	];
 </script>
 

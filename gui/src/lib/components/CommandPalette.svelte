@@ -7,13 +7,14 @@
 	import { startSession, killSession, focusSession } from '$lib/ipc';
 	import { markSessionEnding } from '$lib/stores/sessions';
 	import { cn, fmtChord } from '$lib/utils/cn';
-	import Terminal from '@lucide/svelte/icons/terminal';
-	import FolderOpen from '@lucide/svelte/icons/folder-open';
-	import User from '@lucide/svelte/icons/user-cog';
-	import Settings from '@lucide/svelte/icons/settings';
-	import Plus from '@lucide/svelte/icons/plus';
-	import X from '@lucide/svelte/icons/x';
-	import Home from '@lucide/svelte/icons/home';
+import Terminal from '@lucide/svelte/icons/terminal';
+import FolderOpen from '@lucide/svelte/icons/folder-open';
+import User from '@lucide/svelte/icons/user-cog';
+import Settings from '@lucide/svelte/icons/settings';
+import Plus from '@lucide/svelte/icons/plus';
+import X from '@lucide/svelte/icons/x';
+import Copy from '@lucide/svelte/icons/copy';
+import Home from '@lucide/svelte/icons/home';
 
 	type ActionItem = {
 		id: string;
@@ -63,6 +64,18 @@
 					}
 				});
 			}
+		}
+
+		// Sessions — duplicate
+		for (const s of $sessions.values()) {
+			acts.push({
+				id: `dup:${s.id}`,
+				title: `Duplicate: ${s.title}`,
+				subtitle: `New session with profile ${s.profileId.slice(0, 8)}…`,
+				category: 'Sessions',
+				icon: Copy,
+				run: async () => { await startSession(s.projectId, s.profileId); }
+			});
 		}
 
 		// Projects — switch

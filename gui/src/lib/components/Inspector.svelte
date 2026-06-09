@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { ui } from '$lib/stores/ui';
+	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { SessionState } from '$lib/types';
-	import { killSession, resumeSession, sendCmd } from '$lib/ipc';
+	import { killSession, resumeSession, sendCmd, startSession } from '$lib/ipc';
 	import { cn } from '$lib/utils/cn';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -45,14 +46,14 @@
 				if (copied === text) copied = null;
 			}, 1200);
 		} catch (e) {
-			console.error('clipboard:', e);
+			toasts.error('Copy failed', String(e));
 		}
 	}
 
 	function doKill(s: SessionState) {
-		// Optimistic: flip to finished + unfocus immediately so the UI doesn't lag.
 		markSessionEnding(s.id);
 		killSession(s.id).catch((err) => {
+			toasts.error('Kill failed', String(err));
 			markSessionEnding(s.id, { failReason: `kill failed: ${err}` });
 		});
 	}
@@ -81,7 +82,16 @@
 				ui.update((u) => ({ ...u, focusedSessionId: null }));
 			}
 		} catch (e) {
-			console.error('delete failed:', e);
+			toasts.error('Delete failed', String(e));
+		}
+	}
+
+	async function duplicate(s: SessionState) {
+		try {
+			await startSession(s.projectId, s.profileId);
+			toasts.success(`Duplicated ${s.title}`);
+		} catch (e) {
+			toasts.error('Duplicate failed', String(e));
 		}
 	}
 
@@ -122,7 +132,7 @@
 		try {
 			await sendCmd({ cmd: 'rename_session', session_id: id, title: renameValue.trim() });
 		} catch (e) {
-			console.error(e);
+			toasts.error('Rename failed', String(e));
 		}
 		renaming = false;
 	}
@@ -132,7 +142,7 @@
 			const { openPath } = await import('@tauri-apps/plugin-opener');
 			await openPath(path);
 		} catch (e) {
-			console.error('open cwd failed:', e);
+			toasts.error('Open failed', String(e));
 		}
 	}
 </script>
@@ -175,6 +185,13 @@
 					onclick={() => startRename(session!)}
 				>
 					<Pencil size={12} /> Rename
+				</button>
+				<button
+					title="Duplicate (same profile + cwd)"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					onclick={() => duplicate(session!)}
+				>
+					<Copy size={12} /> Duplicate
 				</button>
 				{#if session.status === 'running' || session.status === 'queued'}
 					<button

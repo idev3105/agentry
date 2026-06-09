@@ -6,14 +6,16 @@
     import { agentMeta } from "$lib/utils/agent";
     import { startSession, killSession, sendCmd } from "$lib/ipc";
     import { markSessionEnding } from "$lib/stores/sessions";
+    import { toasts } from "$lib/stores/toasts.svelte";
     import type { SessionState } from "$lib/types";
     import { cn, fmtChord } from "$lib/utils/cn";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import Plus from "@lucide/svelte/icons/plus";
     import Search from "@lucide/svelte/icons/search";
     import X from "@lucide/svelte/icons/x";
-    import Trash from "@lucide/svelte/icons/trash-2";
-    import ChevronRight from "@lucide/svelte/icons/chevron-right";
+import Trash from "@lucide/svelte/icons/trash-2";
+import Trash2 from "@lucide/svelte/icons/trash";
+import ChevronRight from "@lucide/svelte/icons/chevron-right";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
     import Check from "@lucide/svelte/icons/check";
     import Settings from "@lucide/svelte/icons/settings";
@@ -24,8 +26,24 @@
     }: { projectId: string; onSelect?: (id: string) => void } = $props();
 
     let filter = $state("");
+    let filterEl: HTMLInputElement | null = $state(null);
     let profileMenuOpen = $state(false);
     let confirmTarget = $state<SessionState | null>(null);
+    let clearConfirmOpen = $state(false);
+
+    $effect(() => {
+        function onKey(e: KeyboardEvent) {
+            const t = e.target as HTMLElement | null;
+            const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+            if (e.key === '/' && !inField) {
+                e.preventDefault();
+                filterEl?.focus();
+                filterEl?.select();
+            }
+        }
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    });
 
     let defaultProfile = $derived(
         $settings.defaultProfileId
@@ -60,6 +78,12 @@
         return { active, queued, done };
     });
 
+    let completed = $derived(
+        Array.from($sessions.values()).filter(
+            s => s.projectId === projectId && (s.status === 'finished' || s.status === 'failed')
+        )
+    );
+
     function activityDot(s: SessionState): string {
         if (s.status === "failed") return "bg-gruvbox-red";
         if (s.status === "finished") return "bg-muted-foreground";
@@ -89,7 +113,7 @@
                 s.status === "queued";
             if (wasActive) {
                 markSessionEnding(s.id);
-                await killSession(s.id).catch(() => {});
+                await killSession(s.id).catch((e) => toasts.error('Kill failed', String(e)));
                 // Daemon's kill watcher escalates SIGTERM → SIGKILL within
                 // 250ms; wait a hair longer so finish_session() lands first.
                 await new Promise((r) => setTimeout(r, 350));
@@ -123,6 +147,7 @@
             <input
                 type="text"
                 bind:value={filter}
+                bind:this={filterEl}
                 placeholder="Filter sessions"
                 class="w-full bg-input rounded pl-7 pr-2 py-1 text-xs border border-border focus:outline-none focus:border-gruvbox-yellow"
             />
@@ -188,8 +213,31 @@
                 </div>
             </div>
         {/if}
+        {#if completed.length > 0}
+            <button class="w-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary/40 text-left inline-flex items-center gap-1.5"
+                    onclick={() => (clearConfirmOpen = true)}>
+                <Trash2 size={11} /> Clear {completed.length} completed
+            </button>
+        {/if}
     </div>
 </div>
+
+<ConfirmDialog
+    open={clearConfirmOpen}
+    title="Clear completed"
+    message={`Delete ${completed.length} finished/failed session${completed.length === 1 ? '' : 's'}? This cannot be undone.`}
+    confirmLabel="Delete all"
+    destructive
+    onConfirm={async () => {
+        clearConfirmOpen = false;
+        for (const s of completed) {
+            try { await sendCmd({ cmd: 'delete_session', session_id: s.id }); }
+            catch (e) { toasts.error('Delete failed', `${s.title}: ${e}`); }
+        }
+        sessions.update(m => { for (const s of completed) m.delete(s.id); return m; });
+        toasts.success(`Cleared ${completed.length} sessions`);
+    }}
+    onCancel={() => (clearConfirmOpen = false)} />
 
 {#snippet group(title: string, items: SessionState[])}
     <div
@@ -239,6 +287,7 @@
                         e.stopPropagation();
                         markSessionEnding(s.id);
                         killSession(s.id).catch((err) => {
+                            toasts.error('Kill failed', String(err));
                             markSessionEnding(s.id, {
                                 failReason: `kill failed: ${err}`,
                             });

@@ -7,7 +7,10 @@
 	import Inspector from '$lib/components/Inspector.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import SetupWizard from '$lib/components/SetupWizard.svelte';
-	import SplitPane from '$lib/components/SplitPane.svelte';
+import SplitPane from '$lib/components/SplitPane.svelte';
+import SessionTabs from '$lib/components/SessionTabs.svelte';
+import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
+import ReconnectBanner from '$lib/components/ReconnectBanner.svelte';
 	import ProfilesView from '$lib/views/ProfilesView.svelte';
 	import OverviewView from '$lib/views/OverviewView.svelte';
 	import SettingsView from '$lib/views/SettingsView.svelte';
@@ -52,11 +55,14 @@
 		onBootstrapError
 	} from '$lib/ipc';
 	import { bindKeys } from '$lib/utils/keybindings';
-import { fmtChord } from '$lib/utils/cn';
+	import { fmtChord } from '$lib/utils/cn';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 	import type { SessionState } from '$lib/types';
 
 	let termRef: TerminalView | undefined = $state();
+	let termCtl = $state<{ findNext: (q: string) => void; findPrev: (q: string) => void } | null>(null);
+	let findOpen = $state(false);
 	// While we're replaying the ring buffer for a freshly-picked session,
 	// queue live agent_output for that same session id and flush AFTER replay
 	// completes. Without this, the live writer races readBuffer: bytes that
@@ -128,6 +134,11 @@ import { fmtChord } from '$lib/utils/cn';
 				bootstrapError = null;
 				await bootstrap();
 			})
+		);
+		unlisteners.push(
+			await listen('daemon:disconnected', () => {
+				connected = false;
+			}) as unknown as UnlistenFn
 		);
 		unlisteners.push(
 			await onBootstrapError((msg) => {
@@ -519,6 +530,11 @@ import { fmtChord } from '$lib/utils/cn';
 					});
 				}
 			},
+			{
+				key: 'f',
+				mod: true,
+				handler: () => findOpen = true
+			},
 			...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => ({
 				key: digit,
 				mod: true,
@@ -554,10 +570,11 @@ import { fmtChord } from '$lib/utils/cn';
 
 <div class="flex h-screen bg-background text-foreground overflow-hidden">
 	<ActivityBar />
-
+	
 	<div class="flex flex-col flex-1 min-w-0">
 		<TopBar {connected} />
-
+		<ReconnectBanner visible={!connected} />
+	
 		{#if bootstrapError}
 			<div class="px-3 py-2 text-xs text-destructive-foreground bg-destructive">
 				Daemon bootstrap failed: {bootstrapError}
@@ -598,8 +615,16 @@ import { fmtChord } from '$lib/utils/cn';
 						>
 							{#snippet left()}
 								<div class="h-full w-full overflow-hidden bg-[#282828]">
+									<SessionTabs />
+									{#if findOpen}
+									<TerminalFindBar
+										ctl={termCtl}
+										onClose={() => findOpen = false}
+									/>
+									{/if}
 									<TerminalView
 										bind:this={termRef}
+										bind:ctl={termCtl}
 										sessionId={$ui.focusedSessionId}
 										onInput={handleInput}
 									/>

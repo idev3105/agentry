@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import { Terminal } from '@xterm/xterm';
-	import { FitAddon } from '@xterm/addon-fit';
-	import '@xterm/xterm/css/xterm.css';
-	import { resize as resizeCmd } from '$lib/ipc';
+import { onMount, onDestroy } from 'svelte';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { SearchAddon } from '@xterm/addon-search';
+import '@xterm/xterm/css/xterm.css';
+import { resize as resizeCmd } from '$lib/ipc';
 
-	const { sessionId, onInput }: {
-		sessionId: string | null;
-		onInput: (data: string) => void;
-	} = $props();
+let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(q:string)=>void} | null>(null) }: {
+    sessionId: string | null;
+    onInput: (data: string) => void;
+    ctl?: { findNext: (q: string) => void; findPrev: (q: string) => void } | null;
+} = $props();
 
 	let containerEl: HTMLDivElement;
 	let term: Terminal | null = null;
@@ -80,6 +82,12 @@
 		});
 		fitAddon = new FitAddon();
 		term.loadAddon(fitAddon);
+		const searchAddon = new SearchAddon();
+		term.loadAddon(searchAddon);
+		ctl = {
+			findNext: (q) => searchAddon.findNext(q),
+			findPrev: (q) => searchAddon.findPrevious(q)
+		};
 		term.open(containerEl);
 
 		// Tighten the hidden textarea xterm uses for keyboard + IME input.

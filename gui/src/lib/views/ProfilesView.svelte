@@ -2,6 +2,7 @@
 	import { profiles } from '$lib/stores/profiles';
 	import { settings } from '$lib/stores/settings';
 	import { sendCmd, listProfiles } from '$lib/ipc';
+	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { AgentType, ProfileInfo } from '$lib/types';
 	import { cn } from '$lib/utils/cn';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -130,7 +131,7 @@
 			if (!r.ok) throw new Error(r.error);
 			await refresh();
 		} catch (e) {
-			alert(`Delete failed: ${e}`);
+			toasts.error('Delete failed', String(e));
 		}
 	}
 
