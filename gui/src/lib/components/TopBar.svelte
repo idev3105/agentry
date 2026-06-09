@@ -3,8 +3,9 @@
 	import { sessions } from '$lib/stores/sessions';
 	import { ui, openPalette } from '$lib/stores/ui';
 	import { cn, fmtChord } from '$lib/utils/cn';
-	import Search from '@lucide/svelte/icons/search';
-	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import Search from '@lucide/svelte/icons/search';
+import ChevronDown from '@lucide/svelte/icons/chevron-down';
+import Check from '@lucide/svelte/icons/check';
 
 	const { connected }: { connected: boolean } = $props();
 
@@ -14,15 +15,18 @@
 	let counts = $derived.by(() => {
 		let working = 0,
 			awaiting = 0,
-			queued = 0;
+			queued = 0,
+			total = 0;
 		for (const s of sessionList) {
+			if (s.status === 'finished' || s.status === 'failed') continue;
+			total++;
 			if (s.status === 'queued') queued++;
 			else if (s.status === 'running') {
 				if (s.activity === 'working') working++;
 				else if (s.activity === 'awaiting_input') awaiting++;
 			}
 		}
-		return { working, awaiting, queued };
+		return { working, awaiting, queued, total };
 	});
 
 	let projectMenuOpen = $state(false);
@@ -88,23 +92,33 @@
 
 	<!-- Status counts -->
 	<div class="flex items-center gap-2 text-xs">
-		{#if counts.working > 0}
-			<span class="flex items-center gap-1 text-gruvbox-green">
-				<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-green"></span>
-				{counts.working}
+		{#if counts.working === 0 && counts.awaiting === 0 && counts.queued === 0 && counts.total > 0}
+			<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground border border-border">
+				<Check size={11} class="text-gruvbox-green" /> All idle
 			</span>
-		{/if}
-		{#if counts.awaiting > 0}
-			<span class="flex items-center gap-1 text-gruvbox-red">
-				<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-red"></span>
-				{counts.awaiting} awaiting
+		{:else if counts.total === 0}
+			<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground">
+				No sessions
 			</span>
-		{/if}
-		{#if counts.queued > 0}
-			<span class="flex items-center gap-1 text-gruvbox-gray">
-				<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-gray"></span>
-				{counts.queued} queued
-			</span>
+		{:else}
+			{#if counts.working > 0}
+				<span class="flex items-center gap-1 text-gruvbox-green">
+					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-green"></span>
+					{counts.working}
+				</span>
+			{/if}
+			{#if counts.awaiting > 0}
+				<span class="flex items-center gap-1 text-gruvbox-red">
+					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-red"></span>
+					{counts.awaiting} awaiting
+				</span>
+			{/if}
+			{#if counts.queued > 0}
+				<span class="flex items-center gap-1 text-gruvbox-gray">
+					<span class="w-1.5 h-1.5 rounded-full bg-gruvbox-gray"></span>
+					{counts.queued} queued
+				</span>
+			{/if}
 		{/if}
 	</div>
 

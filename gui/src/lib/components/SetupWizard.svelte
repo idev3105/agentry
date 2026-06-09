@@ -11,12 +11,13 @@
     } from "$lib/ipc";
     import { addProject } from "$lib/stores/projects";
     import { cn } from "$lib/utils/cn";
-	import FolderOpen from "@lucide/svelte/icons/folder-open";
-	import Sparkles from "@lucide/svelte/icons/sparkles";
-	import ArrowRight from "@lucide/svelte/icons/arrow-right";
-	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
-	import Terminal from "@lucide/svelte/icons/terminal";
-	import Check from "@lucide/svelte/icons/check";
+    import FolderOpen from "@lucide/svelte/icons/folder-open";
+    import Sparkles from "@lucide/svelte/icons/sparkles";
+    import ArrowRight from "@lucide/svelte/icons/arrow-right";
+    import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+    import Terminal from "@lucide/svelte/icons/terminal";
+    import Check from "@lucide/svelte/icons/check";
+    import Loader2 from "@lucide/svelte/icons/loader-2";
     import type { AgentType } from "$lib/types";
 
     type Step = "welcome" | "folder" | "agent" | "creating" | "done";
@@ -185,11 +186,10 @@
                             </p>
                         </div>
                         <button
-                            title="Get started"
-                            class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+                            class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 text-sm font-medium"
                             onclick={() => (step = "folder")}
                         >
-                            <ArrowRight size={18} />
+                            Get started <ArrowRight size={14} />
                         </button>
                     </div>
                 {:else if step === "folder"}
@@ -222,31 +222,29 @@
                                 {/if}
                             </div>
                         </button>
-                        <div>
-                            <label
-                                class="block text-xs text-muted-foreground mb-1"
-                                >Project name</label
-                            >
+                        <label class="block">
+                            <span class="block text-xs text-muted-foreground mb-1">Project name</span>
                             <input
                                 type="text"
                                 bind:value={projectName}
                                 class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:border-gruvbox-yellow focus:outline-none"
                                 placeholder="My App"
                             />
-                        </div>
+                        </label>
                         <div class="flex justify-between">
                             <button
-                                title="Back"
-                                class="flex items-center justify-center p-1.5 rounded text-muted-foreground hover:text-foreground"
+                                class="px-3 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
                                 onclick={() => (step = "welcome")}
-                            ><ArrowLeft size={14} /></button
                             >
+                                <ArrowLeft size={14} /> Back
+                            </button>
                             <button
-                                title="Next"
-                                class="flex items-center justify-center p-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                class="px-4 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-1.5 text-sm font-medium"
                                 disabled={!folder.trim() || !projectName.trim()}
                                 onclick={() => (step = "agent")}
-                            ><ArrowRight size={14} /></button>
+                            >
+                                Next <ArrowRight size={14} />
+                            </button>
                         </div>
                     </div>
                 {:else if step === "agent"}
@@ -285,23 +283,23 @@
                         {/if}
                         <div class="flex justify-between">
                             <button
-                                title="Back"
-                                class="flex items-center justify-center p-1.5 rounded text-muted-foreground hover:text-foreground"
+                                class="px-3 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
                                 onclick={() => (step = "folder")}
-                            ><ArrowLeft size={14} /></button
                             >
+                                <ArrowLeft size={14} /> Back
+                            </button>
                             <button
-                                title="Create & start"
-                                class="flex items-center justify-center p-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 flex items-center"
+                                class="px-4 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 text-sm font-medium"
                                 onclick={finish}
-                            ><ArrowRight size={14} /></button>
+                            >
+                                Create project <ArrowRight size={14} />
+                            </button>
                         </div>
                     </div>
                 {:else if step === "creating"}
                     <div class="text-center py-8 space-y-3">
-                        <div class="text-sm text-muted-foreground">
-                            Creating project & starting session…
-                        </div>
+                        <Loader2 size={20} class="mx-auto animate-spin text-gruvbox-yellow" />
+                        <div class="text-sm text-muted-foreground">Creating project & starting session…</div>
                     </div>
                 {:else if step === "done"}
                     <div class="text-center space-y-4">
@@ -316,13 +314,12 @@
                                 Your session is starting in the terminal pane.
                             </p>
                         </div>
-                        <button
-                            title="Open terminal"
-                            class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
-                            onclick={close}
-                        >
-                            <Terminal size={18} />
-                        </button>
+                            <button
+                                class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 text-sm font-medium"
+                                onclick={close}
+                            >
+                                <Terminal size={14} /> Open terminal
+                            </button>
                     </div>
                 {/if}
             </div>

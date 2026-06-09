@@ -169,16 +169,16 @@
 					</button>
 				</div>
 
-				<div>
-					<label class="block text-xs text-muted-foreground mb-1">Name</label>
+				<label class="block">
+					<span class="block text-xs text-muted-foreground mb-1">Name</span>
 					<input
 						bind:value={draftName}
 						class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-gruvbox-yellow"
 					/>
-				</div>
+				</label>
 
 				<div>
-					<label class="block text-xs text-muted-foreground mb-1">Agent</label>
+					<span class="block text-xs text-muted-foreground mb-1">Agent</span>
 					<div class="flex gap-2">
 						{#each agents as a (a)}
 							<button
@@ -196,41 +196,41 @@
 					</div>
 				</div>
 
-				<div>
-					<label class="block text-xs text-muted-foreground mb-1">
+				<label class="block">
+					<span class="block text-xs text-muted-foreground mb-1">
 						CLI flags (one per line, <code>--flag</code> or <code>--flag=value</code>)
-					</label>
+					</span>
 					<textarea
 						bind:value={draftParamsText}
 						rows="3"
 						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
 						placeholder="--model=sonnet&#10;--no-banner"
 					></textarea>
-				</div>
+				</label>
 
-				<div>
-					<label class="block text-xs text-muted-foreground mb-1">
+				<label class="block">
+					<span class="block text-xs text-muted-foreground mb-1">
 						Environment vars (KEY=VALUE per line)
-					</label>
+					</span>
 					<textarea
 						bind:value={draftEnvText}
 						rows="3"
 						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
 						placeholder="ANTHROPIC_API_KEY=sk-..."
 					></textarea>
-				</div>
+				</label>
 
-				<div>
-					<label class="block text-xs text-muted-foreground mb-1">
+				<label class="block">
+					<span class="block text-xs text-muted-foreground mb-1">
 						Start script (optional shell snippet — if it exits non-zero the session fails)
-					</label>
+					</span>
 					<textarea
 						bind:value={draftStartScript}
 						rows="2"
 						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
 						placeholder="source .env && nvm use"
 					></textarea>
-				</div>
+				</label>
 
 				{#if saveError}
 					<div class="text-xs text-gruvbox-red">{saveError}</div>

@@ -1,17 +1,22 @@
 <script lang="ts">
     import { sessions } from "$lib/stores/sessions";
-    import { ui, openWizard } from "$lib/stores/ui";
+    import { ui, openWizard, setView } from "$lib/stores/ui";
     import { profiles } from "$lib/stores/profiles";
+    import { settings } from "$lib/stores/settings";
+    import { agentMeta } from "$lib/utils/agent";
     import { startSession, killSession, sendCmd } from "$lib/ipc";
     import { markSessionEnding } from "$lib/stores/sessions";
     import type { SessionState } from "$lib/types";
-    import { cn } from "$lib/utils/cn";
+    import { cn, fmtChord } from "$lib/utils/cn";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import Plus from "@lucide/svelte/icons/plus";
     import Search from "@lucide/svelte/icons/search";
     import X from "@lucide/svelte/icons/x";
     import Trash from "@lucide/svelte/icons/trash-2";
     import ChevronRight from "@lucide/svelte/icons/chevron-right";
+    import ChevronDown from "@lucide/svelte/icons/chevron-down";
+    import Check from "@lucide/svelte/icons/check";
+    import Settings from "@lucide/svelte/icons/settings";
 
     const {
         projectId,
@@ -19,8 +24,14 @@
     }: { projectId: string; onSelect?: (id: string) => void } = $props();
 
     let filter = $state("");
-    let menuOpen = $state(false);
+    let profileMenuOpen = $state(false);
     let confirmTarget = $state<SessionState | null>(null);
+
+    let defaultProfile = $derived(
+        $settings.defaultProfileId
+            ? $profiles.find(p => p.id === $settings.defaultProfileId)
+            : $profiles[0]
+    );
 
     let allInProject = $derived(
         Array.from($sessions.values()).filter((s) => s.projectId === projectId),
@@ -68,11 +79,6 @@
     function pick(id: string) {
         if (onSelect) onSelect(id);
         else ui.update((u) => ({ ...u, focusedSessionId: id }));
-    }
-
-    async function quickStart(profileId: string) {
-        menuOpen = false;
-        await startSession(projectId, profileId);
     }
 
     async function performDelete(s: SessionState) {
@@ -144,48 +150,44 @@
 
     <!-- New session bar -->
     <div class="border-t border-border p-2 relative">
-        {#if menuOpen}
+        <div class="flex items-stretch rounded overflow-hidden border border-border">
+            <button class="flex-1 px-2 py-1.5 text-xs bg-secondary/40 hover:bg-secondary inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    disabled={!$ui.activeProjectId || !defaultProfile}
+                    onclick={() => $ui.activeProjectId && defaultProfile && startSession($ui.activeProjectId, defaultProfile.id)}>
+                <Plus size={12} />
+                New {defaultProfile?.name ?? 'session'}
+            </button>
+            <button class="px-2 bg-secondary/40 hover:bg-secondary border-l border-border"
+                    onclick={() => (profileMenuOpen = !profileMenuOpen)}
+                    aria-label="Choose profile">
+                <ChevronDown size={12} />
+            </button>
+        </div>
+
+        {#if profileMenuOpen}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-                class="fixed inset-0 z-30"
-                onclick={() => (menuOpen = false)}
-            ></div>
-            <div
-                class="absolute bottom-full left-2 right-2 mb-1 bg-card border border-border rounded shadow-lg overflow-hidden z-40"
-            >
-                {#if $profiles.length === 0}
-                    <button
-                        class="w-full text-left px-3 py-2 text-xs hover:bg-secondary"
-                        onclick={() => {
-                            menuOpen = false;
-                            openWizard();
-                        }}
-                    >
-                        No profiles — set up first agent…
+            <div class="fixed inset-0 z-40" onclick={() => (profileMenuOpen = false)}></div>
+            <div class="absolute bottom-12 left-2 right-2 z-50 bg-card border border-border rounded shadow-lg py-1 max-h-64 overflow-y-auto">
+                {#each $profiles as p (p.id)}
+                    {@const m = agentMeta(p.agent_type)}
+                    <button class="w-full px-3 py-1.5 text-left text-xs hover:bg-secondary flex items-center gap-2"
+                            onclick={() => { profileMenuOpen = false; $ui.activeProjectId && startSession($ui.activeProjectId, p.id); }}>
+                        <m.icon size={12} class={m.color} />
+                        <span class="flex-1 truncate">{p.name}</span>
+                        {#if $settings.defaultProfileId === p.id}
+                            <Check size={12} class="text-gruvbox-yellow" />
+                        {/if}
                     </button>
-                {:else}
-                    {#each $profiles as p (p.id)}
-                        <button
-                            class="w-full text-left px-3 py-2 text-xs hover:bg-secondary"
-                            onclick={() => quickStart(p.id)}
-                        >
-                            <div class="font-medium">{p.name}</div>
-                            <div class="text-[10px] text-muted-foreground">
-                                {p.agent_type}
-                            </div>
-                        </button>
-                    {/each}
-                {/if}
+                {/each}
+                <div class="border-t border-border mt-1 pt-1">
+                    <button class="w-full px-3 py-1.5 text-left text-xs hover:bg-secondary inline-flex items-center gap-2"
+                            onclick={() => { profileMenuOpen = false; setView('profiles'); }}>
+                        <Settings size={12} /> Manage profiles…
+                    </button>
+                </div>
             </div>
         {/if}
-        <button
-            title="New session"
-            class="w-full flex items-center justify-center p-2 rounded bg-secondary hover:bg-secondary/80 transition-colors"
-            onclick={() => (menuOpen = !menuOpen)}
-        >
-            <Plus size={14} />
-        </button>
     </div>
 </div>
 
@@ -196,7 +198,8 @@
         <ChevronRight size={10} />
         {title} <span class="font-normal">· {items.length}</span>
     </div>
-    {#each items as s (s.id)}
+    {#each items as s, idx (s.id)}
+        {@const m = agentMeta(s.agent)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
@@ -208,14 +211,18 @@
             )}
             onclick={() => pick(s.id)}
         >
-            <span class={cn("w-2 h-2 rounded-full shrink-0", activityDot(s))}
-            ></span>
+            <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
             <div class="flex-1 min-w-0">
                 <div class="text-sm truncate">{s.title}</div>
                 <div class="text-[10px] text-muted-foreground truncate">
                     {statusLabel(s)}
                 </div>
             </div>
+            {#if idx < 9}
+                <kbd class="ml-1 px-1 py-px text-[9px] font-mono text-muted-foreground/60 group-hover:text-muted-foreground hidden sm:inline">
+                    {fmtChord(['mod', String(idx + 1)])}
+                </kbd>
+            {/if}
             {#if s.unread > 0 && $ui.focusedSessionId !== s.id}
                 <span
                     class="text-[10px] bg-primary text-primary-foreground rounded-full px-1.5 leading-tight py-0.5"
@@ -230,17 +237,13 @@
                     class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0"
                     onclick={(e) => {
                         e.stopPropagation();
-                        // Optimistic: flip to finished + unfocus immediately so
-                        // the row jumps to "Past" and the terminal pane closes
-                        // without waiting for the daemon's session_finished event.
                         markSessionEnding(s.id);
                         killSession(s.id).catch((err) => {
                             markSessionEnding(s.id, {
                                 failReason: `kill failed: ${err}`,
                             });
                         });
-                    }}><X size={14} /></button
-                >
+                    }}><X size={14} /></button>
             {/if}
             <button
                 title="Delete session"
@@ -249,8 +252,7 @@
                 onclick={(e) => {
                     e.stopPropagation();
                     confirmTarget = s;
-                }}><Trash size={12} /></button
-            >
+                }}><Trash size={12} /></button>
         </div>
     {/each}
 {/snippet}

@@ -18,8 +18,24 @@
 
 	let renaming = $state(false);
 	let renameValue = $state('');
+	let renameEl = $state<HTMLInputElement | null>(null);
 	let copied = $state<string | null>(null);
 	let confirmTarget = $state<SessionState | null>(null);
+
+	$effect(() => {
+		if (renaming) renameEl?.focus();
+	});
+
+	$effect(() => {
+		function onKey(e: KeyboardEvent) {
+			if (e.key === 'F2' && session && !renaming) {
+				e.preventDefault();
+				startRename(session);
+			}
+		}
+		window.addEventListener('keydown', onKey);
+		return () => window.removeEventListener('keydown', onKey);
+	});
 
 	async function copy(text: string) {
 		try {
@@ -134,10 +150,10 @@
 				{#if renaming}
 					<input
 						bind:value={renameValue}
+						bind:this={renameEl}
 						class="flex-1 bg-input border border-border rounded px-2 py-0.5 text-sm font-medium"
 						onkeydown={(e) => e.key === 'Enter' && commitRename(session!.id)}
 						onblur={() => commitRename(session!.id)}
-						autofocus
 					/>
 				{:else}
 					<button
@@ -146,10 +162,6 @@
 					>
 						{session.title}
 					</button>
-					<button
-						class="text-muted-foreground hover:text-foreground"
-						onclick={() => startRename(session!)}
-					><Pencil size={12} /></button>
 				{/if}
 			</div>
 			<div class={cn('text-xs', statusColor(session))}>
@@ -157,6 +169,13 @@
 			</div>
 
 			<div class="flex gap-1.5 pt-1">
+				<button
+					title="Rename (F2)"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs"
+					onclick={() => startRename(session!)}
+				>
+					<Pencil size={12} /> Rename
+				</button>
 				{#if session.status === 'running' || session.status === 'queued'}
 					<button
 						title="Kill session"
@@ -234,14 +253,23 @@
 			{/if}
 			<div>
 				<div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Working dir</div>
-				<button
-					class="font-mono text-xs break-all text-left hover:text-gruvbox-yellow flex items-start gap-1.5 group"
-					onclick={() => openCwd(session!.cwd)}
-					title="Open in file manager"
-				>
-					<FolderOpen size={11} class="mt-0.5 text-muted-foreground group-hover:text-gruvbox-yellow flex-shrink-0" />
-					<span>{session.cwd}</span>
-				</button>
+				<div class="flex items-center gap-1">
+					<button
+						class="flex-1 font-mono text-xs break-all text-left hover:text-gruvbox-yellow inline-flex items-start gap-1.5"
+						onclick={() => openCwd(session!.cwd)}
+						title="Open in file manager"
+					>
+						<FolderOpen size={11} class="mt-0.5 text-muted-foreground flex-shrink-0" />
+						<span>{session.cwd}</span>
+					</button>
+					<button
+						class="p-1 text-muted-foreground hover:text-foreground"
+						onclick={() => copy(session!.cwd)}
+						title="Copy path"
+					>
+						<Copy size={11} />
+					</button>
+				</div>
 			</div>
 			{@render row('Unread', String(session.unread), session.unread === 0)}
 		</section>

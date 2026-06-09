@@ -19,30 +19,26 @@
 	];
 </script>
 
-<div class="flex flex-col items-center gap-1 py-2 w-14 bg-card border-r border-border flex-shrink-0">
+<div class="flex flex-col items-center gap-1 py-2 w-16 bg-card border-r border-border flex-shrink-0">
 	{#each items as item (item.id)}
 		<button
 			title={item.label}
 			class={cn(
-				'w-10 h-10 rounded flex items-center justify-center transition-colors relative group',
+				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group',
 				$ui.view === item.id
-					? 'bg-secondary text-foreground'
-					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+					? 'text-foreground bg-secondary/60'
+					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
 			)}
 			onclick={() => setView(item.id)}
 		>
-			<item.icon size={20} />
+			<item.icon size={18} />
+			<span class="text-[9px] leading-tight">{item.label}</span>
 			{#if item.id === 'r9' && r9.status.running}
-				<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+				<span class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
 			{/if}
 			{#if $ui.view === item.id}
 				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-gruvbox-yellow rounded-r"></span>
 			{/if}
-			<span
-				class="absolute left-full ml-2 px-2 py-1 rounded bg-card border border-border text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10"
-			>
-				{item.label}
-			</span>
 		</button>
 	{/each}
 
@@ -50,9 +46,10 @@
 
 	<button
 		title="New session"
-		class="w-10 h-10 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
 		onclick={() => openWizard()}
 	>
-		<Plus size={20} />
+		<Plus size={18} />
+		<span class="text-[9px] leading-tight">New</span>
 	</button>
 </div>

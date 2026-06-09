@@ -1,19 +1,21 @@
 <script lang="ts">
-import { onMount, onDestroy } from 'svelte';
-import ActivityBar from '$lib/components/ActivityBar.svelte';
-import TopBar from '$lib/components/TopBar.svelte';
-import SessionSidebar from '$lib/components/SessionSidebar.svelte';
-import TerminalView from '$lib/components/TerminalView.svelte';
-import Inspector from '$lib/components/Inspector.svelte';
-import CommandPalette from '$lib/components/CommandPalette.svelte';
-import SetupWizard from '$lib/components/SetupWizard.svelte';
-import SplitPane from '$lib/components/SplitPane.svelte';
-import ProfilesView from '$lib/views/ProfilesView.svelte';
-import OverviewView from '$lib/views/OverviewView.svelte';
-import SettingsView from '$lib/views/SettingsView.svelte';
-import R9DashboardView from '$lib/views/R9DashboardView.svelte';
-import { projects, addProject } from '$lib/stores/projects';
-import Play from '@lucide/svelte/icons/play';
+	import { onMount, onDestroy } from 'svelte';
+	import ActivityBar from '$lib/components/ActivityBar.svelte';
+	import TopBar from '$lib/components/TopBar.svelte';
+	import SessionSidebar from '$lib/components/SessionSidebar.svelte';
+	import TerminalView from '$lib/components/TerminalView.svelte';
+	import Inspector from '$lib/components/Inspector.svelte';
+	import CommandPalette from '$lib/components/CommandPalette.svelte';
+	import SetupWizard from '$lib/components/SetupWizard.svelte';
+	import SplitPane from '$lib/components/SplitPane.svelte';
+	import ProfilesView from '$lib/views/ProfilesView.svelte';
+	import OverviewView from '$lib/views/OverviewView.svelte';
+	import SettingsView from '$lib/views/SettingsView.svelte';
+	import R9DashboardView from '$lib/views/R9DashboardView.svelte';
+	import { projects, addProject } from '$lib/stores/projects';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Command from '@lucide/svelte/icons/command';
+	import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
 	import { settings } from '$lib/stores/settings';
@@ -21,6 +23,7 @@ import Play from '@lucide/svelte/icons/play';
 		ui,
 		togglePalette,
 		closePalette,
+		openPalette,
 		openWizard,
 		closeWizard,
 		setView
@@ -49,6 +52,7 @@ import Play from '@lucide/svelte/icons/play';
 		onBootstrapError
 	} from '$lib/ipc';
 	import { bindKeys } from '$lib/utils/keybindings';
+import { fmtChord } from '$lib/utils/cn';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
 	import type { SessionState } from '$lib/types';
 
@@ -417,6 +421,16 @@ import Play from '@lucide/svelte/icons/play';
 		promptBuffers.set(sid, buf);
 	}
 
+	async function quickStartDefault() {
+		const projId = $ui.activeProjectId;
+		if (!projId) { openWizard(); return; }
+		const def = $settings.defaultProfileId
+			? $profiles.find(p => p.id === $settings.defaultProfileId)
+			: $profiles[0];
+		if (!def) { setView('profiles'); return; }
+		await startSession(projId, def.id);
+	}
+
 	function sanitizeTitle(raw: string): string {
 		const cleaned = raw.replace(/\s+/g, ' ').trim();
 		if (!cleaned) return '';
@@ -598,23 +612,33 @@ import Play from '@lucide/svelte/icons/play';
 							{/snippet}
 						</SplitPane>
 					{:else}
-						<div class="h-full w-full flex items-center justify-center bg-[#282828]">
-							{#if activeProject}
-								<div class="flex flex-col items-center text-muted-foreground text-sm gap-3">
-									<div>No session focused.</div>
-									<button
-										title="Start a session"
-										class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
-										onclick={() => openWizard()}
-									>
-										<Play size={14} fill="currentColor" />
-									</button>
-								</div>
-							{:else}
-								<div class="text-muted-foreground text-sm">
-									Pick a project from the top bar.
-								</div>
-							{/if}
+						<div class="flex flex-col items-center justify-center h-full gap-6 p-8 text-center">
+							<div>
+								<h2 class="text-base font-semibold">No session focused</h2>
+								<p class="text-xs text-muted-foreground mt-1">Pick one from the sidebar, or:</p>
+							</div>
+							<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors group"
+										onclick={() => quickStartDefault()}>
+									<Plus size={18} class="text-gruvbox-yellow mb-2" />
+									<div class="text-sm font-medium">New session</div>
+									<div class="text-[11px] text-muted-foreground mt-0.5">Start with default profile</div>
+									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','t'])}</kbd>
+								</button>
+								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors"
+										onclick={() => openPalette()}>
+									<Command size={18} class="text-gruvbox-aqua mb-2" />
+									<div class="text-sm font-medium">Command palette</div>
+									<div class="text-[11px] text-muted-foreground mt-0.5">Switch session, run actions</div>
+									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','k'])}</kbd>
+								</button>
+								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors"
+										onclick={() => setView('overview')}>
+									<LayoutGrid size={18} class="text-gruvbox-blue mb-2" />
+									<div class="text-sm font-medium">Overview</div>
+									<div class="text-[11px] text-muted-foreground mt-0.5">All projects & sessions</div>
+								</button>
+							</div>
 						</div>
 					{/if}
 						</div>
