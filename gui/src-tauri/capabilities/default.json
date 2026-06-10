@@ -16,7 +16,11 @@
         { "name": "9router", "cmd": "9router", "args": true },
         { "name": "npx-9router", "cmd": "npx", "args": ["9router"] },
         { "name": "lsof-port", "cmd": "lsof", "args": ["-t", "-iTCP:20128", "-sTCP:LISTEN"] },
-        { "name": "kill", "cmd": "kill", "args": true }
+        { "name": "kill", "cmd": "kill", "args": true },
+        { "name": "which", "cmd": "which", "args": true },
+        { "name": "claude", "cmd": "claude", "args": ["--version"] },
+        { "name": "codex", "cmd": "codex", "args": ["--version"] },
+        { "name": "opencode", "cmd": "opencode", "args": ["--version"] }
       ]
     }
   ]

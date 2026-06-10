@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import { ui, closePalette, setView, openWizard } from '$lib/stores/ui';
+	import { ui, closePalette, setView, openOnboarding } from '$lib/stores/ui';
 	import { sessions } from '$lib/stores/sessions';
 	import { projects } from '$lib/stores/projects';
 	import { profiles } from '$lib/stores/profiles';
@@ -152,7 +152,7 @@
 				title: 'New Project Setup…',
 				category: 'Navigate',
 				icon: Plus,
-				run: () => openWizard()
+				run: () => openOnboarding()
 			}
 		);
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { sessions } from "$lib/stores/sessions";
-    import { ui, openWizard, setView } from "$lib/stores/ui";
+    import { ui, openOnboarding, setView } from "$lib/stores/ui";
     import { profiles } from "$lib/stores/profiles";
     import { settings } from "$lib/stores/settings";
     import { agentMeta } from "$lib/utils/agent";

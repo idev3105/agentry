@@ -7,7 +7,7 @@
 	import TerminalHeader from '$lib/components/TerminalHeader.svelte';
 	import Inspector from '$lib/components/Inspector.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
-	import SetupWizard from '$lib/components/SetupWizard.svelte';
+	import Onboarding from '$lib/components/Onboarding.svelte';
 import SplitPane from '$lib/components/SplitPane.svelte';
 import SessionTabs from '$lib/components/SessionTabs.svelte';
 import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
@@ -30,8 +30,8 @@ import { toasts } from '$lib/stores/toasts.svelte';
 		togglePalette,
 		closePalette,
 		openPalette,
-		openWizard,
-		closeWizard,
+		openOnboarding,
+		closeOnboarding,
 		setView
 	} from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
@@ -120,8 +120,11 @@ import { listen } from '@tauri-apps/api/event';
 				}
 			}
 
-			if (projs.length === 0) {
-				openWizard();
+			const onboarded = localStorage.getItem('agentry:onboarded') === '1';
+			if (projs.length === 0 && !onboarded) {
+				openOnboarding();
+			} else if (projs.length === 0) {
+				// User onboarded once but deleted all projects — empty state handles it
 			} else if (!$ui.activeProjectId) {
 				ui.update((u) => ({ ...u, activeProjectId: projs[0].id }));
 			}
@@ -439,7 +442,12 @@ import { listen } from '@tauri-apps/api/event';
 
 	async function quickStartDefault() {
 		const projId = $ui.activeProjectId;
-		if (!projId) { openWizard(); return; }
+		if (!projId) {
+			const onboarded = localStorage.getItem('agentry:onboarded') === '1';
+			if (!onboarded) openOnboarding();
+			else toasts.info('No project selected', 'Use the activity bar to create one.');
+			return;
+		}
 		const def = $settings.defaultProfileId
 			? $profiles.find(p => p.id === $settings.defaultProfileId)
 			: $profiles[0];
@@ -501,7 +509,7 @@ import { listen } from '@tauri-apps/api/event';
 			{
 				key: 't',
 				mod: true,
-				handler: () => openWizard()
+				handler: () => openOnboarding()
 			},
 			{
 				key: 'p',
@@ -519,7 +527,7 @@ import { listen } from '@tauri-apps/api/event';
 				key: 'Escape',
 				handler: () => {
 					if ($ui.paletteOpen) closePalette();
-					else if ($ui.wizardOpen) closeWizard();
+					else if ($ui.onboardingOpen) closeOnboarding();
 				}
 			},
 			{
@@ -697,5 +705,5 @@ import { listen } from '@tauri-apps/api/event';
 </div>
 
 <CommandPalette onPickSession={pickSession} />
-<SetupWizard />
+<Onboarding />
 <OnboardingTour />

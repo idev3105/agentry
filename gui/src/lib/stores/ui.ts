@@ -7,7 +7,7 @@ export interface UiState {
 	focusedSessionId: string | null;
 	view: View;
 	paletteOpen: boolean;
-	wizardOpen: boolean;
+	onboardingOpen: boolean;
 }
 
 export const ui = writable<UiState>({
@@ -15,7 +15,7 @@ export const ui = writable<UiState>({
 	focusedSessionId: null,
 	view: 'terminal',
 	paletteOpen: false,
-	wizardOpen: false
+	onboardingOpen: false
 });
 
 export function setView(view: View) {
@@ -30,9 +30,9 @@ export function openPalette() {
 export function closePalette() {
 	ui.update((u) => ({ ...u, paletteOpen: false }));
 }
-export function openWizard() {
-	ui.update((u) => ({ ...u, wizardOpen: true }));
+export function openOnboarding() {
+	ui.update((u) => ({ ...u, onboardingOpen: true }));
 }
-export function closeWizard() {
-	ui.update((u) => ({ ...u, wizardOpen: false }));
+export function closeOnboarding() {
+	ui.update((u) => ({ ...u, onboardingOpen: false }));
 }

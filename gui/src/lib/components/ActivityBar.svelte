@@ -5,7 +5,7 @@
 	import Router from '@lucide/svelte/icons/router';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Plus from '@lucide/svelte/icons/plus';
-	import { ui, setView, openWizard } from '$lib/stores/ui';
+	import { ui, setView, openOnboarding } from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { cn } from '$lib/utils/cn';
 	import type { View } from '$lib/stores/ui';
@@ -47,7 +47,7 @@
 	<button
 		title="New session"
 		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
-		onclick={() => openWizard()}
+		onclick={() => openOnboarding()}
 	>
 		<Plus size={18} />
 		<span class="text-[9px] leading-tight">New</span>

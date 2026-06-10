@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { sessions } from '$lib/stores/sessions';
 	import { projects } from '$lib/stores/projects';
-	import { ui, setView, openWizard } from '$lib/stores/ui';
+	import { ui, setView, openOnboarding } from '$lib/stores/ui';
 	import { cn } from '$lib/utils/cn';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Terminal from '@lucide/svelte/icons/terminal';
@@ -56,7 +56,7 @@
 				<button
 					title="Get started"
 					class="inline-flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
-					onclick={() => openWizard()}
+					onclick={() => openOnboarding()}
 				>
 					<Plus size={14} />
 				</button>
