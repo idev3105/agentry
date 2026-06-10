@@ -399,18 +399,18 @@ impl SessionManager {
                     if let Err(e) = kill(pgrp, Signal::SIGTERM) {
                         eprintln!("[session {sid_k}] SIGTERM pgrp failed: {e}");
                     }
+                    std::thread::sleep(std::time::Duration::from_millis(250));
+                    // Probe the leader; ESRCH = the group is gone.
+                    let leader = Pid::from_raw(kill_pid as i32);
+                    if kill(leader, None).is_ok() {
+                        if let Err(e) = kill(pgrp, Signal::SIGKILL) {
+                            eprintln!("[session {sid_k}] SIGKILL pgrp failed: {e}");
+                        }
+                    }
                 }
                 #[cfg(windows)]
                 {
                     let _ = kill_pid;
-                }
-                std::thread::sleep(std::time::Duration::from_millis(250));
-                // Probe the leader; ESRCH = the group is gone.
-                let leader = Pid::from_raw(kill_pid as i32);
-                if kill(leader, None).is_ok() {
-                    if let Err(e) = kill(pgrp, Signal::SIGKILL) {
-                        eprintln!("[session {sid_k}] SIGKILL pgrp failed: {e}");
-                    }
                 }
             });
 
