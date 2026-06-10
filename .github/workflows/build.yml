@@ -67,7 +67,7 @@ jobs:
         working-directory: gui
         run: |
           pnpm install --frozen-lockfile
-          ./node_modules/.bin/svelte-kit sync
+          npx svelte-kit sync
 
       - name: Clippy
         run: cargo clippy -p agentry-wire -p agentry-daemon -p agentry-cli -- -D warnings
@@ -85,10 +85,6 @@ jobs:
         env:
           GDK_BACKEND: ${{ matrix.os == 'ubuntu-22.04' && 'x11' || '' }}
           WEBKIT_DISABLE_DMABUF_RENDERER: ${{ matrix.os == 'ubuntu-22.04' && '1' || '' }}
-
-      - name: List Linux bundle outputs
-        if: matrix.os == 'ubuntu-22.04'
-        run: ls -la target/release/bundle/
 
       - name: Upload macOS bundle
         if: matrix.os == 'macos-14'
