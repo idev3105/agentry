@@ -65,14 +65,7 @@ jobs:
 
       - name: Install frontend deps
         working-directory: gui
-        run: |
-          pnpm install
-          ls -la node_modules/.bin/svelte-kit || echo "svelte-kit NOT found"
-          # Verify lockfile is frozen (no unintended changes)
-          git diff --exit-code pnpm-lock.yaml || {
-            echo "ERROR: pnpm-lock.yaml is dirty — run 'pnpm install' locally and commit the lockfile"
-            exit 1
-          }
+        run: pnpm install --frozen-lockfile
 
       - name: Clippy
         run: cargo clippy -p agentry-wire -p agentry-daemon -p agentry-cli -- -D warnings
@@ -88,8 +81,8 @@ jobs:
         working-directory: gui
         run: pnpm tauri:build
         env:
-          GDK_BACKEND: x11
-          WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+          GDK_BACKEND: ${{ matrix.os == 'ubuntu-22.04' && 'x11' || '' }}
+          WEBKIT_DISABLE_DMABUF_RENDERER: ${{ matrix.os == 'ubuntu-22.04' && '1' || '' }}
 
       - name: List Linux bundle outputs
         if: matrix.os == 'ubuntu-22.04'

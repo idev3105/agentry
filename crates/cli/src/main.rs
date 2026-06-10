@@ -1,4 +1,4 @@
-#[cfg(unix)]
+#[cfg(not(windows))]
 mod unix_impl {
     use agentry_wire::{encode, decode, Message, Cmd, CmdEnvelope, WIRE_VERSION};
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -6,8 +6,9 @@ mod unix_impl {
 
     pub async fn run() -> anyhow::Result<()> {
         let args: Vec<String> = std::env::args().collect();
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
         let sock_path = std::env::var("AGENTRY_SOCK")
-            .unwrap_or_else(|_| format!("{}/.agentry/daemon.sock", std::env::var("HOME").unwrap()));
+            .unwrap_or_else(|_| format!("{home}/.agentry/daemon.sock"));
 
         let stream = UnixStream::connect(&sock_path).await?;
         let (read_half, mut write_half) = stream.into_split();
@@ -51,7 +52,7 @@ mod windows_impl {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    #[cfg(unix)]
+    #[cfg(not(windows))]
     { unix_impl::run().await }
     #[cfg(windows)]
     { windows_impl::run().await }
