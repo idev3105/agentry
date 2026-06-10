@@ -16,6 +16,8 @@ mod unix_impl {
     use crate::store::Store;
     use crate::session::SessionManager;
     use crate::server::Server;
+    // ... rest of the content remains same ...
+
 
     pub async fn run() -> anyhow::Result<()> {
         let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
