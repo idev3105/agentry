@@ -40,7 +40,9 @@ Bump `WIRE_VERSION` only on breaking changes (daemon rejects `v > WIRE_VERSION`)
 - `agent_type` has two encodings (`claude_code` wire vs `claude` display). See `agent_display_name()` in `daemon/src/server.rs`. Don't conflate.
 - PTY reader is **blocking** — must run in `std::thread::spawn`, capture `tokio::runtime::Handle::current()` *before* the thread starts.
 - `Store::cleanup_zombies` runs every daemon startup → marks all non-terminal sessions `failed`. Resume-after-restart in `docs/session-lifecycle.md` is NOT implemented.
-- OpenCode + Codex session-id capture: NOT implemented. Only Claude Code's `--session-id <uuid>` works.
+- Agent-session-id capture is now implemented for all three: Claude Code (`--session-id`), Codex (fs watch), OpenCode (session-list diff). Surfaces as `agent_session_id` / `agent_session_name` on `SessionInfo` + `SessionStarted`.
+- `agent_output` events are filtered per-connection by the focused session (set via `focus_session`). Unread badges derive from a per-session activity sequence — bump `lastSeenSeq` in `pickSession` to avoid stale spikes (see commit 9954aa2).
+- 9Router lifecycle (detect/start/stop/dashboard) lives in the Tauri shim, not the daemon — see `gui/src-tauri/src/r9.rs` and `gui/src/lib/stores/r9.svelte.ts`. Dashboard is iframed from `localhost:20128/dashboard`.
 
 ## Style
 

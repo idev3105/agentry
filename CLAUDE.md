@@ -98,7 +98,7 @@ The shim and daemon both `use agentry_wire::*` so wire types never drift.
 - `pid.rs` — pidfile read/write/cleanup
 - `migrations.sql` — embedded via `include_str!`; tables `projects`, `agent_profiles`, `sessions`, `session_tail`, `settings`
 
-Events fan out through one `tokio::sync::broadcast::Sender<Event>` (capacity 512). Each connection's writer task subscribes; lagged receivers are skipped, not killed. `agent_output` is supposed to be filtered by the connection's focused session id but currently every connection receives every output event — see `server.rs` `_focused_clone` (subscription model still TODO; see `wire-protocol.md` §2.4).
+Events fan out through one `tokio::sync::broadcast::Sender<Event>` (capacity 512). Each connection's writer task subscribes; lagged receivers are skipped, not killed. `agent_output` is filtered per-connection by the focused session id set via `focus_session` (commit 4c7ccd4); unread badges are derived from a per-session activity sequence number.
 
 ### Tauri shim (`gui/src-tauri/src/`)
 
@@ -132,7 +132,7 @@ Every cmd response is built ad-hoc in `build_resp()` (a JSON `Value` with `v`/`k
 - **`agent_type` strings have two encodings.** Wire enum `AgentType` serializes as `claude_code` / `open_code` / `codex` (snake_case). `SessionInfo.agent` and `SessionStartedEvent.agent` are the *display* names (`claude` / `opencode` / `codex`) — see `agent_display_name()` in `server.rs`. Don't conflate them.
 - **Resume reuses the original session row** via `Store::reactivate_session` — it nulls `exit_code`/`fail_reason`/`finished_at` and re-stamps `created_at`. There is no separate "resumed" row, even though `data-models.md` §4 describes it as creating a new session with `parent_session_id`. The schema column exists but is currently always NULL.
 - **`Store::cleanup_zombies` runs on every startup** and marks any non-terminal session `failed` with reason `daemon restarted`. The three recovery scenarios in `session-lifecycle.md` §"Resume sau restart daemon" are NOT yet implemented.
-- **OpenCode + Codex session-id capture are not implemented.** Only Claude Code's pre-generated `--session-id <uuid>` works (`session.rs` `build_argv()`). The codex `notify`-watch and opencode list-diff approaches in `data-models.md` §4 are still TODO.
+- **Agent-session-id capture differs per agent.** Claude Code uses a pre-generated `--session-id <uuid>` passed via `build_argv()`. Codex captures its id via fs watch on the session log (commit 243cd47). OpenCode captures via a session-list diff after spawn (commit b6def5f). All three surface as `agent_session_id` + `agent_session_name` on `SessionInfo` / `SessionStarted` and are displayed in the Inspector with copy-to-clipboard.
 - **`SessionManager::get_activity` uses `block_in_place` + `block_on`** to read activity sync from inside `ListSessions`. Don't call it from a single-threaded runtime.
 - **`SessionHandle::inner` is std::sync::Mutex.** Hot per-session state (ring, activity) lives in `Arc<Mutex<SessionInner>>` separate from the outer `RwLock<HashMap>`. NEVER hold an `inner.lock()` guard across `.await` — `MutexGuard: !Send`. Lock in a block, copy out the data, drop the guard, then await.
 - **Frontend mirrors are hand-written.** No `ts-rs` codegen — every wire change requires touching `gui/src/lib/types.ts` *and* `ipc.ts`.
