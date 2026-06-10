@@ -3,16 +3,16 @@ mod pid;
 mod server;
 mod session;
 mod profile;
-#[cfg(unix)]
+#[cfg(not(windows))]
 mod codex_watch;
-#[cfg(unix)]
+#[cfg(not(windows))]
 mod opencode_capture;
 
 use std::sync::Arc;
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 async fn run_daemon() -> anyhow::Result<()> {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
     let agentry_dir = format!("{home}/.agentry");
     std::fs::create_dir_all(&agentry_dir)?;
 
