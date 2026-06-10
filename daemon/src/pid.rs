@@ -1,3 +1,7 @@
+#[cfg(unix)]
+use nix::sys::signal;
+#[cfg(unix)]
+use nix::unistd;
 use std::fs;
 
 const PID_FILE: &str = "daemon.pid";
@@ -19,13 +23,21 @@ pub fn cleanup(dir: &str) {
 }
 
 pub fn is_running(dir: &str) -> bool {
-    if let Some(pid) = read(dir) {
-        // kill -0: check process exists
-        nix::sys::signal::kill(
-            nix::unistd::Pid::from_raw(pid as i32),
-            None,
-        ).is_ok()
-    } else {
+    #[cfg(unix)]
+    {
+        if let Some(pid) = read(dir) {
+            // kill -0: check process exists
+            signal::kill(
+                unistd::Pid::from_raw(pid as i32),
+                None,
+            ).is_ok()
+        } else {
+            false
+        }
+    }
+    #[cfg(windows)]
+    {
+        // Windows implementation or just false for now
         false
     }
 }
