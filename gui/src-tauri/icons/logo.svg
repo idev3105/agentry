@@ -1,0 +1,10 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 02: The Continuous Core -->
+  <!-- Outer loop path representing agentic cycles -->
+  <path d="M60 150 L100 60 L140 150" stroke="#1c1b1a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- AI Core node -->
+  <circle cx="100" cy="60" r="14" fill="#ffffff" stroke="#3b82f6" stroke-width="8" />
+  <!-- Horizontal feedback loop line -->
+  <path d="M72 120 C85 100, 115 100, 128 120" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" fill="none" />
+  <path d="M128 120 C115 140, 85 140, 72 120" stroke="#1c1b1a" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.3" />
+</svg>
