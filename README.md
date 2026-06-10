@@ -4,6 +4,7 @@
 > (`claude`, `opencode`, `codex`) inside a single window — agents survive
 > closing the window.
 
+[![build](https://github.com/idev3105/agentry/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/idev3105/agentry/actions/workflows/build.yml)
 [![status](https://img.shields.io/badge/status-Phase%202-orange)]()
 [![rust](https://img.shields.io/badge/rust-stable-93450a?logo=rust)]()
 [![svelte](https://img.shields.io/badge/svelte-5-ff3e00?logo=svelte)]()
@@ -24,8 +25,11 @@ into one GUI:
   daemon keeps the PTYs running, GUI re-attaches on next launch.
 - **Activity badges.** A 1 Hz idle heuristic surfaces sessions that need
   your attention (`● cần bạn` / "needs you").
-- **Resume.** Re-attach to an interrupted Claude Code session by its
-  pre-generated `--session-id` UUID.
+- **Resume.** Re-attach to an interrupted session by its captured
+  `agent_session_id`: Claude Code via pre-generated `--session-id` UUID,
+  Codex via fs-watch on its session log, OpenCode via session-list diff.
+- **9Router integration.** Detect, start/stop, and embed the 9Router
+  dashboard (`localhost:20128/dashboard`) from inside the GUI.
 
 > Status: mid Phase 2 of [`docs/roadmap.md`](docs/roadmap.md). Single-agent
 > usage works end-to-end; orchestration / multi-agent pipelines / Windows
