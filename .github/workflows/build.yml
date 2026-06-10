@@ -65,7 +65,9 @@ jobs:
 
       - name: Install frontend deps
         working-directory: gui
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          ./node_modules/.bin/svelte-kit sync
 
       - name: Clippy
         run: cargo clippy -p agentry-wire -p agentry-daemon -p agentry-cli -- -D warnings
