@@ -390,12 +390,19 @@ impl SessionManager {
                 if kill_pid == 0 {
                     return;
                 }
-                use nix::sys::signal::{kill, Signal};
-                use nix::unistd::Pid;
-                // Negative pid → signal the process group with that pgid.
-                let pgrp = Pid::from_raw(-(kill_pid as i32));
-                if let Err(e) = kill(pgrp, Signal::SIGTERM) {
-                    eprintln!("[session {sid_k}] SIGTERM pgrp failed: {e}");
+                #[cfg(unix)]
+                {
+                    use nix::sys::signal::{kill, Signal};
+                    use nix::unistd::Pid;
+                    // Negative pid → signal the process group with that pgid.
+                    let pgrp = Pid::from_raw(-(kill_pid as i32));
+                    if let Err(e) = kill(pgrp, Signal::SIGTERM) {
+                        eprintln!("[session {sid_k}] SIGTERM pgrp failed: {e}");
+                    }
+                }
+                #[cfg(windows)]
+                {
+                    let _ = kill_pid;
                 }
                 std::thread::sleep(std::time::Duration::from_millis(250));
                 // Probe the leader; ESRCH = the group is gone.

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+#[cfg(unix)]
 use tokio::net::{UnixListener, UnixStream};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{broadcast, RwLock};
