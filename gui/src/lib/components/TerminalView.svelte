@@ -177,12 +177,58 @@
 			brightMagenta: '#c678dd',
 			brightCyan:    '#56b6c2',
 			brightWhite:   '#fff',
+		},
+		dark: {
+			background:    '#09090b',
+			foreground:    '#fafafa',
+			cursor:        '#fafafa',
+			cursorAccent:  '#09090b',
+			selectionBackground: '#27272a',
+			black:         '#18181b',
+			red:           '#ef4444',
+			green:         '#22c55e',
+			yellow:        '#eab308',
+			blue:          '#3b82f6',
+			magenta:       '#8b5cf6',
+			cyan:          '#2dd4bf',
+			white:         '#a1a1aa',
+			brightBlack:   '#71717a',
+			brightRed:     '#f87171',
+			brightGreen:   '#4ade80',
+			brightYellow:  '#facc15',
+			brightBlue:    '#60a5fa',
+			brightMagenta: '#a78bfa',
+			brightCyan:    '#5eead4',
+			brightWhite:   '#fafafa',
+		},
+		light: {
+			background:    '#ffffff',
+			foreground:    '#09090b',
+			cursor:        '#09090b',
+			cursorAccent:  '#ffffff',
+			selectionBackground: '#e4e4e7',
+			black:         '#09090b',
+			red:           '#dc2626',
+			green:         '#16a34a',
+			yellow:        '#ca8a04',
+			blue:          '#2563eb',
+			magenta:       '#7c3aed',
+			cyan:          '#0d9488',
+			white:         '#71717a',
+			brightBlack:   '#52525b',
+			brightRed:     '#ef4444',
+			brightGreen:   '#22c55e',
+			brightYellow:  '#eab308',
+			brightBlue:    '#3b82f6',
+			brightMagenta: '#8b5cf6',
+			brightCyan:    '#14b8a6',
+			brightWhite:   '#18181b',
 		}
 	};
 
 	$effect(() => {
 		if (!term) return;
-		term.options.theme = THEMES[theme.value as 'gruvbox' | 'one-dark'];
+		term.options.theme = THEMES[theme.value];
 	});
 
 	onDestroy(() => {

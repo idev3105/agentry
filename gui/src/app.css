@@ -93,6 +93,112 @@
   --color-accent-info:   #61afef;
 }
 
+/* Dark (shadcn zinc) — runtime override via data-theme attribute on <html>.
+   Same --color-* var names so all utility classes update automatically. */
+:root[data-theme="dark"] {
+  /* bg */
+  --color-background:    #09090b;
+  --color-card:          #18181b;
+  --color-secondary:     #27272a;
+  --color-muted:         #27272a;
+  --color-border:        #27272a;
+  --color-input:         #18181b;
+  --color-popover:       #18181b;
+
+  /* fg */
+  --color-foreground:             #fafafa;
+  --color-card-foreground:        #fafafa;
+  --color-popover-foreground:     #fafafa;
+  --color-secondary-foreground:   #fafafa;
+  --color-muted-foreground:       #a1a1aa;
+  --color-accent:                 #3b82f6;
+  --color-accent-foreground:      #ffffff;
+
+  /* primary */
+  --color-primary:            #fafafa;
+  --color-primary-foreground: #18181b;
+
+  /* semantic */
+  --color-destructive:            #ef4444;
+  --color-destructive-foreground: #fafafa;
+
+  /* zinc-friendly accent palette (mapped to gruvbox var names for compatibility) */
+  --color-gruvbox-yellow:  #eab308;
+  --color-gruvbox-green:   #22c55e;
+  --color-gruvbox-aqua:    #2dd4bf;
+  --color-gruvbox-blue:    #3b82f6;
+  --color-gruvbox-orange:  #f97316;
+  --color-gruvbox-purple:  #8b5cf6;
+  --color-gruvbox-red:     #ef4444;
+  --color-gruvbox-gray:    #71717a;
+
+  /* semantic status overrides */
+  --color-accent-ok:     #22c55e;
+  --color-accent-warn:   #eab308;
+  --color-accent-error:  #ef4444;
+  --color-accent-info:   #3b82f6;
+}
+
+/* Light (shadcn zinc) — runtime override via data-theme attribute on <html>. */
+:root[data-theme="light"] {
+  /* bg */
+  --color-background:    #ffffff;
+  --color-card:          #fafafa;
+  --color-secondary:     #f4f4f5;
+  --color-muted:         #f4f4f5;
+  --color-border:        #e4e4e7;
+  --color-input:         #ffffff;
+  --color-popover:       #ffffff;
+
+  /* fg */
+  --color-foreground:             #09090b;
+  --color-card-foreground:        #09090b;
+  --color-popover-foreground:     #09090b;
+  --color-secondary-foreground:   #18181b;
+  --color-muted-foreground:       #71717a;
+  --color-accent:                 #2563eb;
+  --color-accent-foreground:      #ffffff;
+
+  /* primary */
+  --color-primary:            #18181b;
+  --color-primary-foreground: #fafafa;
+
+  /* semantic */
+  --color-destructive:            #dc2626;
+  --color-destructive-foreground: #ffffff;
+
+  /* darker accent palette for light bg (mapped to gruvbox var names) */
+  --color-gruvbox-yellow:  #ca8a04;
+  --color-gruvbox-green:   #16a34a;
+  --color-gruvbox-aqua:    #0d9488;
+  --color-gruvbox-blue:    #2563eb;
+  --color-gruvbox-orange:  #ea580c;
+  --color-gruvbox-purple:  #7c3aed;
+  --color-gruvbox-red:     #dc2626;
+  --color-gruvbox-gray:    #71717a;
+
+  /* semantic status overrides */
+  --color-accent-ok:     #16a34a;
+  --color-accent-warn:   #ca8a04;
+  --color-accent-error:  #dc2626;
+  --color-accent-info:   #2563eb;
+}
+
+/* Accent overrides — runtime via data-accent attribute on <html>.
+   data-accent absent OR "default" → accent stays at the theme's own value. */
+:root[data-accent="teal"] {
+  --color-accent:            #2f9e6e;
+  --color-accent-foreground: #ffffff;
+}
+:root[data-accent="violet"] {
+  --color-accent:            #8b5cf6;
+  --color-accent-foreground: #ffffff;
+}
+:root[data-accent="amber"] {
+  --color-accent:            #d97706;
+  --color-accent-foreground: #ffffff;
+}
+
 /* Density — switched via data-density attribute on root <div> in +page.svelte.
    Default (no attribute or "comfortable") = py-1.5 equiv. "compact" = py-1 equiv.
    Components opt-in by using py-[var(--row-py)] instead of hardcoded py-1/py-1.5. */

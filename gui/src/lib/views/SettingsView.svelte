@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { settings, density } from '$lib/stores/settings';
 	import { r9 } from '$lib/stores/r9.svelte';
-	import { theme } from '$lib/stores/theme.svelte';
+	import { theme, accent, type Theme, type Accent } from '$lib/stores/theme.svelte';
 	import { cn, fmtChord } from '$lib/utils/cn';
 	import Play from '@lucide/svelte/icons/play';
 	import Square from '@lucide/svelte/icons/square';
@@ -114,10 +114,28 @@
 
 		<section class="bg-card border border-border rounded p-4 space-y-3">
 			<h2 class="text-sm font-semibold">Theme</h2>
-			<div class="flex gap-2">
-				{#each ['gruvbox','one-dark'] as t}
+			<div class="flex gap-2 flex-wrap">
+				{#each (['gruvbox', 'one-dark', 'dark', 'light'] as Theme[]) as t (t)}
 					<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
-							onclick={() => theme.set(t as 'gruvbox' | 'one-dark')}>{t}</button>
+							onclick={() => theme.set(t)}>{t}</button>
+				{/each}
+			</div>
+		</section>
+
+		<section class="bg-card border border-border rounded p-4 space-y-3">
+			<h2 class="text-sm font-semibold">Accent</h2>
+			<div class="flex gap-2 flex-wrap">
+				{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
+					<button
+						class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', accent.value === a ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+						onclick={() => accent.set(a)}
+					>
+						<span
+							class="w-3 h-3 rounded-full border border-border"
+							style={`background:${a === 'teal' ? '#2f9e6e' : a === 'violet' ? '#8b5cf6' : a === 'amber' ? '#d97706' : 'var(--color-accent)'}`}
+						></span>
+						{a}
+					</button>
 				{/each}
 			</div>
 		</section>
