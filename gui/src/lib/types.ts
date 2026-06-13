@@ -76,6 +76,12 @@ export interface R9StatusResp {
 	port: number;
 }
 
+export interface RemoteStatus {
+	listening: boolean;
+	address: string | null;
+	error: string | null;
+}
+
 export interface Settings {
 	defaultProfileId: string | null;
 	maxConcurrentSessions: number;

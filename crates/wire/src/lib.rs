@@ -60,6 +60,7 @@ pub enum Cmd {
     // Settings
     GetSettings,
     SetDefaultProfile(SetDefaultProfileCmd),
+    GetRemoteStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -291,6 +292,7 @@ pub enum RespData {
     ListProjects(ListProjectsResp),
     ListProfiles(ListProfilesResp),
     GetSettings(GetSettingsResp),
+    GetRemoteStatus(GetRemoteStatusResp),
     Empty(EmptyResp),
 }
 
@@ -321,6 +323,13 @@ pub struct ListProjectsResp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListProfilesResp {
     pub profiles: Vec<ProfileInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetRemoteStatusResp {
+    pub listening: bool,
+    pub address: Option<String>,
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

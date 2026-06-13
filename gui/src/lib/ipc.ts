@@ -11,6 +11,7 @@ import type {
 	ProjectInfo,
 	ProfileInfo,
 	R9StatusResp,
+	RemoteStatus,
 	SessionInfo
 } from '$lib/types';
 
@@ -63,6 +64,15 @@ export async function getSettings(): Promise<RespOk> {
 
 export async function createProject(name: string, path: string): Promise<void> {
 	await rpc({ cmd: 'create_project', name, path });
+}
+
+export async function getRemoteStatus(): Promise<RemoteStatus> {
+	const r = await rpc({ cmd: 'get_remote_status' }) as Record<string, unknown>;
+	return {
+		listening: (r.listening as boolean) ?? false,
+		address: (r.address as string) ?? null,
+		error: (r.error as string) ?? null,
+	};
 }
 
 export async function removeProject(projectId: string): Promise<void> {

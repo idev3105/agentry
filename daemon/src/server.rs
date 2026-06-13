@@ -433,6 +433,20 @@ impl Server {
                     .map_err(|e| e.to_string())?;
                 Ok(serde_json::json!({"ok":true}))
             }
+
+            Cmd::GetRemoteStatus => {
+                let addr = crate::remote::remote_bind_addr();
+                let (listening, address, error) = match addr {
+                    Some(a) => (true, Some(a.to_string()), None),
+                    None => (false, None, Some("tailscale interface not found".to_string())),
+                };
+                Ok(serde_json::json!({
+                    "ok": true,
+                    "listening": listening,
+                    "address": address,
+                    "error": error,
+                }))
+            }
         }
     }
 }
