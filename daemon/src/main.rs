@@ -3,6 +3,7 @@ mod pid;
 mod server;
 mod session;
 mod profile;
+mod remote;
 #[cfg(not(windows))]
 mod codex_watch;
 #[cfg(not(windows))]
@@ -37,6 +38,18 @@ async fn run_daemon() -> anyhow::Result<()> {
     }).ok();
 
     eprintln!("agentry-daemon listening on {sock_path}");
+
+    // Spawn remote WS server on Tailscale interface (non-fatal if no tailnet).
+    let home2 = home.clone();
+    let remote_server = server.clone();
+    tokio::spawn(async move {
+        let static_dir = format!("{home2}/.agentry/static");
+        std::fs::create_dir_all(&static_dir).ok();
+        if let Err(e) = remote::serve(remote_server, static_dir).await {
+            tracing::warn!("remote server error: {e}");
+        }
+    });
+
     server.listen(&sock_path).await?;
 
     pid::cleanup(&agentry_dir);

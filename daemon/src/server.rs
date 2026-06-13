@@ -133,7 +133,11 @@ impl Server {
         Ok(())
     }
 
-    async fn dispatch(
+    pub fn subscribe_events(&self) -> EventRx {
+        self.event_tx.subscribe()
+    }
+
+    pub async fn dispatch(
         &self,
         envelope: CmdEnvelope,
         focused: &Arc<RwLock<Option<String>>>,
