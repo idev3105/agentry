@@ -8,6 +8,7 @@
 	import Inspector from '$lib/components/Inspector.svelte';
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
+	import LaunchSheet from '$lib/components/LaunchSheet.svelte';
 import SplitPane from '$lib/components/SplitPane.svelte';
 import SessionTabs from '$lib/components/SessionTabs.svelte';
 import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
@@ -177,6 +178,7 @@ import { listen } from '@tauri-apps/api/event';
 					failReason: null,
 					agent_session_id: e.agent_session_id,
 					agent_session_name: e.agent_session_name,
+					createdAt: new Date().toISOString(),
 				});
 				// Resumed/already-titled sessions should NOT get auto-renamed by
 				// the first prompt — only fresh "<agent> · #N" titles are subject
@@ -256,6 +258,7 @@ import { listen } from '@tauri-apps/api/event';
 				updateSession(e.session_id, {
 					status: 'finished',
 					activity: null,
+					exitCode: e.exit_code,
 					failReason: e.exit_code === 0 ? null : `exit ${e.exit_code}`
 				});
 				// Only auto-close the terminal pane if the session was still
@@ -272,6 +275,7 @@ import { listen } from '@tauri-apps/api/event';
 				updateSession(e.session_id, {
 					status: 'failed',
 					activity: null,
+					exitCode: e.exit_code,
 					failReason: e.reason
 				});
 				if (wasActive) maybeUnfocus(e.session_id);
@@ -710,5 +714,11 @@ import { listen } from '@tauri-apps/api/event';
 </div>
 
 <CommandPalette onPickSession={pickSession} />
-<Onboarding />
+{#if $ui.onboardingOpen}
+	{#if localStorage.getItem('agentry:onboarded') === '1'}
+		<LaunchSheet />
+	{:else}
+		<Onboarding />
+	{/if}
+{/if}
 <OnboardingTour />

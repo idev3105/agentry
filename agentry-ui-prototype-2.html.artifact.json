@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "Agentry UI Prototype",
+  "entry": "agentry-ui-prototype-2.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "primary": true,
+  "createdAt": "2026-06-10T13:46:06.896Z",
+  "updatedAt": "2026-06-10T13:46:06.897Z",
+  "sourceSkillId": "agent-browser",
+  "metadata": {
+    "identifier": "agentry-ui-prototype",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

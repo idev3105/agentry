@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<title>Agentry Remote</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- SVG icon sprite — single source, replaces ad-hoc emoji -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="M12 3 22 21H2L12 3Z" fill="currentColor"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-corner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></symbol>
+</svg>
+
+<div class="phone-shell">
+<div class="app" id="app">
+
+  <!-- ════════ VIEW: CONNECTION PROBLEM (no pairing — Tailscale carries identity) ════════ -->
+  <section class="view view-conn" id="view-conn" hidden>
+    <div class="conn-wrap">
+      <div class="pair-logo">
+        <svg class="logo-mark" width="18" height="18"><use href="#i-logo"/></svg>
+        <span class="logo-word">Agentry <em>Remote</em></span>
+      </div>
+
+      <!-- state: dev machine unreachable (daemon down / machine asleep) -->
+      <div class="conn-step" id="conn-step-daemon" hidden>
+        <div class="pair-bigicon"><svg width="44" height="44"><use href="#i-monitor"/></svg></div>
+        <h1>Can't reach <span class="mono" id="conn-host-daemon">dev-macbook</span></h1>
+        <p class="pair-sub">You're on the tailnet, but the dev machine isn't responding. It may be asleep, powered off, or the Agentry daemon isn't running.</p>
+        <ul class="conn-hints">
+          <li>Check the dev machine is awake and online</li>
+          <li>Confirm the Agentry desktop app / daemon is running on it</li>
+        </ul>
+        <button class="btn btn-primary btn-block" id="btn-conn-retry">Try again</button>
+      </div>
+
+      <!-- state: this device off the tailnet (Tailscale not connected here) -->
+      <div class="conn-step" id="conn-step-tailnet" hidden>
+        <div class="pair-bigicon"><svg width="44" height="44"><use href="#i-radio"/></svg></div>
+        <h1>Not on your tailnet</h1>
+        <p class="pair-sub">This device can't see the tailnet. Tailscale may be turned off here, or its session expired.</p>
+        <ul class="conn-hints">
+          <li>Open Tailscale on <strong>this device</strong> and make sure it's connected</li>
+          <li>Re-authenticate if your session expired</li>
+        </ul>
+        <button class="btn btn-primary btn-block" id="btn-conn-retry-2">Try again</button>
+      </div>
+
+      <!-- state: reconnecting -->
+      <div class="conn-step" id="conn-step-busy" hidden>
+        <div class="spinner"></div>
+        <h1>Reconnecting…</h1>
+        <p class="pair-sub">Reaching <span class="mono" id="conn-host-busy">dev-macbook</span> over Tailscale</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ VIEW: HOME ("who needs me?") ════════ -->
+  <section class="view view-home" id="view-home" hidden>
+    <header class="topbar">
+      <div class="topbar-brand">
+        <svg class="logo-mark" width="15" height="15"><use href="#i-logo"/></svg>
+        <span class="topbar-title">Agentry</span>
+      </div>
+      <button class="conn-pill" id="conn-pill" aria-label="connection status">
+        <span class="conn-dot"></span><span class="conn-host mono">dev-macbook</span><span class="conn-label" hidden></span>
+      </button>
+      <button class="icon-btn" id="btn-settings" aria-label="Settings"><svg width="19" height="19"><use href="#i-settings"/></svg></button>
+    </header>
+
+    <div class="offline-banner" id="offline-banner" hidden>
+      <svg class="ob-icon" width="15" height="15"><use href="#i-alert"/></svg>
+      <span class="ob-text" id="ob-text">Disconnected — showing data from 14:32</span>
+      <button class="ob-retry" id="ob-retry">Retry</button>
+    </div>
+
+    <main class="home-scroll" id="home-scroll">
+      <!-- hero: the one answer -->
+      <div class="hero" id="hero">
+        <div class="hero-main">
+          <div class="hero-num" id="hero-num">2</div>
+          <svg class="hero-check" id="hero-check" width="40" height="40" hidden><use href="#i-check"/></svg>
+          <div class="hero-lines">
+            <div class="hero-text" id="hero-text">agents need you</div>
+            <div class="hero-sub" id="hero-sub">longest waiting 31m</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- project filter -->
+      <div class="filter-row" id="filter-row"></div>
+
+      <!-- needs you -->
+      <section class="sect" id="sect-await">
+        <h2 class="sect-title sect-title-await"><span class="sect-pulse"></span>Needs you</h2>
+        <div class="card-list" id="list-await"></div>
+      </section>
+
+      <!-- running -->
+      <section class="sect" id="sect-running">
+        <h2 class="sect-title">Running</h2>
+        <div class="card-list" id="list-running"></div>
+      </section>
+
+      <!-- recent -->
+      <section class="sect" id="sect-recent">
+        <h2 class="sect-title">Recent</h2>
+        <div class="card-list" id="list-recent"></div>
+      </section>
+
+      <!-- all-quiet empty state -->
+      <div class="quiet" id="quiet-state" hidden>
+        <div class="quiet-icon"><svg width="24" height="24"><use href="#i-check"/></svg></div>
+        <h2>All quiet</h2>
+        <p>No sessions are running. Nothing needs your attention.</p>
+        <button class="btn btn-primary" id="btn-quiet-new">Start a session</button>
+      </div>
+      <div class="home-bottom-pad"></div>
+    </main>
+
+    <button class="fab" id="fab-new" aria-label="New session"><svg width="22" height="22"><use href="#i-plus"/></svg></button>
+  </section>
+
+  <!-- ════════ VIEW: SESSION DETAIL ════════ -->
+  <section class="view view-session" id="view-session" hidden>
+    <header class="topbar topbar-session">
+      <button class="icon-btn" id="btn-back" aria-label="Back"><svg width="20" height="20"><use href="#i-back"/></svg></button>
+      <div class="sess-head">
+        <div class="sess-head-title" id="sess-title">fix-auth-flow</div>
+        <div class="sess-head-meta">
+          <span class="agent-dot" id="sess-agent-dot"></span>
+          <span id="sess-agent-name">claude</span>
+          <span class="meta-sep">·</span>
+          <span id="sess-project">api-server</span>
+        </div>
+      </div>
+      <span class="badge" id="sess-badge">running</span>
+      <button class="icon-btn icon-btn-danger" id="btn-kill" aria-label="Kill session"><svg width="18" height="18"><use href="#i-power"/></svg></button>
+    </header>
+
+    <div class="offline-banner" id="offline-banner-sess" hidden>
+      <svg class="ob-icon" width="15" height="15"><use href="#i-alert"/></svg>
+      <span class="ob-text" id="ob-text-sess">Disconnected — output frozen at 14:32</span>
+      <button class="ob-retry" id="ob-retry-sess">Retry</button>
+    </div>
+
+    <div class="await-strip" id="await-strip" hidden>
+      <span class="await-strip-pulse"></span>
+      <span id="await-strip-text">Waiting for your input · 12m</span>
+    </div>
+
+    <main class="term-scroll" id="term-scroll">
+      <pre class="term" id="term-out"></pre>
+    </main>
+
+    <!-- reply bar — pinned to thumb zone -->
+    <footer class="replybar" id="replybar">
+      <div class="quickkeys" id="quickkeys">
+        <div class="qk-group qk-group-answers">
+          <button class="qk qk-primary" data-send="y">y</button>
+          <button class="qk qk-primary" data-send="n">n</button>
+          <button class="qk qk-primary" data-send="1">1</button>
+          <button class="qk qk-primary" data-send="2">2</button>
+          <button class="qk qk-primary qk-enter" data-key="Enter"><svg width="14" height="14"><use href="#i-corner"/></svg>Enter</button>
+        </div>
+        <div class="qk-sep"></div>
+        <div class="qk-group">
+          <button class="qk" data-key="Up">↑</button>
+          <button class="qk" data-key="Down">↓</button>
+          <button class="qk" data-key="Esc">Esc</button>
+        </div>
+        <div class="qk-sep"></div>
+        <div class="qk-group">
+          <button class="qk qk-danger" data-key="CtrlC">Ctrl+C</button>
+        </div>
+      </div>
+      <div class="reply-row">
+        <input class="reply-input" id="reply-input" placeholder="Type a reply…" autocomplete="off">
+        <button class="reply-send" id="btn-send" aria-label="Send"><svg width="17" height="17"><use href="#i-send"/></svg></button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ════════ VIEW: SETTINGS ════════ -->
+  <section class="view view-settings" id="view-settings" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="btn-settings-back" aria-label="Back"><svg width="20" height="20"><use href="#i-back"/></svg></button>
+      <div class="topbar-title">Settings</div>
+    </header>
+    <main class="settings-scroll">
+      <section class="set-group">
+        <h3 class="set-group-title">Notifications</h3>
+        <label class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-label">Agent needs input</div>
+            <div class="set-row-sub">When a session starts waiting for you</div>
+          </div>
+          <input type="checkbox" class="switch" id="ntf-await" checked>
+        </label>
+        <label class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-label">Session failed</div>
+            <div class="set-row-sub">When a session exits with an error</div>
+          </div>
+          <input type="checkbox" class="switch" id="ntf-failed" checked>
+        </label>
+        <label class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-label">Session finished</div>
+            <div class="set-row-sub">When a long-running task completes</div>
+          </div>
+          <input type="checkbox" class="switch" id="ntf-finished">
+        </label>
+      </section>
+
+      <section class="set-group">
+        <h3 class="set-group-title">Connection</h3>
+        <div class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-label">Dev machine</div>
+            <div class="set-row-sub mono">dev-macbook.tail9c2e.ts.net · daemon v0.4.2</div>
+          </div>
+          <span class="conn-tag" id="set-conn-tag">Connected</span>
+        </div>
+        <div class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-label">Access</div>
+            <div class="set-row-sub">Secured by Tailscale — devices on your tailnet are trusted automatically. No pairing needed.</div>
+          </div>
+        </div>
+        <p class="set-note">Manage which devices can reach this machine from the Tailscale admin console and the desktop app → Settings.</p>
+      </section>
+    </main>
+  </section>
+
+  <!-- ════════ SHEET: NEW SESSION ════════ -->
+  <div class="sheet-overlay" id="sheet-overlay" hidden></div>
+  <div class="sheet" id="sheet-new" hidden>
+    <div class="sheet-grab"></div>
+    <h2 class="sheet-title">New session</h2>
+
+    <!-- context line: project comes from where you are, not a forced choice -->
+    <div class="ns-ctx" id="ns-ctx">
+      <svg class="ns-ctx-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H3z"/></svg>
+      <span class="ns-ctx-txt">Starting in <b id="ns-ctx-name">—</b></span>
+      <button class="ns-ctx-change" id="ns-ctx-change" type="button">Change</button>
+    </div>
+
+    <label class="f-label" for="ns-prompt">Prompt <span class="f-opt">optional · agent waits if empty</span></label>
+    <textarea class="f-textarea" id="ns-prompt" rows="3" placeholder="e.g. Fix the failing migration test"></textarea>
+
+    <button class="btn btn-primary btn-block" id="btn-ns-start">Start session</button>
+
+    <!-- advanced: hidden until "Change". Project + profile live here. -->
+    <div class="ns-opts" id="ns-opts" hidden>
+      <label class="f-label" for="ns-project">Project</label>
+      <select class="f-select" id="ns-project"></select>
+      <label class="f-label" for="ns-profile">Profile</label>
+      <select class="f-select" id="ns-profile"></select>
+      <div class="ns-profile-meta mono" id="ns-profile-meta"></div>
+    </div>
+  </div>
+
+  <!-- ════════ DIALOG: CONFIRM ════════ -->
+  <div class="dlg-overlay" id="dlg-overlay" hidden>
+    <div class="dlg" role="alertdialog" aria-modal="true">
+      <h3 class="dlg-title" id="dlg-title">Kill session?</h3>
+      <p class="dlg-msg" id="dlg-msg">…</p>
+      <div class="dlg-actions">
+        <button class="btn btn-ghost" id="dlg-cancel">Cancel</button>
+        <button class="btn btn-danger" id="dlg-ok">Kill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div class="toast" id="toast" hidden></div>
+
+</div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

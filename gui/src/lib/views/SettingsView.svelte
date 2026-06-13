@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { settings, density } from '$lib/stores/settings';
+	import { profiles } from '$lib/stores/profiles';
+	import { sendCmd } from '$lib/ipc';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { theme, accent, type Theme, type Accent } from '$lib/stores/theme.svelte';
 	import { remote } from '$lib/stores/remote.svelte';
@@ -51,6 +53,11 @@
 		toasts.success('Address copied');
 	}
 
+	async function setDefaultProfile(id: string) {
+		await sendCmd({ cmd: 'set_default_profile', profile_id: id });
+		settings.update((s) => ({ ...s, defaultProfileId: id }));
+	}
+
 	const tabs: { id: SettingsTab; label: string }[] = [
 		{ id: 'general', label: 'General' },
 		{ id: 'appearance', label: 'Appearance' },
@@ -85,7 +92,19 @@
 		{#if tab === 'general'}
 			<section class="bg-card border border-border rounded p-4 space-y-3">
 				<h2 class="text-sm font-semibold">Daemon</h2>
-				{@render row('Default profile', $settings.defaultProfileId ?? '—')}
+				<div class="flex items-center justify-between gap-4">
+					<span class="text-xs text-muted-foreground shrink-0">Default profile</span>
+					<select
+						class="bg-input rounded px-2 py-1 text-xs border border-border focus:border-gruvbox-yellow focus:outline-none max-w-[200px]"
+						value={$settings.defaultProfileId ?? ''}
+						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; if (v) setDefaultProfile(v); }}
+					>
+						<option value="">— none —</option>
+						{#each $profiles as p (p.id)}
+							<option value={p.id}>{p.name}</option>
+						{/each}
+					</select>
+				</div>
 				{@render row('Max concurrent sessions', String($settings.maxConcurrentSessions))}
 				{@render row('Idle threshold', `${$settings.idleThresholdS}s`)}
 				{@render row('Awaiting threshold', `${$settings.awaitingThresholdS}s`)}

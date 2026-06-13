@@ -7,6 +7,7 @@
 	import { get } from 'svelte/store';
 	import type { AgentType, ProfileInfo } from '$lib/types';
 	import { cn } from '$lib/utils/cn';
+	import { agentMeta } from '$lib/utils/agent';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import Star from '@lucide/svelte/icons/star';
@@ -275,6 +276,7 @@
 		{:else}
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl">
 				{#each $profiles as p (p.id)}
+					{@const m = agentMeta(p.agent_type)}
 					<div class="bg-card border border-border rounded p-3">
 						<div class="flex items-start justify-between gap-2">
 							<div class="flex-1 min-w-0">
@@ -286,7 +288,15 @@
 										</span>
 									{/if}
 								</div>
-								<div class="text-xs text-muted-foreground mt-0.5">{p.agent_type}</div>
+								<div class="flex items-center gap-1.5 mt-0.5">
+										{#if m.logoUrl}
+										<img src={m.logoUrl} alt={m.label}
+											class={cn('w-3.5 h-3.5 object-contain', m.label === 'OpenCode' && 'invert brightness-150')} />
+									{:else}
+										<m.icon size={12} class={m.color} />
+									{/if}
+									<span class="text-xs text-muted-foreground">{m.label}</span>
+								</div>
 							</div>
 							<div class="flex items-center gap-1">
 								{#if $settings.defaultProfileId !== p.id}

@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-accent="blue" data-density="comfortable">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Agentry</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── Activity Bar ──────────────────────────────────────── -->
+  <nav class="actbar" role="navigation" aria-label="Primary navigation">
+
+    <button class="actbar-btn active" data-nav="sessions" title="Sessions (S)" aria-label="Sessions" aria-current="page">
+      <i data-lucide="layout-list"></i>
+      <span class="nav-label">Sessions</span>
+    </button>
+
+    <button class="actbar-btn" data-nav="launch" title="New Session (N)" aria-label="New Session">
+      <i data-lucide="circle-plus"></i>
+      <span class="nav-label">New</span>
+    </button>
+
+    <button class="actbar-btn" data-nav="overview" title="Overview (O)" aria-label="Overview">
+      <i data-lucide="grid-2x2"></i>
+      <span class="nav-label">Overview</span>
+    </button>
+
+    <button class="actbar-btn" data-nav="projects" title="Projects (G)" aria-label="Projects">
+      <i data-lucide="folder-git-2"></i>
+      <span class="nav-label">Projects</span>
+    </button>
+
+    <button class="actbar-btn" data-nav="profiles" title="Profiles (P)" aria-label="Agent Profiles">
+      <i data-lucide="bookmark"></i>
+      <span class="nav-label">Profiles</span>
+    </button>
+
+    <span class="actbar-spacer"></span>
+
+    <button class="actbar-btn" data-nav="r9router" title="9Router" aria-label="9Router Integration">
+      <i data-lucide="network"></i>
+      <span class="nav-label">Router</span>
+    </button>
+
+    <button class="actbar-btn" data-nav="settings" title="Settings (,)" aria-label="Settings">
+      <i data-lucide="settings-2"></i>
+      <span class="nav-label">Settings</span>
+    </button>
+
+  </nav>
+
+  <!-- ─── Sidebar (session list) ────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Sessions</span>
+      <div class="sidebar-actions">
+        <button class="icon-btn" id="btn-quick-launch" title="Quick launch (default profile)" aria-label="Quick launch with default profile">
+          <i data-lucide="zap"></i>
+        </button>
+        <button class="icon-btn" id="btn-new-session" title="New session (N)" aria-label="New session">
+          <i data-lucide="plus"></i>
+        </button>
+        <button class="icon-btn" id="btn-refresh-sessions" title="Refresh" aria-label="Refresh sessions" data-od-id="path-0-1-0-1-1">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+        <button class="icon-btn sidebar-close" id="btn-sidebar-close" title="Close" aria-label="Close session list">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="session-list" id="session-list" role="listbox" aria-label="Agent sessions">
+
+      <!-- Group: Running -->
+      <div class="session-group-label" id="group-running-label">Running</div>
+      <div id="group-running">
+
+        <div class="session-item active" data-session-id="sess-001" role="option" aria-selected="true" tabindex="0">
+          <span class="session-item-icon">
+            <img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="Claude Code" />
+          </span>
+          <div class="session-item-body">
+            <div class="session-item-name">Refactor auth middleware</div>
+            <div class="session-item-meta">
+              <span class="session-item-agent agent-claude">Claude</span>
+              <span class="session-item-time">14m ago</span>
+            </div>
+          </div>
+          <div class="session-item-right">
+            <span class="badge badge-running"><span class="badge-dot"></span>running</span>
+            <span class="unread-badge" aria-label="3 unread">3</span>
+          </div>
+          <div class="session-item-actions">
+            <button class="icon-btn" title="Kill session" aria-label="Kill session" data-action="kill" data-session-id="sess-001">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="session-item" data-session-id="sess-002" role="option" aria-selected="false" tabindex="0">
+          <span class="session-item-icon">
+            <img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/codex-color.svg" alt="Codex" />
+          </span>
+          <div class="session-item-body">
+            <div class="session-item-name">Write unit tests for parser</div>
+            <div class="session-item-meta">
+              <span class="session-item-agent agent-codex">Codex</span>
+              <span class="session-item-time">2m ago</span>
+            </div>
+          </div>
+          <div class="session-item-right">
+            <span class="badge badge-running"><span class="badge-dot"></span>running</span>
+          </div>
+          <div class="session-item-actions">
+            <button class="icon-btn" title="Kill session" aria-label="Kill session" data-action="kill" data-session-id="sess-002">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Group: Finished -->
+      <div class="session-group-label">Finished</div>
+      <div id="group-finished">
+
+        <div class="session-item" data-session-id="sess-003" role="option" aria-selected="false" tabindex="0">
+          <span class="session-item-icon">
+            <img class="agent-icon agent-icon-opencode" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/opencode.svg" alt="OpenCode" />
+          </span>
+          <div class="session-item-body">
+            <div class="session-item-name">Add OpenAPI schema gen</div>
+            <div class="session-item-meta">
+              <span class="session-item-agent agent-opencode">OpenCode</span>
+              <span class="session-item-time">1h ago</span>
+            </div>
+          </div>
+          <div class="session-item-right">
+            <span class="badge badge-finished"><span class="badge-dot"></span>done</span>
+          </div>
+          <div class="session-item-actions">
+            <button class="icon-btn" title="Restart session" aria-label="Restart session" data-action="restart" data-session-id="sess-003">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="session-item" data-session-id="sess-004" role="option" aria-selected="false" tabindex="0">
+          <span class="session-item-icon">
+            <img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="Claude Code" />
+          </span>
+          <div class="session-item-body">
+            <div class="session-item-name">Migrate DB schema v4</div>
+            <div class="session-item-meta">
+              <span class="session-item-agent agent-claude">Claude</span>
+              <span class="session-item-time">3h ago</span>
+            </div>
+          </div>
+          <div class="session-item-right">
+            <span class="badge badge-failed"><span class="badge-dot"></span>failed</span>
+          </div>
+          <div class="session-item-actions">
+            <button class="icon-btn" title="Restart" aria-label="Restart session" data-action="restart" data-session-id="sess-004">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Empty state (hidden when sessions exist) -->
+      <div class="empty-state" id="empty-sessions" style="display:none;" aria-hidden="true">
+        <i data-lucide="server" class="empty-state-icon"></i>
+        <div class="empty-state-title">No sessions yet</div>
+        <div class="empty-state-desc">Launch a new agent session to get started.</div>
+        <button class="btn btn-primary btn-sm" data-nav="launch">New Session</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ─── Main content ──────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Shared topbar -->
+    <header class="topbar">
+      <button class="icon-btn" id="btn-sidebar-toggle" title="Toggle sidebar" aria-label="Toggle sidebar" aria-expanded="false">
+        <i data-lucide="menu"></i>
+      </button>
+
+      <!-- Project switcher — always-visible active-project anchor -->
+      <div class="proj-switcher" id="proj-switcher">
+        <button class="proj-switcher-btn" id="btn-proj-switcher" aria-haspopup="listbox" aria-expanded="false" title="Switch project (⌘P)">
+          <i data-lucide="folder-git-2"></i>
+          <span class="proj-switcher-name" id="proj-switcher-name">api-server</span>
+          <span class="proj-switcher-count" id="proj-switcher-count" style="display:none;">2</span>
+          <i data-lucide="chevron-down" class="proj-switcher-caret"></i>
+        </button>
+        <div class="proj-menu" id="proj-menu" role="listbox" aria-label="Projects" aria-hidden="true">
+          <div class="proj-menu-list" id="proj-menu-list"><!-- JS-rendered --></div>
+          <div class="proj-menu-footer">
+            <button class="proj-menu-action" id="proj-menu-new">
+              <i data-lucide="folder-plus"></i> New project…
+            </button>
+            <button class="proj-menu-action" id="proj-menu-manage">
+              <i data-lucide="settings-2"></i> Manage projects
+            </button>
+          </div>
+        </div>
+      </div>
+      <span class="topbar-sep" aria-hidden="true"></span>
+
+      <span class="topbar-title" id="topbar-title">Refactor auth middleware</span>
+
+      <!-- Terminal toolbar (shown only in terminal view) -->
+      <div id="toolbar-terminal" class="terminal-toolbar">
+        <button class="icon-btn" id="btn-copy-output" title="Copy output" aria-label="Copy terminal output">
+          <i data-lucide="copy"></i>
+        </button>
+        <button class="icon-btn" id="btn-clear-terminal" title="Clear terminal" aria-label="Clear terminal">
+          <i data-lucide="trash-2"></i>
+        </button>
+        <div class="toolbar-sep"></div>
+        <button class="btn btn-danger btn-sm" id="btn-kill-session" aria-label="Kill session">
+          <i data-lucide="x"></i>
+           Kill
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-session-info" aria-label="Session info">
+          <i data-lucide="info"></i>
+           Info
+        </button>
+      </div>
+
+      <!-- Remote Access status — server-side indicator (desktop hosts the daemon).
+           Click → dropdown summary + jump to Settings › Remote Access. -->
+      <div class="host-switcher" id="host-switcher">
+        <button class="host-pill" id="btn-host-pill" aria-haspopup="menu" aria-expanded="false" title="Remote access">
+          <i data-lucide="radio-tower" class="host-pill-icon"></i>
+          <span class="host-pill-name" id="host-pill-name">Remote off</span>
+          <span class="host-pill-badge" id="host-pill-badge" hidden>0</span>
+        </button>
+        <div class="host-menu" id="host-menu" role="menu" aria-hidden="true">
+          <div class="host-menu-label">Remote access</div>
+          <div class="ra-mini" id="ra-mini">
+            <div class="ra-mini-row">
+              <span class="ra-state-pill" data-ra="off" id="ra-mini-pill"><span class="ra-state-dot"></span><span id="ra-mini-text">Off</span></span>
+              <span class="ra-mini-host mono" id="ra-mini-host">dev-macbook</span>
+            </div>
+            <div class="ra-mini-clients" id="ra-mini-clients" hidden></div>
+          </div>
+          <div class="host-menu-footer">
+            <button class="host-menu-action" id="host-menu-manage" role="menuitem">
+              <i data-lucide="settings-2"></i> Manage remote access…
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </header>
+
+    <!-- ── VIEW 1: Terminal ──────────────────────────────────── -->
+    <section class="view active" id="view-sessions" aria-label="Terminal output" data-od-id="terminal-view">
+      <div class="terminal-header">
+        <span class="agent-icon"><img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="" /></span>
+        <div class="terminal-header-info">
+          <span class="terminal-session-title">Refactor auth middleware</span>
+          <div class="terminal-session-meta">
+            <span class="mono-chip">sess-001</span>
+            <span class="terminal-elapsed">14m 32s</span>
+            <div class="terminal-running-indicator">
+              <span class="terminal-running-dot"></span>
+              <span>running</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal-body" role="log" aria-live="polite" aria-label="Terminal output">
+        <div class="terminal-output"></div>
+        <div class="terminal-running-indicator" style="padding-left:0;margin-top:4px;">
+          <span class="terminal-running-dot"></span>
+          <span style="color:var(--fg-3);">Streaming output…</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW 2: Launch (New Session) ─────────────────────── -->
+    <section class="view" id="view-launch" aria-label="Create new session" data-od-id="launch-view">
+      <div class="launch-panel">
+        <h2>New Agent Session</h2>
+        <p class="launch-hint">A session runs a <strong>profile</strong> (agent + params) inside a <strong>project</strong>. Working directory and an initial prompt are optional.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="select-project">Project <span class="req">*</span></label>
+          <div class="input-with-btn">
+            <select class="select" id="select-project" aria-describedby="project-help">
+              <option value="">— Select a project —</option>
+            </select>
+            <button class="btn btn-secondary" id="btn-new-project" type="button" aria-label="Create project">
+              <i data-lucide="folder-plus" style="width:13px;height:13px;"></i>
+              New
+            </button>
+          </div>
+          <span class="form-help" id="project-help">Sessions are scoped to a project. The project path is the default working directory.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="select-profile">Profile <span class="req">*</span></label>
+          <div class="input-with-btn">
+            <select class="select" id="select-profile" aria-describedby="profile-help">
+              <option value="">— Select a profile —</option>
+            </select>
+            <button class="btn btn-secondary" id="btn-new-profile-inline" type="button" aria-label="Create profile">
+              <i data-lucide="plus" style="width:13px;height:13px;"></i>
+              New
+            </button>
+          </div>
+          <span class="form-help" id="profile-help">The agent type, model, and flags all live in the profile.</span>
+          <div class="profile-preview" id="launch-profile-preview" style="display:none;" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-cwd">Working Directory <span class="optional">(optional)</span></label>
+          <div class="input-with-btn">
+            <input class="input" type="text" id="input-cwd" placeholder="Defaults to the project path" autocomplete="off" spellcheck="false" />
+            <button class="btn btn-secondary" id="btn-browse-dir" type="button" aria-label="Browse directory">
+              <i data-lucide="folder-open" style="width:13px;height:13px;"></i>
+              Browse
+            </button>
+          </div>
+          <span class="form-help">Leave blank to use the project path.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-prompt">Initial Prompt <span class="optional">(optional)</span></label>
+          <textarea class="textarea" id="input-prompt" rows="4" placeholder="An optional first message for the agent. Leave blank to start an interactive session and type in the terminal."></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;padding-top:4px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-lg" id="btn-launch" aria-label="Start agent session">
+            <i data-lucide="play" style="width:14px;height:14px;"></i>
+             Start Session
+          </button>
+          <span class="text-subtle" style="font-size:11px;font-family:var(--font-mono);">
+            <span class="kbd">⌘ Enter</span> to start
+          </span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── VIEW 3: Overview ──────────────────────────────────── -->
+    <section class="view" id="view-overview" aria-label="Sessions overview" data-od-id="overview-view">
+      <div class="overview">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 style="font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:8px;">Overview
+            <span class="scope-chip" id="overview-scope" title="Scoped to the active project">api-server</span>
+          </h2>
+          <span style="font-size:11px;color:var(--fg-3);font-family:var(--font-mono);">Auto-refresh every 2s</span>
+        </div>
+
+        <div class="overview-stats">
+          <div class="stat-card">
+            <div class="stat-card-val" id="stat-running" style="color:var(--running);">2</div>
+            <div class="stat-card-label" style="color:var(--running);">Running</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-val">0</div>
+            <div class="stat-card-label">Queued</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-val" id="stat-finished" style="color:var(--finished);">1</div>
+            <div class="stat-card-label" style="color:var(--finished);">Finished</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-val" id="stat-failed" style="color:var(--failed);">1</div>
+            <div class="stat-card-label" style="color:var(--failed);">Failed</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sessions-table-head">
+            <span>Session</span>
+            <span>Project</span>
+            <span>Agent</span>
+            <span>Status</span>
+            <span>Started</span>
+            <span>Actions</span>
+          </div>
+          <div class="sessions-table">
+
+            <div class="sessions-table-row" data-session-id="sess-001">
+              <span style="font-weight:500;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Refactor auth middleware</span>
+              <span class="agent-claude" style="display:inline-flex;align-items:center;gap:5px;"><img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="Claude" style="width:13px;height:13px;" />Claude</span>
+              <span><span class="badge badge-running"><span class="badge-dot"></span>running</span></span>
+              <span style="color:var(--fg-2);font-family:var(--font-mono);font-size:11px;">14m ago</span>
+              <span style="display:flex;gap:4px;">
+                <button class="icon-btn" title="Focus" data-action="focus" data-session-id="sess-001" aria-label="Focus session">
+                  <i data-lucide="maximize-2"></i>
+                </button>
+              </span>
+            </div>
+
+            <div class="sessions-table-row" data-session-id="sess-002">
+              <span style="font-weight:500;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Write unit tests for parser</span>
+              <span class="agent-codex" style="display:inline-flex;align-items:center;gap:5px;"><img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/codex-color.svg" alt="Codex" style="width:13px;height:13px;" />Codex</span>
+              <span><span class="badge badge-running"><span class="badge-dot"></span>running</span></span>
+              <span style="color:var(--fg-2);font-family:var(--font-mono);font-size:11px;">2m ago</span>
+              <span style="display:flex;gap:4px;">
+                <button class="icon-btn" title="Focus" data-action="focus" data-session-id="sess-002" aria-label="Focus session">
+                  <i data-lucide="maximize-2"></i>
+                </button>
+              </span>
+            </div>
+
+            <div class="sessions-table-row" data-session-id="sess-003">
+              <span style="font-weight:500;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Add OpenAPI schema gen</span>
+              <span class="agent-opencode" style="display:inline-flex;align-items:center;gap:5px;"><img class="agent-icon agent-icon-opencode" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/opencode.svg" alt="OpenCode" style="width:13px;height:13px;" />OpenCode</span>
+              <span><span class="badge badge-finished"><span class="badge-dot"></span>done</span></span>
+              <span style="color:var(--fg-2);font-family:var(--font-mono);font-size:11px;">1h ago</span>
+              <span style="display:flex;gap:4px;">
+                <button class="icon-btn" title="Restart" data-action="restart" data-session-id="sess-003" aria-label="Restart session">
+                  <i data-lucide="rotate-ccw"></i>
+                </button>
+              </span>
+            </div>
+
+            <div class="sessions-table-row" data-session-id="sess-004">
+              <span style="font-weight:500;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Migrate DB schema v4</span>
+              <span class="agent-claude" style="display:inline-flex;align-items:center;gap:5px;"><img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="Claude" style="width:13px;height:13px;" />Claude</span>
+              <span><span class="badge badge-failed"><span class="badge-dot"></span>failed</span></span>
+              <span style="color:var(--fg-2);font-family:var(--font-mono);font-size:11px;">3h ago</span>
+              <span style="display:flex;gap:4px;">
+                <button class="icon-btn" title="Restart" data-action="restart" data-session-id="sess-004" aria-label="Restart session">
+                  <i data-lucide="rotate-ccw"></i>
+                </button>
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── VIEW: Projects (library / manager) ────────────────── -->
+    <section class="view" id="view-projects" aria-label="Projects" data-od-id="projects-view">
+      <div class="projects-panel">
+        <div class="projects-header">
+          <div>
+            <h2 style="font-size:15px;font-weight:600;color:var(--fg);">Projects</h2>
+            <p style="font-size:12px;color:var(--fg-3);margin-top:2px;">Every session lives in a project. Switch the active project to change the session list.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-projects-new">
+            <i data-lucide="folder-plus" style="width:14px;height:14px;"></i>
+            New Project
+          </button>
+        </div>
+        <div class="projects-grid" id="projects-grid"><!-- JS-rendered --></div>
+        <div class="empty-state" id="empty-projects" style="display:none;">
+          <i data-lucide="folder-git-2" class="empty-state-icon"></i>
+          <div class="empty-state-title">No projects yet</div>
+          <div class="empty-state-desc">Create your first project to start launching agent sessions.</div>
+          <button class="btn btn-primary btn-sm" id="btn-empty-new-project">
+            <i data-lucide="folder-plus" style="width:14px;height:14px;"></i>
+            Create Project
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── VIEW: Profiles ────────────────────────────────────── -->
+    <section class="view" id="view-profiles" aria-label="Agent profiles" data-od-id="profiles-view">
+      <div class="profiles-panel">
+
+        <div class="profiles-header">
+          <div>
+            <h2>Agent Profiles</h2>
+            <p class="profiles-sub">Saved presets — launch a configured session in one click</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-new-profile" aria-label="Create new profile">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i>
+            New Profile
+          </button>
+        </div>
+
+        <div class="profile-grid" id="profile-grid">
+          <!-- profile cards rendered by app.js -->
+        </div>
+
+        <div class="profiles-empty" id="profiles-empty" style="display:none;">
+          <i data-lucide="bookmark" style="width:32px;height:32px;opacity:.35;"></i>
+          <div class="profiles-empty-title">No profiles yet</div>
+          <p>Save an agent configuration once, launch it forever with one click.</p>
+          <button class="btn btn-primary btn-sm" id="btn-empty-new-profile">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i>
+            Create your first profile
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── VIEW 4: Settings ──────────────────────────────────── -->
+    <section class="view" id="view-settings" aria-label="Settings" data-od-id="settings-view">
+      <div class="settings-layout">
+
+        <!-- Settings tabs -->
+        <div class="settings-tabs" id="settings-tabs" role="tablist" aria-label="Settings sections">
+          <button class="settings-tab active" data-stab="general" role="tab" aria-selected="true"><i data-lucide="settings-2"></i> General</button>
+          <button class="settings-tab" data-stab="remote" role="tab" aria-selected="false"><i data-lucide="globe-2"></i> Remote Access</button>
+          <button class="settings-tab" data-stab="appearance" role="tab" aria-selected="false"><i data-lucide="palette"></i> Appearance</button>
+          <button class="settings-tab" data-stab="agents" role="tab" aria-selected="false"><i data-lucide="bot"></i> Agents</button>
+        </div>
+
+        <!-- Daemon -->
+        <div class="settings-section" data-stab-panel="general">
+          <div class="settings-section-title">Daemon Connection</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Socket Path</span>
+              <span class="settings-row-desc">Unix domain socket for daemon IPC</span>
+            </div>
+            <div class="settings-row-control">
+              <span class="mono-chip" id="setting-socket-path">/tmp/agentry-[uid].sock</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Connection Status</span>
+            </div>
+            <div class="settings-row-control">
+              <div class="conn-status">
+                <span class="conn-dot connected" id="conn-dot"></span>
+                <span id="conn-label">Connected</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Wire Protocol</span>
+              <span class="settings-row-desc">Daemon–client message format version</span>
+            </div>
+            <div class="settings-row-control">
+              <span class="mono-chip">v1.4.0</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── Remote Access (SERVER) ──────────────────────────────── -->
+        <div class="settings-section" data-stab-panel="remote" hidden>
+          <div class="settings-section-title">
+            Remote Access
+            <span class="ra-state-pill" id="ra-state-pill" data-ra="off"><span class="ra-state-dot"></span><span id="ra-state-text">Off</span></span>
+          </div>
+          <p class="settings-section-note">
+            Expose this machine's daemon to your other devices over your private
+            Tailscale network. Remote clients can view and control agents running here —
+            keep this off unless you need it.
+          </p>
+
+          <!-- Tailscale prerequisite gate (blocks enabling until tailnet is ready) -->
+          <div class="ra-gate" id="ra-gate" hidden>
+            <i data-lucide="shield-alert" class="ra-gate-icon"></i>
+            <div class="ra-gate-body">
+              <span class="ra-gate-title" id="ra-gate-title">Tailscale is not ready</span>
+              <span class="ra-gate-desc" id="ra-gate-desc">Remote access runs over your Tailscale network.</span>
+              <button class="btn btn-secondary btn-sm" id="btn-ra-gate-action"><i data-lucide="external-link"></i> <span id="ra-gate-action-label">Open Tailscale</span></button>
+            </div>
+          </div>
+
+          <!-- Main toggle row -->
+          <div class="settings-row" id="ra-toggle-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Allow remote control</span>
+              <span class="settings-row-desc" id="ra-toggle-desc">Listening on your tailnet · clients can control agents</span>
+            </div>
+            <div class="settings-row-control">
+              <label class="toggle">
+                <input type="checkbox" id="ra-toggle" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Address card (shown when listening) -->
+          <div class="ra-address" id="ra-address" hidden>
+            <div class="ra-address-main">
+              <div class="ra-address-text">
+                <span class="ra-address-label"><i data-lucide="globe-2"></i> Reachable at</span>
+                <code class="ra-address-url mono" id="ra-address-url">dev-macbook.tail9c2e.ts.net:8723</code>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btn-ra-copy"><i data-lucide="copy"></i> Copy</button>
+              <button class="btn btn-ghost btn-sm" id="btn-ra-qr"><i data-lucide="qr-code"></i> QR</button>
+            </div>
+            <div class="ra-qr" id="ra-qr" hidden>
+              <div class="ra-qr-frame" id="ra-qr-canvas"><!-- JS draws a placeholder matrix --></div>
+              <span class="ra-qr-cap">Scan from a mobile device on your tailnet</span>
+            </div>
+          </div>
+
+          <!-- Connected clients -->
+          <div class="ra-clients" id="ra-clients" hidden>
+            <div class="ra-clients-head">
+              <span class="ra-clients-title">Connected devices <span class="ra-clients-count" id="ra-clients-count">0</span></span>
+            </div>
+            <div class="ra-clients-list" id="ra-clients-list"><!-- JS-rendered --></div>
+          </div>
+
+        </div>
+
+        <!-- ── (continued: original Daemon section trailing rows) ── -->
+        <div class="settings-section" data-stab-panel="general">
+          <div class="settings-section-title">Launch</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Default Profile</span>
+              <span class="settings-row-desc">Used for 1-click launch from the sidebar</span>
+            </div>
+            <div class="settings-row-control">
+              <select class="select" id="setting-default-profile" style="min-width:200px;">
+                <option value="">— None —</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-section" data-stab-panel="appearance" hidden>
+          <div class="settings-section-title">Appearance</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Theme</span>
+              <span class="settings-row-desc">Toggle dark / light mode</span>
+            </div>
+            <div class="settings-row-control">
+              <div class="tweak-options">
+                <button class="tweak-btn active" data-tweak="theme" data-value="dark" aria-pressed="true">Dark</button>
+                <button class="tweak-btn" data-tweak="theme" data-value="light" aria-pressed="false">Light</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Density</span>
+              <span class="settings-row-desc">Interface spacing</span>
+            </div>
+            <div class="settings-row-control">
+              <div class="tweak-options">
+                <button class="tweak-btn active" data-tweak="density" data-value="comfortable" aria-pressed="true">Comfortable</button>
+                <button class="tweak-btn" data-tweak="density" data-value="compact" aria-pressed="false">Compact</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Accent Color</span>
+              <span class="settings-row-desc">Primary action color</span>
+            </div>
+            <div class="settings-row-control">
+              <div class="tweak-options">
+                <button class="tweak-btn active" data-tweak="accent" data-value="blue" aria-pressed="true">
+                  <span class="accent-dot" style="background:#60a5fa;"></span>Blue
+                </button>
+                <button class="tweak-btn" data-tweak="accent" data-value="teal" aria-pressed="false">
+                  <span class="accent-dot" style="background:#2f9e6e;"></span>Teal
+                </button>
+                <button class="tweak-btn" data-tweak="accent" data-value="violet" aria-pressed="false">
+                  <span class="accent-dot" style="background:#8b5cf6;"></span>Violet
+                </button>
+                <button class="tweak-btn" data-tweak="accent" data-value="amber" aria-pressed="false">
+                  <span class="accent-dot" style="background:#d97706;"></span>Amber
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Log Level</span>
+              <span class="settings-row-desc">Daemon logging verbosity</span>
+            </div>
+            <div class="settings-row-control">
+              <select class="select" style="width:auto;" id="select-log-level">
+                <option value="error">error</option>
+                <option value="warn">warn</option>
+                <option value="info" selected>info</option>
+                <option value="debug">debug</option>
+                <option value="trace">trace</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Agent binaries -->
+        <div class="settings-section" data-stab-panel="agents" hidden>
+          <div class="settings-section-title">Agent Binaries</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Claude Code</span>
+            </div>
+            <div class="settings-row-control" style="display:flex;align-items:center;gap:8px;">
+              <input class="input" type="text" value="/usr/local/bin/claude" style="width:220px;font-family:var(--font-mono);font-size:11px;" id="bin-claude" />
+              <span class="badge badge-running" style="font-size:10px;">found</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Codex</span>
+            </div>
+            <div class="settings-row-control" style="display:flex;align-items:center;gap:8px;">
+              <input class="input" type="text" value="/usr/local/bin/codex" style="width:220px;font-family:var(--font-mono);font-size:11px;" id="bin-codex" />
+              <span class="badge badge-running" style="font-size:10px;">found</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">OpenCode</span>
+            </div>
+            <div class="settings-row-control" style="display:flex;align-items:center;gap:8px;">
+              <input class="input" type="text" value="" placeholder="/usr/local/bin/opencode" style="width:220px;font-family:var(--font-mono);font-size:11px;" id="bin-opencode" />
+              <span class="badge badge-failed" style="font-size:10px;">not found</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 9Router -->
+        <div class="settings-section" data-stab-panel="general">
+          <div class="settings-section-title">9Router Integration</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">9Router Status</span>
+              <span class="settings-row-desc">Manage the 9Router gateway process</span>
+            </div>
+            <div class="settings-row-control">
+              <button class="btn btn-secondary btn-sm" data-nav="r9router">Open 9Router Panel →</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Session limits -->
+        <div class="settings-section" data-stab-panel="general">
+          <div class="settings-section-title">Session Limits</div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Max Concurrent Sessions</span>
+            </div>
+            <div class="settings-row-control">
+              <input class="input" type="number" min="1" max="32" value="8" style="width:72px;" id="input-max-sessions" />
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-label">
+              <span class="settings-row-name">Ring Buffer Size</span>
+              <span class="settings-row-desc">Per-session terminal buffer</span>
+            </div>
+            <div class="settings-row-control">
+              <select class="select" style="width:auto;" id="select-ring-buf">
+                <option value="524288">512 KB</option>
+                <option value="1048576">1 MB</option>
+                <option value="2097152" selected>2 MB</option>
+                <option value="4194304">4 MB</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── VIEW 5: 9Router ───────────────────────────────────── -->
+    <section class="view" id="view-r9router" aria-label="9Router integration" data-od-id="r9router-view">
+      <div class="r9-panel">
+
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+          <div>
+            <h2 style="font-size:15px;font-weight:600;color:var(--fg);">9Router Integration</h2>
+            <p style="font-size:12px;color:var(--fg-3);margin-top:2px;">Route agent outputs through a local 9Router gateway (localhost:20128)</p>
+          </div>
+        </div>
+
+        <!-- Status card -->
+        <div class="r9-status-card">
+          <div class="r9-status-header">
+            <div>
+              <div class="r9-status-name">9Router Daemon</div>
+              <div style="font-size:12px;margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="conn-status">
+                  <span class="conn-dot" id="r9-conn-dot"></span>
+                  <span id="r9-status-label">Stopped</span>
+                </div>
+                <span class="mono-chip">port: 20128</span>
+                <span class="mono-chip" id="r9-pid-chip" style="display:none;">pid: —</span>
+              </div>
+            </div>
+            <div class="r9-actions">
+              <button class="btn btn-secondary btn-sm" id="btn-r9-detect" aria-label="Detect 9Router">
+                <i data-lucide="scan-search" style="width:12px;height:12px;"></i>
+                Detect
+              </button>
+              <button class="btn btn-primary btn-sm" id="btn-r9-start" aria-label="Start 9Router">
+                <i data-lucide="play" style="width:12px;height:12px;"></i>
+                Start
+              </button>
+              <button class="btn btn-danger btn-sm" id="btn-r9-stop" style="display:none;" aria-label="Stop 9Router">
+                <i data-lucide="square" style="width:12px;height:12px;"></i>
+                Stop
+              </button>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-row">
+              <span class="meta-key">Resolved path</span>
+              <span class="meta-val" id="r9-resolved-path">not installed</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">PID</span>
+              <span class="meta-val" id="r9-pid">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">Port</span>
+              <span class="meta-val">20128</span>
+            </div>
+          </div>
+
+          <div id="r9-error-banner" style="display:none;padding:8px 10px;background:var(--failed-bg);border:1px solid var(--failed);border-radius:var(--radius-sm);font-size:12px;color:var(--failed);font-family:var(--font-mono);">
+            — error placeholder —
+          </div>
+
+        </div>
+
+        <!-- Dashboard iframe placeholder -->
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px;">
+            Dashboard — localhost:20128/dashboard
+          </div>
+          <div class="r9-iframe-placeholder" id="r9-iframe-placeholder">
+            <i data-lucide="monitor" style="width:32px;height:32px;opacity:.4;"></i>
+            <span>Dashboard unavailable — 9Router not running</span>
+            <span style="font-size:10px;opacity:.5;">Start 9Router to load the dashboard</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<!-- ─── Sidebar overlay (mobile) ─────────────────────────────── -->
+<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+<!-- ─── Session Info Drawer (Screen 4) ───────────────────────── -->
+<div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
+<aside class="drawer" id="session-drawer" role="complementary" aria-label="Session detail">
+  <div class="drawer-header">
+    <span class="drawer-title">Session Detail</span>
+    <button class="icon-btn" id="btn-close-drawer" aria-label="Close drawer">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+  <div class="drawer-body">
+
+    <!-- Status banner -->
+    <div class="session-status-banner running" id="drawer-status-banner">
+      <div class="terminal-running-dot"></div>
+      <span id="drawer-status-label">Running</span>
+    </div>
+
+    <!-- Metadata -->
+    <div>
+      <div class="drawer-section-label">Session Metadata</div>
+      <div class="meta-grid">
+
+        <div class="meta-row">
+          <span class="meta-key">Session ID</span>
+          <span class="meta-val copy-btn-row">
+            <span class="mono-chip" id="drawer-session-id">sess-001</span>
+            <button class="icon-btn" id="btn-copy-session-id" title="Copy session ID" aria-label="Copy session ID">
+              <i data-lucide="copy"></i>
+            </button>
+          </span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Agent Session ID</span>
+          <span class="meta-val copy-btn-row">
+            <span class="mono-chip" id="drawer-agent-session-id" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">pending…</span>
+            <button class="icon-btn" id="btn-copy-agent-session-id" title="Copy agent session ID" aria-label="Copy agent session ID">
+              <i data-lucide="copy"></i>
+            </button>
+          </span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Agent Session Name</span>
+          <span class="meta-val" id="drawer-agent-session-name" style="font-family:var(--font-ui);">—</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Session Name</span>
+          <span class="meta-val" id="drawer-session-name" style="font-family:var(--font-ui);">Refactor auth middleware</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Project</span>
+          <span class="meta-val" id="drawer-project" style="font-family:var(--font-ui);">—</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Profile</span>
+          <span class="meta-val" id="drawer-profile" style="font-family:var(--font-ui);">—</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Agent</span>
+          <span class="meta-val agent-claude" id="drawer-agent" style="font-family:var(--font-ui);">Claude Code</span>
+        </div>
+
+        <div class="meta-row" id="drawer-activity-row">
+          <span class="meta-key">Activity</span>
+          <span class="meta-val" id="drawer-activity">—</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Working Dir</span>
+          <span class="meta-val" id="drawer-cwd">/home/user/projects/api-server</span>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-key">Created</span>
+          <span class="meta-val" id="drawer-created-at">2025-01-15 14:23:47</span>
+        </div>
+
+        <div class="meta-row" id="drawer-exit-row" style="display:none;">
+          <span class="meta-key">Exit Code</span>
+          <span class="meta-val" id="drawer-exit-code">—</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div>
+      <div class="drawer-section-label">Timeline</div>
+      <div class="timeline" id="drawer-timeline">
+
+        <div class="timeline-item">
+          <span class="timeline-dot done"></span>
+          <div class="timeline-content">
+            <div class="timeline-label">Created</div>
+            <div class="timeline-ts">14:23:47</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <span class="timeline-dot done"></span>
+          <div class="timeline-content">
+            <div class="timeline-label">Started</div>
+            <div class="timeline-ts">14:23:49</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <span class="timeline-dot active"></span>
+          <div class="timeline-content">
+            <div class="timeline-label">Running</div>
+            <div class="timeline-ts">14:23:52 → now</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <span class="timeline-dot" style="opacity:.3;"></span>
+          <div class="timeline-content">
+            <div class="timeline-label" style="color:var(--fg-3);">Completed / Failed</div>
+            <div class="timeline-ts">—</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-danger btn-sm" id="drawer-btn-kill" aria-label="Kill session">Kill</button>
+      <button class="btn btn-secondary btn-sm" id="drawer-btn-restart" aria-label="Restart session">Restart</button>
+    </div>
+
+  </div>
+</aside>
+
+<!-- ─── Profile Editor (modal) ───────────────────────────────── -->
+<!-- ─── Create Project Modal ─────────────────────────────────── -->
+<div class="modal-overlay" id="project-modal-overlay" aria-hidden="true"></div>
+<div class="modal modal-sm" id="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title" aria-hidden="true">
+  <div class="modal-header">
+    <span class="modal-title" id="project-modal-title">New Project</span>
+    <button class="icon-btn" id="btn-close-project-modal" aria-label="Close">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group">
+      <label class="form-label" for="proj-input-path">Path <span class="req">*</span></label>
+      <div class="input-with-btn">
+        <input class="input" type="text" id="proj-input-path" placeholder="/home/user/projects/my-repo" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-secondary" id="proj-btn-browse" type="button" aria-label="Browse directory">
+          <i data-lucide="folder-open" style="width:13px;height:13px;"></i>
+          Browse
+        </button>
+      </div>
+      <span class="form-help">Absolute path to the code directory. Also the default working directory for sessions.</span>
+      <span class="form-error" id="proj-path-error" style="display:none;"></span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="proj-input-name">Name <span class="req">*</span></label>
+      <input class="input" type="text" id="proj-input-name" placeholder="Auto-filled from the folder name" autocomplete="off" spellcheck="false" />
+      <span class="form-help">Display name. Suggested from the folder; edit freely.</span>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" id="proj-btn-cancel">Cancel</button>
+    <button class="btn btn-primary" id="proj-btn-create">
+      <i data-lucide="folder-plus" style="width:13px;height:13px;"></i>
+      Create Project
+    </button>
+  </div>
+</div>
+
+<!-- ─── Profile Modal ────────────────────────────────────────── -->
+<div class="modal-overlay" id="profile-modal-overlay" aria-hidden="true"></div>
+<div class="modal" id="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" aria-hidden="true">
+  <div class="modal-header">
+    <span class="modal-title" id="profile-modal-title">New Profile</span>
+    <button class="icon-btn" id="btn-profile-modal-close" aria-label="Close">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+  <div class="modal-body">
+
+    <div class="form-group">
+      <label class="form-label" for="pf-name">Profile name <span class="req">*</span></label>
+      <input class="input" type="text" id="pf-name" placeholder="e.g. Frontend — Claude Code" autocomplete="off" spellcheck="false" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Agent type</label>
+      <div class="agent-picker" id="pf-agent-picker">
+        <div class="agent-card selected" data-agent="agent-claude" role="radio" aria-checked="true" tabindex="0">
+          <img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/claudecode-color.svg" alt="Claude Code" />
+          <div class="agent-card-name">Claude Code</div>
+        </div>
+        <div class="agent-card" data-agent="agent-codex" role="radio" aria-checked="false" tabindex="0">
+          <img class="agent-icon" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/codex-color.svg" alt="Codex" />
+          <div class="agent-card-name">Codex</div>
+        </div>
+        <div class="agent-card" data-agent="agent-opencode" role="radio" aria-checked="false" tabindex="0">
+          <img class="agent-icon agent-icon-opencode" src="https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons/opencode.svg" alt="OpenCode" />
+          <div class="agent-card-name">OpenCode</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">CLI params</label>
+      <div class="kv-list" id="pf-params-list"></div>
+      <button class="btn btn-ghost btn-sm" id="pf-add-param" type="button" aria-label="Add CLI param">
+        <i data-lucide="plus" style="width:12px;height:12px;"></i> Add param
+      </button>
+      <span class="form-help">Flag + optional value, passed to the agent CLI (e.g. <code>--model</code> <code>claude-sonnet-4-5</code>, <code>--no-cache</code>).</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Environment variables</label>
+      <div class="kv-list" id="pf-env-list"></div>
+      <button class="btn btn-ghost btn-sm" id="pf-add-env" type="button" aria-label="Add environment variable">
+        <i data-lucide="plus" style="width:12px;height:12px;"></i> Add variable
+      </button>
+      <span class="form-help">Set in the agent process environment (e.g. <code>RUST_LOG=debug</code>).</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="pf-start-script">Start script <span class="optional">(optional)</span></label>
+      <textarea class="textarea" id="pf-start-script" rows="2" placeholder="Shell commands to run before the agent starts, e.g. source .env && nvm use" spellcheck="false" style="font-family:var(--font-mono);font-size:12px;"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="pf-template">Task prompt template <span class="optional">(optional · local only)</span></label>
+      <textarea class="textarea" id="pf-template" rows="3" placeholder="Review the diff for {{branch}} and flag regressions…"></textarea>
+      <span class="form-help">Pre-fills the initial prompt at launch. Stored locally, not part of the daemon profile.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Identity color <span class="optional">(local only)</span></label>
+      <div class="swatch-row" id="pf-color-picker">
+        <button type="button" class="swatch" data-color="blue"   style="--sw:#3b82f6" aria-label="Blue"></button>
+        <button type="button" class="swatch" data-color="violet" style="--sw:#8b5cf6" aria-label="Violet"></button>
+        <button type="button" class="swatch" data-color="green"  style="--sw:#22c55e" aria-label="Green"></button>
+        <button type="button" class="swatch" data-color="amber"  style="--sw:#f59e0b" aria-label="Amber"></button>
+        <button type="button" class="swatch" data-color="rose"   style="--sw:#f43f5e" aria-label="Rose"></button>
+        <button type="button" class="swatch" data-color="cyan"   style="--sw:#06b6d4" aria-label="Cyan"></button>
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="btn-profile-delete" style="display:none;" aria-label="Delete profile">Delete</button>
+    <span style="flex:1;"></span>
+    <button class="btn btn-secondary btn-sm" id="btn-profile-cancel">Cancel</button>
+    <button class="btn btn-primary btn-sm" id="btn-profile-save">Save profile</button>
+  </div>
+</div>
+
+<!-- ─── Confirm dialog ───────────────────────────────────────── -->
+<!-- ─── Command Palette (⌘K) ─────────────────────────────────── -->
+<div class="palette-overlay" id="palette-overlay" aria-hidden="true"></div>
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" aria-hidden="true">
+  <div class="palette-input-row">
+    <i data-lucide="search"></i>
+    <input class="palette-input" id="palette-input" type="text" placeholder="Jump to project, session, or view…" autocomplete="off" spellcheck="false" />
+    <span class="palette-esc">esc</span>
+  </div>
+  <div class="palette-results" id="palette-results" role="listbox"><!-- JS-rendered --></div>
+</div>
+
+<!-- ─── Confirm dialog ────────────────────────────────────────── -->
+<div class="modal-overlay" id="confirm-overlay" aria-hidden="true"></div>
+<div class="confirm-dialog" id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true">
+  <div class="confirm-title" id="confirm-title">Delete profile?</div>
+  <p class="confirm-msg" id="confirm-msg">This action cannot be undone.</p>
+  <div class="confirm-actions">
+    <button class="btn btn-secondary btn-sm" id="btn-confirm-cancel">Cancel</button>
+    <button class="btn btn-danger btn-sm" id="btn-confirm-ok">Delete</button>
+  </div>
+</div>
+
+<!-- ─── Tweaks Panel ──────────────────────────────────────────── -->
+
+<!-- ─── Toast container ───────────────────────────────────────── -->
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

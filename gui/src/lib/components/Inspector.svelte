@@ -21,6 +21,10 @@
 		$ui.focusedSessionId ? $sessions.get($ui.focusedSessionId) : undefined
 	);
 
+	let sessionProfile = $derived(
+		session ? $profiles.find(p => p.id === session?.profileId) : undefined
+	);
+
 	let sessionProject = $derived(
 		session ? $projects.get(session.projectId) : undefined
 	);
@@ -34,6 +38,8 @@
 	let renameEl = $state<HTMLInputElement | null>(null);
 	let copied = $state<string | null>(null);
 	let confirmTarget = $state<SessionState | null>(null);
+	type InspectorTab = 'info' | 'timeline';
+	let activeTab = $state<InspectorTab>('info');
 
 	$effect(() => {
 		if (renaming) renameEl?.focus();
@@ -255,10 +261,29 @@
 			</div>
 		</div>
 
+		<!-- Tab bar -->
+		<div class="flex border-b border-border px-4">
+			{#each [['info', 'Info'], ['timeline', 'Timeline']] as [id, label]}
+				<button
+					class={cn(
+						'px-3 py-2 text-xs border-b-2 transition-colors',
+						activeTab === id
+							? 'border-gruvbox-yellow text-foreground'
+							: 'border-transparent text-muted-foreground hover:text-foreground'
+					)}
+					onclick={() => (activeTab = id as InspectorTab)}
+				>{label}</button>
+			{/each}
+		</div>
+
+		{#if activeTab === 'info'}
 		<!-- Sections -->
 		<section class="px-4 py-3 border-b border-border space-y-2">
 			<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">General</h3>
 			{@render row('Agent', session.agent)}
+			{#if sessionProfile}
+				{@render row('Profile', sessionProfile.name)}
+			{/if}
 			{#if sessionProject}
 				<div class="flex items-baseline justify-between gap-2">
 					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Project</span>
@@ -331,6 +356,12 @@
 				</div>
 			</div>
 			{@render row('Unread', String(session.unread), session.unread === 0)}
+			{#if session.exitCode != null}
+				{@render row('Exit code', String(session.exitCode), session.exitCode === 0)}
+			{/if}
+			{#if session.createdAt}
+				{@render row('Started', new Date(session.createdAt).toLocaleTimeString())}
+			{/if}
 		</section>
 
 		{#if session.failReason}
@@ -338,6 +369,39 @@
 				<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">Fail reason</h3>
 				<pre class="text-xs text-gruvbox-red bg-card rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
 			</section>
+		{/if}
+		{:else}
+		<!-- Timeline tab -->
+		<section class="px-4 py-4 space-y-0">
+			{#each [
+				{ label: 'Created', done: true, ts: session.createdAt ?? null },
+				{ label: 'Starting', done: session.status !== 'queued', ts: null },
+				{ label: 'Running', done: session.status === 'running' || session.status === 'finished' || session.status === 'failed', ts: null },
+				{ label: session.status === 'failed' ? 'Failed' : 'Finished', done: session.status === 'finished' || session.status === 'failed', ts: null },
+			] as step, i (step.label)}
+				<div class="flex gap-3">
+					<div class="flex flex-col items-center">
+						<span class={cn(
+							'w-3 h-3 rounded-full border-2 flex-shrink-0 mt-0.5',
+							step.done
+								? (step.label === 'Failed' ? 'bg-accent-error border-accent-error' : 'bg-accent-ok border-accent-ok')
+								: 'bg-transparent border-muted-foreground/40'
+						)}></span>
+						{#if i < 3}
+							<span class={cn('w-0.5 flex-1 min-h-[20px]', step.done ? 'bg-accent-ok/40' : 'bg-border')}></span>
+						{/if}
+					</div>
+					<div class="pb-4 min-w-0">
+						<div class={cn('text-xs font-medium', step.done ? 'text-foreground' : 'text-muted-foreground/50')}>
+							{step.label}
+						</div>
+						{#if step.ts}
+							<div class="text-[10px] text-muted-foreground font-mono">{new Date(step.ts).toLocaleTimeString()}</div>
+						{/if}
+					</div>
+				</div>
+			{/each}
+		</section>
 		{/if}
 	{/if}
 </aside>

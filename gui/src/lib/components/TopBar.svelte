@@ -3,10 +3,12 @@
 	import { sessions } from '$lib/stores/sessions';
 	import { ui, openPalette } from '$lib/stores/ui';
 	import { setView } from '$lib/stores/ui';
+	import { remote } from '$lib/stores/remote.svelte';
 	import { cn, fmtChord } from '$lib/utils/cn';
 import Search from '@lucide/svelte/icons/search';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
 import Check from '@lucide/svelte/icons/check';
+import RadioTower from '@lucide/svelte/icons/radio-tower';
 
 	const { connected }: { connected: boolean } = $props();
 
@@ -148,6 +150,25 @@ import Check from '@lucide/svelte/icons/check';
 			{/if}
 		{/if}
 	</div>
+
+	<!-- Remote pill -->
+	<button
+		title={remote.status.listening ? `Remote on · ${remote.status.address}` : 'Remote off — click to configure'}
+		class={cn(
+			'flex items-center gap-1 text-xs px-2 py-0.5 rounded border transition-colors',
+			remote.status.listening
+				? 'border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10'
+				: 'border-border text-muted-foreground hover:bg-secondary'
+		)}
+		onclick={() => { setView('settings'); }}
+	>
+		<RadioTower size={11} />
+		{#if remote.status.listening}
+			<span>Remote</span>
+		{:else}
+			<span class="hidden sm:inline">Remote off</span>
+		{/if}
+	</button>
 
 	<!-- Connection -->
 	<span

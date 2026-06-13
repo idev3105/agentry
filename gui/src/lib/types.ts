@@ -67,6 +67,10 @@ export interface SessionState {
 	failReason: string | null;
 	agent_session_id: string | null;
 	agent_session_name: string | null;
+	/** Exit code from session_finished/session_failed events */
+	exitCode?: number | null;
+	/** ISO timestamp when session was started (from session_started event) */
+	createdAt?: string | null;
 }
 
 export interface R9StatusResp {

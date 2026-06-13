@@ -16,7 +16,8 @@
     import Inbox from "@lucide/svelte/icons/inbox";
     import Search from "@lucide/svelte/icons/search";
     import X from "@lucide/svelte/icons/x";
-import Trash from "@lucide/svelte/icons/trash-2";
+    import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
+    import Trash from "@lucide/svelte/icons/trash-2";
 import Trash2 from "@lucide/svelte/icons/trash";
 import ChevronRight from "@lucide/svelte/icons/chevron-right";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
@@ -272,7 +273,12 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
             onclick={() => pick(s.id)}
             transition:slide={{ duration: 120 }}
         >
-            <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
+            {#if m.logoUrl}
+                <img src={m.logoUrl} alt={m.label}
+                    class={cn('w-3.5 h-3.5 flex-shrink-0 object-contain', m.label === 'OpenCode' && 'invert brightness-150')} />
+            {:else}
+                <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
+            {/if}
             <div class="flex-1 min-w-0">
                 <div class="text-sm truncate flex items-center gap-1.5">
                     <span class="truncate">{s.title}</span>
@@ -313,6 +319,18 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                         });
                     });
                 }}><X size={14} /></button>
+        {/if}
+        {#if s.status === "finished" || s.status === "failed"}
+            <button
+                title="Restart session (same profile)"
+                aria-label="Restart session"
+                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+                onclick={(e) => {
+                    e.stopPropagation();
+                    startSession(s.projectId, s.profileId).catch((err) =>
+                        toasts.error('Restart failed', String(err))
+                    );
+                }}><RotateCcw size={13} /></button>
         {/if}
         <button
             title="Delete session"
