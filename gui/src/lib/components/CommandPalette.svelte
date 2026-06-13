@@ -149,6 +149,26 @@
 				run: () => setView('projects')
 			},
 			{
+				id: 'settings:appearance',
+				title: 'Settings: Appearance',
+				category: 'Settings',
+				icon: Settings,
+				run: () => {
+					localStorage.setItem('agentry:settings-tab', 'appearance');
+					setView('settings');
+				}
+			},
+			{
+				id: 'settings:integrations',
+				title: 'Settings: Integrations',
+				category: 'Settings',
+				icon: Settings,
+				run: () => {
+					localStorage.setItem('agentry:settings-tab', 'integrations');
+					setView('settings');
+				}
+			},
+			{
 				id: 'nav:profiles',
 				title: 'Manage Profiles',
 				category: 'Navigate',

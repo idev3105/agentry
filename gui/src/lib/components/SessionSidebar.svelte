@@ -10,8 +10,10 @@
     import type { SessionState } from "$lib/types";
     import { cn, fmtChord } from "$lib/utils/cn";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import EmptyState from "./EmptyState.svelte";
     import { slide } from 'svelte/transition';
     import Plus from "@lucide/svelte/icons/plus";
+    import Inbox from "@lucide/svelte/icons/inbox";
     import Search from "@lucide/svelte/icons/search";
     import X from "@lucide/svelte/icons/x";
 import Trash from "@lucide/svelte/icons/trash-2";
@@ -158,9 +160,18 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
     <!-- Sessions -->
     <div class="flex-1 overflow-y-auto">
         {#if filtered.length === 0}
-            <div class="p-4 text-xs text-muted-foreground text-center">
-                {filter ? "No matches" : "No sessions yet"}
-            </div>
+            {#if filter}
+                <div class="p-4 text-xs text-muted-foreground text-center">No matches</div>
+            {:else}
+                <EmptyState
+                    icon={Inbox}
+                    title="No sessions yet"
+                    hint="Press ⌘T to start one"
+                    action={$ui.activeProjectId && defaultProfile
+                        ? { label: 'New session', onClick: () => $ui.activeProjectId && defaultProfile && startSession($ui.activeProjectId, defaultProfile.id) }
+                        : undefined}
+                />
+            {/if}
         {:else}
             {#if groups.active.length > 0}
                 {@render group("Active", groups.active)}
@@ -263,7 +274,14 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
         >
             <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
             <div class="flex-1 min-w-0">
-                <div class="text-sm truncate">{s.title}</div>
+                <div class="text-sm truncate flex items-center gap-1.5">
+                    <span class="truncate">{s.title}</span>
+                    {#if s.activity === 'awaiting_input'}
+                        <span class="flex-shrink-0 text-[9px] px-1 py-px rounded bg-accent-error/15 text-accent-error font-medium uppercase tracking-wide animate-pulse">
+                            needs you
+                        </span>
+                    {/if}
+                </div>
                 <div class="text-[10px] text-muted-foreground truncate">
                     {statusLabel(s)}
                 </div>
