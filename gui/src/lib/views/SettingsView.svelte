@@ -23,146 +23,180 @@
 		{ keys: ['Escape'], desc: 'Close dialogs' },
 		{ keys: ['/'], desc: 'Focus session filter' }
 	];
+
+	type SettingsTab = 'general' | 'appearance' | 'integrations' | 'shortcuts';
+	const TAB_KEY = 'agentry:settings-tab';
+	let tab = $state<SettingsTab>(
+		(localStorage.getItem(TAB_KEY) as SettingsTab) || 'general'
+	);
+	function setTab(t: SettingsTab) {
+		tab = t;
+		localStorage.setItem(TAB_KEY, t);
+	}
+	const tabs: { id: SettingsTab; label: string }[] = [
+		{ id: 'general', label: 'General' },
+		{ id: 'appearance', label: 'Appearance' },
+		{ id: 'integrations', label: 'Integrations' },
+		{ id: 'shortcuts', label: 'Shortcuts' }
+	];
 </script>
 
 <div class="flex flex-col h-full overflow-y-auto">
-	<header class="px-6 py-5 border-b border-border">
+	<header class="px-6 pt-5 border-b border-border">
 		<h1 class="text-base font-semibold">Settings</h1>
-		<p class="text-xs text-muted-foreground mt-0.5">Daemon limits and keyboard shortcuts.</p>
+		<div class="flex gap-1 mt-3 -mb-px" role="tablist">
+			{#each tabs as t (t.id)}
+				<button
+					role="tab"
+					aria-selected={tab === t.id}
+					class={cn(
+						'px-3 py-2 text-xs rounded-t border-b-2 transition-colors',
+						tab === t.id
+							? 'border-gruvbox-yellow text-foreground font-medium'
+							: 'border-transparent text-muted-foreground hover:text-foreground'
+					)}
+					onclick={() => setTab(t.id)}
+				>
+					{t.label}
+				</button>
+			{/each}
+		</div>
 	</header>
 
 	<div class="p-6 space-y-6 max-w-2xl">
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<h2 class="text-sm font-semibold">Daemon</h2>
-			{@render row('Default profile', $settings.defaultProfileId ?? '—')}
-			{@render row('Max concurrent sessions', String($settings.maxConcurrentSessions))}
-			{@render row('Idle threshold', `${$settings.idleThresholdS}s`)}
-			{@render row('Awaiting threshold', `${$settings.awaitingThresholdS}s`)}
-			{@render row(
-				'Ring buffer',
-				`${(($settings.ringBufferBytes / 1024 / 1024) || 0).toFixed(1)} MiB`
-			)}
-		</section>
-
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<div class="flex items-center justify-between">
-				<div>
-					<h2 class="text-sm font-semibold">9Router</h2>
-					<p class="text-xs text-muted-foreground mt-0.5">
-						FREE AI router. Connect agents to free Claude / GPT / Gemini.
-					</p>
+		{#if tab === 'general'}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Daemon</h2>
+				{@render row('Default profile', $settings.defaultProfileId ?? '—')}
+				{@render row('Max concurrent sessions', String($settings.maxConcurrentSessions))}
+				{@render row('Idle threshold', `${$settings.idleThresholdS}s`)}
+				{@render row('Awaiting threshold', `${$settings.awaitingThresholdS}s`)}
+				{@render row(
+					'Ring buffer',
+					`${(($settings.ringBufferBytes / 1024 / 1024) || 0).toFixed(1)} MiB`
+				)}
+			</section>
+		{:else if tab === 'appearance'}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Theme</h2>
+				<div class="flex gap-2 flex-wrap">
+					{#each (['gruvbox', 'one-dark', 'dark', 'light'] as Theme[]) as t (t)}
+						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+								onclick={() => theme.set(t)}>{t}</button>
+					{/each}
 				</div>
-				{@render r9Badge()}
-			</div>
+			</section>
 
-			{#if r9.status.resolved === 'missing'}
-				<div class="text-xs bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2">
-					9Router not installed. Run
-					<code class="px-1 rounded bg-muted">npm i -g 9router</code>
-					then restart Agentry.
-				</div>
-			{:else}
-				<div class="flex items-center gap-2">
-					{#if r9.status.running}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Accent</h2>
+				<div class="flex gap-2 flex-wrap">
+					{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
 						<button
-							class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
-							disabled={r9.busy}
-							onclick={() => r9.stop()}
+							class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', accent.value === a ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+							onclick={() => accent.set(a)}
 						>
-							{#if r9.busy}
-								<Loader2 class="size-3 animate-spin" />
-							{:else}
-								<Square class="size-3" />
-							{/if}
-							Stop
+							<span
+								class="w-3 h-3 rounded-full border border-border"
+								style={`background:${a === 'teal' ? '#2f9e6e' : a === 'violet' ? '#8b5cf6' : a === 'amber' ? '#d97706' : 'var(--color-accent)'}`}
+							></span>
+							{a}
 						</button>
-						<button
-							class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent"
-							onclick={() => r9.openDashboard()}
-						>
-							<ExternalLink class="size-3" />
-							Open dashboard
-						</button>
-					{:else}
-						<button
-							class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
-							disabled={r9.busy}
-							onclick={() => r9.start()}
-						>
-							{#if r9.busy}
-								<Loader2 class="size-3 animate-spin" />
-							{:else}
-								<Play class="size-3" />
-							{/if}
-							Start
-						</button>
-					{/if}
-					<span class="text-xs text-muted-foreground ml-auto">
-						via {r9.status.resolved}
-						{#if r9.status.pid}· pid {r9.status.pid}{/if}
-						· :{r9.status.port}
-					</span>
+					{/each}
 				</div>
-			{/if}
+			</section>
 
-			{#if r9.lastError}
-				<div class="text-xs bg-destructive/10 border border-destructive/30 rounded px-3 py-2 font-mono">
-					{r9.lastError}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Density</h2>
+				<div class="flex gap-2">
+					{#each (['comfortable', 'compact'] as const) as d}
+						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', $density === d ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+								onclick={() => density.set(d)}>{d}</button>
+					{/each}
 				</div>
-			{/if}
-		</section>
-
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<h2 class="text-sm font-semibold">Theme</h2>
-			<div class="flex gap-2 flex-wrap">
-				{#each (['gruvbox', 'one-dark', 'dark', 'light'] as Theme[]) as t (t)}
-					<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
-							onclick={() => theme.set(t)}>{t}</button>
-				{/each}
-			</div>
-		</section>
-
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<h2 class="text-sm font-semibold">Accent</h2>
-			<div class="flex gap-2 flex-wrap">
-				{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
-					<button
-						class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', accent.value === a ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
-						onclick={() => accent.set(a)}
-					>
-						<span
-							class="w-3 h-3 rounded-full border border-border"
-							style={`background:${a === 'teal' ? '#2f9e6e' : a === 'violet' ? '#8b5cf6' : a === 'amber' ? '#d97706' : 'var(--color-accent)'}`}
-						></span>
-						{a}
-					</button>
-				{/each}
-			</div>
-		</section>
-
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<h2 class="text-sm font-semibold">Density</h2>
-			<div class="flex gap-2">
-				{#each (['comfortable', 'compact'] as const) as d}
-					<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', $density === d ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
-							onclick={() => density.set(d)}>{d}</button>
-				{/each}
-			</div>
-		</section>
-
-		<section class="bg-card border border-border rounded p-4 space-y-3">
-			<h2 class="text-sm font-semibold">Keyboard shortcuts</h2>
-			<div class="space-y-1">
-				{#each shortcuts as sc (sc.desc)}
-					<div class="flex items-center justify-between text-sm py-1">
-						<span class="text-muted-foreground">{sc.desc}</span>
-						<kbd class="px-1.5 py-0.5 rounded bg-background border border-border text-foreground text-xs font-mono">
-							{fmtChord(sc.keys)}
-						</kbd>
+			</section>
+		{:else if tab === 'integrations'}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<div class="flex items-center justify-between">
+					<div>
+						<h2 class="text-sm font-semibold">9Router</h2>
+						<p class="text-xs text-muted-foreground mt-0.5">
+							FREE AI router. Connect agents to free Claude / GPT / Gemini.
+						</p>
 					</div>
-				{/each}
-			</div>
-		</section>
+					{@render r9Badge()}
+				</div>
+
+				{#if r9.status.resolved === 'missing'}
+					<div class="text-xs bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2">
+						9Router not installed. Run
+						<code class="px-1 rounded bg-muted">npm i -g 9router</code>
+						then restart Agentry.
+					</div>
+				{:else}
+					<div class="flex items-center gap-2">
+						{#if r9.status.running}
+							<button
+								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+								disabled={r9.busy}
+								onclick={() => r9.stop()}
+							>
+								{#if r9.busy}
+									<Loader2 class="size-3 animate-spin" />
+								{:else}
+									<Square class="size-3" />
+								{/if}
+								Stop
+							</button>
+							<button
+								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent"
+								onclick={() => r9.openDashboard()}
+							>
+								<ExternalLink class="size-3" />
+								Open dashboard
+							</button>
+						{:else}
+							<button
+								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+								disabled={r9.busy}
+								onclick={() => r9.start()}
+							>
+								{#if r9.busy}
+									<Loader2 class="size-3 animate-spin" />
+								{:else}
+									<Play class="size-3" />
+								{/if}
+								Start
+							</button>
+						{/if}
+						<span class="text-xs text-muted-foreground ml-auto">
+							via {r9.status.resolved}
+							{#if r9.status.pid}· pid {r9.status.pid}{/if}
+							· :{r9.status.port}
+						</span>
+					</div>
+				{/if}
+
+				{#if r9.lastError}
+					<div class="text-xs bg-destructive/10 border border-destructive/30 rounded px-3 py-2 font-mono">
+						{r9.lastError}
+					</div>
+				{/if}
+			</section>
+		{:else if tab === 'shortcuts'}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Keyboard shortcuts</h2>
+				<div class="space-y-1">
+					{#each shortcuts as sc (sc.desc)}
+						<div class="flex items-center justify-between text-sm py-1">
+							<span class="text-muted-foreground">{sc.desc}</span>
+							<kbd class="px-1.5 py-0.5 rounded bg-background border border-border text-foreground text-xs font-mono">
+								{fmtChord(sc.keys)}
+							</kbd>
+						</div>
+					{/each}
+				</div>
+			</section>
+		{/if}
 	</div>
 </div>
 

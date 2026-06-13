@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sessions, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
+	import { projects } from '$lib/stores/projects';
 	import { ui } from '$lib/stores/ui';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import type { SessionState } from '$lib/types';
@@ -19,6 +20,14 @@
 	let session = $derived<SessionState | undefined>(
 		$ui.focusedSessionId ? $sessions.get($ui.focusedSessionId) : undefined
 	);
+
+	let sessionProject = $derived(
+		session ? $projects.get(session.projectId) : undefined
+	);
+
+	function switchToProject(id: string) {
+		ui.update((u) => ({ ...u, activeProjectId: id, view: 'overview' }));
+	}
 
 	let renaming = $state(false);
 	let renameValue = $state('');
@@ -250,6 +259,18 @@
 		<section class="px-4 py-3 border-b border-border space-y-2">
 			<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">General</h3>
 			{@render row('Agent', session.agent)}
+			{#if sessionProject}
+				<div class="flex items-baseline justify-between gap-2">
+					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Project</span>
+					<button
+						class="text-xs hover:text-gruvbox-yellow truncate"
+						title="Switch to this project"
+						onclick={() => switchToProject(sessionProject!.id)}
+					>
+						{sessionProject.name}
+					</button>
+				</div>
+			{/if}
 			{@render row('Status', session.status)}
 			{#if session.activity}
 				{@render row('Activity', session.activity)}
