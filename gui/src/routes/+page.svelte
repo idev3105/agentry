@@ -662,21 +662,21 @@ import { listen } from '@tauri-apps/api/event';
 								<p class="text-xs text-muted-foreground mt-1">Pick one from the sidebar, or:</p>
 							</div>
 							<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
-								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors group"
+								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors group"
 										onclick={() => quickStartDefault()}>
-									<Plus size={18} class="text-gruvbox-yellow mb-2" />
+									<Plus size={18} class="text-accent mb-2" />
 									<div class="text-sm font-medium">New session</div>
 									<div class="text-[11px] text-muted-foreground mt-0.5">Start with default profile</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','t'])}</kbd>
 								</button>
-								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors"
+								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors"
 										onclick={() => openPalette()}>
 									<Command size={18} class="text-gruvbox-aqua mb-2" />
 									<div class="text-sm font-medium">Command palette</div>
 									<div class="text-[11px] text-muted-foreground mt-0.5">Switch session, run actions</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','k'])}</kbd>
 								</button>
-								<button class="bg-card border border-border hover:border-gruvbox-yellow rounded-lg p-4 text-left transition-colors"
+								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors"
 										onclick={() => setView('overview')}>
 									<LayoutGrid size={18} class="text-gruvbox-blue mb-2" />
 									<div class="text-sm font-medium">Overview</div>

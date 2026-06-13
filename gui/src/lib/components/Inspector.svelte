@@ -196,7 +196,7 @@
 					/>
 				{:else}
 					<button
-						class="flex-1 text-left font-medium truncate hover:text-gruvbox-yellow"
+						class="flex-1 text-left font-medium truncate hover:text-accent"
 						onclick={() => startRename(session!)}
 					>
 						{session.title}
@@ -210,14 +210,14 @@
 			<div class="flex gap-1.5 pt-1">
 				<button
 					title="Rename (F2)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 					onclick={() => startRename(session!)}
 				>
 					<Pencil size={12} /> Rename
 				</button>
 				<button
 					title="Duplicate (same profile + cwd)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 					onclick={() => duplicate(session!)}
 				>
 					<Copy size={12} /> Duplicate
@@ -225,7 +225,7 @@
 				{#if session.status === 'running' || session.status === 'queued'}
 					<button
 						title="Kill session"
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 						onclick={() => doKill(session!)}
 					>
 						<Square size={14} fill="currentColor" />
@@ -234,7 +234,7 @@
 				{#if session.status === 'finished' || session.status === 'failed'}
 					{@const canResume = session.agent === 'claude_code' || !!session.agent_session_id}
 					<button
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 						disabled={!canResume}
 						title={canResume
 							? 'Resume session'
@@ -246,14 +246,14 @@
 				{/if}
 				<button
 					title="Copy as CLI command"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 					onclick={() => copyAsCli(session!)}
 				>
 					<Terminal size={12} /> CLI
 				</button>
 				<button
 					title="Delete session permanently"
-					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 					onclick={() => (confirmTarget = session!)}
 				>
 					<Trash size={14} />
@@ -268,7 +268,7 @@
 					class={cn(
 						'px-3 py-2 text-xs border-b-2 transition-colors',
 						activeTab === id
-							? 'border-gruvbox-yellow text-foreground'
+							? 'border-accent text-foreground'
 							: 'border-transparent text-muted-foreground hover:text-foreground'
 					)}
 					onclick={() => (activeTab = id as InspectorTab)}
@@ -288,7 +288,7 @@
 				<div class="flex items-baseline justify-between gap-2">
 					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Project</span>
 					<button
-						class="text-xs hover:text-gruvbox-yellow truncate"
+						class="text-xs hover:text-accent truncate"
 						title="Switch to this project"
 						onclick={() => switchToProject(sessionProject!.id)}
 					>
@@ -339,7 +339,7 @@
 				<div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Working dir</div>
 				<div class="flex items-center gap-1">
 					<button
-						class="flex-1 font-mono text-xs break-all text-left hover:text-gruvbox-yellow inline-flex items-start gap-1.5"
+						class="flex-1 font-mono text-xs break-all text-left hover:text-accent inline-flex items-start gap-1.5"
 						onclick={() => openCwd(session!.cwd)}
 						title="Open in file manager"
 					>

@@ -153,7 +153,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 bind:value={filter}
                 bind:this={filterEl}
                 placeholder="Filter sessions"
-                class="w-full bg-input rounded pl-7 pr-2 py-1 text-xs border border-border focus:outline-none focus:border-gruvbox-yellow"
+                class="w-full bg-input rounded pl-7 pr-2 py-1 text-xs border border-border focus:outline-none focus:border-accent"
             />
         </div>
     </div>
@@ -214,7 +214,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                         <m.icon size={12} class={m.color} />
                         <span class="flex-1 truncate">{p.name}</span>
                         {#if $settings.defaultProfileId === p.id}
-                            <Check size={12} class="text-gruvbox-yellow" />
+                            <Check size={12} class="text-accent" />
                         {/if}
                     </button>
                 {/each}
@@ -267,7 +267,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
             class={cn(
                 "group flex items-center gap-2 pl-3 pr-1 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors py-[var(--row-py)]",
                 $ui.focusedSessionId === s.id
-                    ? "bg-secondary border-gruvbox-yellow"
+                    ? "bg-secondary border-accent"
                     : "border-transparent",
             )}
             onclick={() => pick(s.id)}
@@ -308,7 +308,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
             <button
                 title="Kill session"
                 aria-label="Kill session"
-                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
                 onclick={(e) => {
                     e.stopPropagation();
                     markSessionEnding(s.id);
@@ -324,7 +324,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
             <button
                 title="Restart session (same profile)"
                 aria-label="Restart session"
-                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
                 onclick={(e) => {
                     e.stopPropagation();
                     startSession(s.projectId, s.profileId).catch((err) =>
@@ -335,7 +335,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
         <button
             title="Delete session"
             aria-label="Delete session"
-            class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100 focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+            class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
                 onclick={(e) => {
                     e.stopPropagation();
                     confirmTarget = s;

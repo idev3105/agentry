@@ -25,7 +25,7 @@
         <div class="text-sm">{t.title}</div>
         {#if t.detail}<div class="text-[11px] text-muted-foreground break-words">{t.detail}</div>{/if}
       </div>
-      <button class="text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={() => toasts.dismiss(t.id)} aria-label="Dismiss">
+      <button class="text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => toasts.dismiss(t.id)} aria-label="Dismiss">
         <X size={12} />
       </button>
     </div>

@@ -26,7 +26,7 @@
 		<button
 			title={item.label}
 			class={cn(
-				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none',
+				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
 				$ui.view === item.id
 					? 'text-foreground bg-secondary/60'
 					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
@@ -39,7 +39,7 @@
 				<span class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
 			{/if}
 			{#if $ui.view === item.id}
-				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-gruvbox-yellow rounded-r"></span>
+				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-r"></span>
 			{/if}
 		</button>
 	{/each}
@@ -48,7 +48,7 @@
 
 	<button
 		title="New session"
-		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 		onclick={() => openOnboarding()}
 	>
 		<Plus size={18} />

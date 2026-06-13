@@ -8,7 +8,7 @@
 <div class="flex items-center gap-2 px-2 py-1 border-b border-border bg-card">
   <input bind:this={el} bind:value={q}
          placeholder="Find in terminal…"
-         class="flex-1 bg-input rounded px-2 py-0.5 text-xs border border-border focus:outline-none focus:border-gruvbox-yellow"
+         class="flex-1 bg-input rounded px-2 py-0.5 text-xs border border-border focus:outline-none focus:border-accent"
          onkeydown={(e) => {
            if (e.key === 'Enter') { e.shiftKey ? ctl?.findPrev(q) : ctl?.findNext(q); }
            else if (e.key === 'Escape') onClose();

@@ -155,8 +155,8 @@
 		role="separator"
 		aria-orientation="vertical"
 		tabindex="-1"
-		class="w-1 cursor-col-resize bg-border hover:bg-gruvbox-yellow/50 active:bg-gruvbox-yellow flex-shrink-0 transition-colors"
-		class:bg-gruvbox-yellow={dragging}
+		class="w-1 cursor-col-resize bg-border hover:bg-accent/50 active:bg-accent flex-shrink-0 transition-colors"
+		class:bg-accent={dragging}
 		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
 		onpointerup={onPointerUp}

@@ -193,7 +193,7 @@
 					<span class="block text-xs text-muted-foreground mb-1">Name</span>
 					<input
 						bind:value={draftName}
-						class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-gruvbox-yellow"
+						class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-accent"
 					/>
 				</label>
 
@@ -205,7 +205,7 @@
 								class={cn(
 									'px-3 py-1.5 rounded text-xs border',
 									draftAgent === a
-										? 'border-gruvbox-yellow bg-secondary'
+										? 'border-accent bg-secondary'
 										: 'border-border hover:border-secondary'
 								)}
 								onclick={() => (draftAgent = a)}
@@ -223,7 +223,7 @@
 					<textarea
 						bind:value={draftParamsText}
 						rows="3"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
+						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
 						placeholder="--model=sonnet&#10;--no-banner"
 					></textarea>
 				</label>
@@ -235,7 +235,7 @@
 					<textarea
 						bind:value={draftEnvText}
 						rows="3"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
+						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
 						placeholder="ANTHROPIC_API_KEY=sk-..."
 					></textarea>
 				</label>
@@ -247,7 +247,7 @@
 					<textarea
 						bind:value={draftStartScript}
 						rows="2"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-gruvbox-yellow"
+						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
 						placeholder="source .env && nvm use"
 					></textarea>
 				</label>
@@ -283,7 +283,7 @@
 								<div class="flex items-center gap-2">
 									<span class="font-medium text-sm truncate">{p.name}</span>
 									{#if $settings.defaultProfileId === p.id}
-										<span class="text-[10px] uppercase tracking-wider text-gruvbox-yellow flex items-center gap-0.5">
+										<span class="text-[10px] uppercase tracking-wider text-accent flex items-center gap-0.5">
 											<Star size={10} /> default
 										</span>
 									{/if}
@@ -302,7 +302,7 @@
 								{#if $settings.defaultProfileId !== p.id}
 									<button
 										title="Set as default"
-										class="p-1 rounded text-muted-foreground hover:text-gruvbox-yellow hover:bg-secondary"
+										class="p-1 rounded text-muted-foreground hover:text-accent hover:bg-secondary"
 										onclick={() => setDefault(p.id)}
 									><Star size={14} /></button>
 								{/if}

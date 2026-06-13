@@ -73,7 +73,7 @@ import RadioTower from '@lucide/svelte/icons/radio-tower';
 					<button
 						class={cn(
 							'w-full text-left px-3 py-1.5 text-sm hover:bg-secondary flex items-center gap-2',
-							$ui.activeProjectId === p.id && 'text-gruvbox-yellow'
+							$ui.activeProjectId === p.id && 'text-accent'
 						)}
 						onclick={() => {
 							ui.update((u) => ({ ...u, activeProjectId: p.id }));

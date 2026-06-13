@@ -178,11 +178,11 @@
 		<!-- Header -->
 		<header class="flex items-center justify-between px-6 py-4 border-b border-border">
 			<div class="flex items-center gap-2">
-				<Sparkles size={18} class="text-gruvbox-yellow" />
+				<Sparkles size={18} class="text-accent" />
 				<span class="text-sm font-semibold">Agentry</span>
 			</div>
 			{#if canSkip}
-				<button class="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={skip}>
+				<button class="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={skip}>
 					Skip onboarding →
 				</button>
 			{/if}
@@ -199,9 +199,9 @@
 						<li>
 							<button
 								class={cn(
-									'w-full flex items-start gap-3 px-3 py-3 rounded text-left transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none',
+									'w-full flex items-start gap-3 px-3 py-3 rounded text-left transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
 									completed && 'hover:bg-secondary/50 cursor-pointer',
-									current && 'bg-secondary/30 ring-1 ring-gruvbox-yellow/50',
+									current && 'bg-secondary/30 ring-1 ring-accent/50',
 									!completed && !current && 'opacity-50 cursor-not-allowed'
 								)}
 								disabled={!completed}
@@ -210,7 +210,7 @@
 								<span class={cn(
 									'mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0',
 									completed && 'bg-gruvbox-green text-background',
-									current   && 'bg-gruvbox-yellow text-background',
+									current   && 'bg-accent text-background',
 									!completed && !current && 'bg-secondary text-muted-foreground'
 								)}>
 									{#if completed}<Check size={12} />{:else}{i + 1}{/if}
@@ -255,7 +255,7 @@
 
 							<div class="pt-2">
 								<button
-									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 									onclick={() => step = 'agents'}
 								>
 									Get started →
@@ -280,8 +280,8 @@
 										{@const meta = AGENT_LABELS[a.id]}
 										<button
 											class={cn(
-												'w-full text-left px-4 py-3 rounded border transition-colors focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none',
-												pickedAgent === a.id  && 'border-gruvbox-yellow bg-secondary/30',
+												'w-full text-left px-4 py-3 rounded border transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
+												pickedAgent === a.id  && 'border-accent bg-secondary/30',
 												pickedAgent !== a.id && a.installed && 'border-border hover:border-secondary',
 												!a.installed && 'border-border/50 opacity-60 cursor-not-allowed'
 											)}
@@ -312,11 +312,11 @@
 								</div>
 
 								<div class="flex items-center justify-between pt-2">
-									<button class="text-xs text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={runDetection}>
+									<button class="text-xs text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={runDetection}>
 										↻ Re-detect
 									</button>
 									<button
-										class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+										class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 										disabled={!pickedAgent}
 										onclick={() => step = 'project'}
 									>
@@ -336,7 +336,7 @@
 							</div>
 
 							<button
-								class="w-full px-4 py-4 rounded border border-dashed border-border hover:border-gruvbox-yellow hover:bg-secondary/30 transition-colors flex items-center gap-3 text-left focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+								class="w-full px-4 py-4 rounded border border-dashed border-border hover:border-accent hover:bg-secondary/30 transition-colors flex items-center gap-3 text-left focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 								onclick={pickFolder}
 							>
 								<FolderOpen size={18} class="text-muted-foreground shrink-0" />
@@ -353,9 +353,9 @@
 								<div class="space-y-1">
 									<div class="text-xs text-muted-foreground">Or quick pick:</div>
 									<div class="flex flex-wrap gap-2">
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-gruvbox-yellow font-mono focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath!, 'Home')}>~/</button>
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-gruvbox-yellow font-mono focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Documents', 'Documents')}>~/Documents</button>
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-gruvbox-yellow font-mono focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Projects', 'Projects')}>~/Projects</button>
+										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath!, 'Home')}>~/</button>
+										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Documents', 'Documents')}>~/Documents</button>
+										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Projects', 'Projects')}>~/Projects</button>
 									</div>
 								</div>
 							{/if}
@@ -365,14 +365,14 @@
 								<input
 									type="text"
 									bind:value={projectName}
-									class="w-full bg-input rounded px-3 py-2 text-sm border border-border focus:border-gruvbox-yellow focus:outline-none"
+									class="w-full bg-input rounded px-3 py-2 text-sm border border-border focus:border-accent focus:outline-none"
 									placeholder="My App"
 								/>
 							</label>
 
 							<div class="flex justify-end">
 								<button
-									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
 									disabled={!folder.trim() || !projectName.trim()}
 									onclick={() => step = 'launch'}
 								>
@@ -400,7 +400,7 @@
 											<span class="w-5 h-5 rounded-full border border-border"></span>
 											<span class="text-sm text-muted-foreground">{item.label}</span>
 										{:else if s === 'running'}
-											<Loader2 size={16} class="animate-spin text-gruvbox-yellow" />
+											<Loader2 size={16} class="animate-spin text-accent" />
 											<span class="text-sm">{item.label}…</span>
 										{:else if s === 'ok'}
 											<Check size={16} class="text-gruvbox-green" />
@@ -416,16 +416,16 @@
 							{#if launchError}
 								<div class="rounded border border-destructive/40 bg-destructive/10 p-3 space-y-2">
 									<div class="text-xs font-mono text-destructive-foreground break-all">{launchError}</div>
-									<button class="text-xs underline hover:text-foreground focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={runLaunch}>Retry</button>
+									<button class="text-xs underline hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={runLaunch}>Retry</button>
 								</div>
 							{/if}
 
 							{#if allOk}
 								<div class="flex gap-2 pt-2">
-									<button class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={startTour}>
+									<button class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={startTour}>
 										Take a quick tour
 									</button>
-									<button class="px-4 py-2 rounded border border-border hover:bg-secondary/30 text-sm focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none" onclick={openTerminal}>
+									<button class="px-4 py-2 rounded border border-border hover:bg-secondary/30 text-sm focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={openTerminal}>
 										Just open terminal
 									</button>
 								</div>

@@ -41,9 +41,9 @@
         <m.icon size={11} class={cn(m.color, 'flex-shrink-0')} />
         <span class="truncate max-w-[140px]">{s.title}</span>
         {#if s.unread > 0 && !active}
-          <span class="text-[9px] px-1 rounded bg-gruvbox-yellow text-background font-mono">{s.unread}</span>
+          <span class="text-[9px] px-1 rounded bg-accent text-background font-mono">{s.unread}</span>
         {/if}
-        <button class="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-secondary focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none"
+        <button class="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-secondary focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
                 onclick={(e) => closeTab(e, s.id)}
                 aria-label="Close session">
           <X size={10} />

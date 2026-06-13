@@ -90,7 +90,7 @@
 			<span class="block text-xs text-muted-foreground mb-1">Project <span class="text-destructive">*</span></span>
 			<select
 				bind:value={selProjectId}
-				class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:border-gruvbox-yellow focus:outline-none"
+				class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:border-accent focus:outline-none"
 			>
 				<option value="">— Select project —</option>
 				{#each projectList as p (p.id)}
@@ -107,7 +107,7 @@
 			<span class="block text-xs text-muted-foreground mb-1">Profile <span class="text-destructive">*</span></span>
 			<select
 				bind:value={selProfileId}
-				class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:border-gruvbox-yellow focus:outline-none"
+				class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:border-accent focus:outline-none"
 			>
 				<option value="">— Select profile —</option>
 				{#each profileList as p (p.id)}
@@ -125,7 +125,7 @@
 					type="text"
 					bind:value={cwdOverride}
 					placeholder="Leave blank to use project path"
-					class="flex-1 bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:border-gruvbox-yellow focus:outline-none"
+					class="flex-1 bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:border-accent focus:outline-none"
 				/>
 				<button
 					class="px-2 rounded border border-border hover:bg-secondary text-muted-foreground hover:text-foreground"
@@ -142,7 +142,7 @@
 				bind:value={initialPrompt}
 				rows={3}
 				placeholder="An optional first message for the agent. Leave blank to start an interactive session."
-				class="w-full bg-input rounded px-2 py-1.5 text-xs border border-border focus:border-gruvbox-yellow focus:outline-none resize-none"
+				class="w-full bg-input rounded px-2 py-1.5 text-xs border border-border focus:border-accent focus:outline-none resize-none"
 			></textarea>
 		</label>
 
@@ -152,7 +152,7 @@
 			<button
 				class={cn(
 					'flex items-center gap-2 px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium disabled:opacity-50',
-					'focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none'
+					'focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none'
 				)}
 				disabled={!selProjectId || !selProfileId || launching}
 				onclick={launch}

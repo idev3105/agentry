@@ -77,7 +77,7 @@
 					class={cn(
 						'px-3 py-2 text-xs rounded-t border-b-2 transition-colors',
 						tab === t.id
-							? 'border-gruvbox-yellow text-foreground font-medium'
+							? 'border-accent text-foreground font-medium'
 							: 'border-transparent text-muted-foreground hover:text-foreground'
 					)}
 					onclick={() => setTab(t.id)}
@@ -95,7 +95,7 @@
 				<div class="flex items-center justify-between gap-4">
 					<span class="text-xs text-muted-foreground shrink-0">Default profile</span>
 					<select
-						class="bg-input rounded px-2 py-1 text-xs border border-border focus:border-gruvbox-yellow focus:outline-none max-w-[200px]"
+						class="bg-input rounded px-2 py-1 text-xs border border-border focus:border-accent focus:outline-none max-w-[200px]"
 						value={$settings.defaultProfileId ?? ''}
 						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; if (v) setDefaultProfile(v); }}
 					>
@@ -118,7 +118,7 @@
 				<h2 class="text-sm font-semibold">Theme</h2>
 				<div class="flex gap-2 flex-wrap">
 					{#each (['dark', 'light'] as Theme[]) as t (t)}
-						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', theme.value === t ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
 								onclick={() => theme.set(t)}>{t}</button>
 					{/each}
 				</div>
@@ -129,7 +129,7 @@
 				<div class="flex gap-2 flex-wrap">
 					{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
 						<button
-							class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', accent.value === a ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+							class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', accent.value === a ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
 							onclick={() => accent.set(a)}
 						>
 							<span
@@ -146,7 +146,7 @@
 				<h2 class="text-sm font-semibold">Density</h2>
 				<div class="flex gap-2">
 					{#each (['comfortable', 'compact'] as const) as d}
-						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', $density === d ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
+						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', $density === d ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
 								onclick={() => density.set(d)}>{d}</button>
 					{/each}
 				</div>

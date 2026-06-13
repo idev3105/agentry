@@ -13,8 +13,8 @@ export interface AgentMeta {
 }
 
 const META: Record<string, AgentMeta> = {
-	claude_code: { icon: Sparkles, label: 'Claude',   color: 'text-gruvbox-yellow', logoUrl: ICON_BASE + 'claudecode-color.svg' },
-	claude:      { icon: Sparkles, label: 'Claude',   color: 'text-gruvbox-yellow', logoUrl: ICON_BASE + 'claudecode-color.svg' },
+	claude_code: { icon: Sparkles, label: 'Claude',   color: 'text-accent', logoUrl: ICON_BASE + 'claudecode-color.svg' },
+	claude:      { icon: Sparkles, label: 'Claude',   color: 'text-accent', logoUrl: ICON_BASE + 'claudecode-color.svg' },
 	codex:       { icon: Bot,      label: 'Codex',    color: 'text-gruvbox-aqua',   logoUrl: ICON_BASE + 'codex-color.svg' },
 	open_code:   { icon: Code2,    label: 'OpenCode', color: 'text-gruvbox-blue',   logoUrl: ICON_BASE + 'opencode.svg' },
 	opencode:    { icon: Code2,    label: 'OpenCode', color: 'text-gruvbox-blue',   logoUrl: ICON_BASE + 'opencode.svg' },
