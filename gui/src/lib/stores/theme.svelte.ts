@@ -1,13 +1,15 @@
 const KEY = 'agentry:theme';
 const ACCENT_KEY = 'agentry:accent';
-export type Theme = 'gruvbox' | 'one-dark' | 'dark' | 'light';
+export type Theme = 'dark' | 'light';
 export type Accent = 'default' | 'teal' | 'violet' | 'amber';
 
 function createTheme() {
 	const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null;
-	let cur = $state<Theme>((saved as Theme) ?? 'gruvbox');
+	// migrate old gruvbox/one-dark → dark
+	const valid: Theme[] = ['dark', 'light'];
+	const initial: Theme = valid.includes(saved as Theme) ? (saved as Theme) : 'dark';
+	let cur = $state<Theme>(initial);
 
-	// $effect.root() creates its own owner — safe to call at module level in .svelte.ts
 	$effect.root(() => {
 		$effect(() => {
 			if (typeof document !== 'undefined') {
@@ -32,7 +34,6 @@ function createAccent() {
 	$effect.root(() => {
 		$effect(() => {
 			if (typeof document !== 'undefined') {
-				// xoá attr khi 'default' — tránh để rác `data-accent="default"` trên DOM
 				if (cur === 'default') {
 					delete document.documentElement.dataset.accent;
 				} else {

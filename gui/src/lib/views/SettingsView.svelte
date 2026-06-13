@@ -117,7 +117,7 @@
 			<section class="bg-card border border-border rounded p-4 space-y-3">
 				<h2 class="text-sm font-semibold">Theme</h2>
 				<div class="flex gap-2 flex-wrap">
-					{#each (['gruvbox', 'one-dark', 'dark', 'light'] as Theme[]) as t (t)}
+					{#each (['dark', 'light'] as Theme[]) as t (t)}
 						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-gruvbox-yellow focus-visible:outline-none', theme.value === t ? 'border-gruvbox-yellow bg-secondary' : 'border-border hover:border-secondary')}
 								onclick={() => theme.set(t)}>{t}</button>
 					{/each}

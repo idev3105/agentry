@@ -1,102 +1,9 @@
 @import "tailwindcss";
 
-/* Tailwind v4: @theme inline registers vars as utility classes (bg-background, text-foreground,
-   border-border, text-gruvbox-*, etc.). These are the gruvbox defaults.
-   Per-theme overrides below swap the var values at runtime — utilities stay valid. */
+/* Tailwind v4: @theme inline — dark (zinc) as default base.
+   data-theme="light" overrides at runtime. */
 @theme inline {
-  /* bg */
-  --color-background:    #282828;
-  --color-card:          #3c3836;
-  --color-secondary:     #504945;
-  --color-muted:         #504945;
-  --color-border:        #504945;
-  --color-input:         #3c3836;
-  --color-popover:       #3c3836;
-
-  /* fg */
-  --color-foreground:             #ebdbb2;
-  --color-card-foreground:        #ebdbb2;
-  --color-popover-foreground:     #ebdbb2;
-  --color-secondary-foreground:   #d5c4a1;
-  --color-muted-foreground:       #a89984;
-  --color-accent:                 #d79921;
-  --color-accent-foreground:      #282828;
-
-  /* primary */
-  --color-primary:            #ebdbb2;
-  --color-primary-foreground: #282828;
-
-  /* semantic */
-  --color-destructive:            #cc241d;
-  --color-destructive-foreground: #fbf1c7;
-
-  /* gruvbox accent colors */
-  --color-gruvbox-yellow:  #fabd2f;
-  --color-gruvbox-green:   #b8bb26;
-  --color-gruvbox-aqua:    #8ec07c;
-  --color-gruvbox-blue:    #83a598;
-  --color-gruvbox-orange:  #fe8019;
-  --color-gruvbox-purple:  #d3869b;
-  --color-gruvbox-red:     #fb4934;
-  --color-gruvbox-gray:    #928374;
-
-  /* semantic status colors (cross-theme safe) */
-  --color-accent-ok:     #b8bb26;
-  --color-accent-warn:   #d79921;
-  --color-accent-error:  #fb4934;
-  --color-accent-info:   #83a598;
-}
-
-/* One Dark — runtime override via data-theme attribute on <html>.
-   Reuses the same --color-* var names so all utility classes update automatically. */
-:root[data-theme="one-dark"] {
-  /* bg */
-  --color-background:    #282c34;
-  --color-card:          #21252b;
-  --color-secondary:     #2c313a;
-  --color-muted:         #2c313a;
-  --color-border:        #3a3f4b;
-  --color-input:         #21252b;
-  --color-popover:       #21252b;
-
-  /* fg */
-  --color-foreground:             #abb2bf;
-  --color-card-foreground:        #abb2bf;
-  --color-popover-foreground:     #abb2bf;
-  --color-secondary-foreground:   #abb2bf;
-  --color-muted-foreground:       #5c6370;
-  --color-accent:                 #e06c75;
-  --color-accent-foreground:      #282c34;
-
-  /* primary */
-  --color-primary:            #61afef;
-  --color-primary-foreground: #282c34;
-
-  /* semantic */
-  --color-destructive:            #e06c75;
-  --color-destructive-foreground: #282c34;
-
-  /* one-dark accent colors (mapped to gruvbox var names for compatibility) */
-  --color-gruvbox-yellow:  #e5c07b;
-  --color-gruvbox-green:   #98c379;
-  --color-gruvbox-aqua:    #56b6c2;
-  --color-gruvbox-blue:    #61afef;
-  --color-gruvbox-orange:  #d19a66;
-  --color-gruvbox-purple:  #c678dd;
-  --color-gruvbox-red:     #e06c75;
-  --color-gruvbox-gray:    #5c6370;
-
-  /* semantic overrides for one-dark */
-  --color-accent-ok:     #98c379;
-  --color-accent-warn:   #e5c07b;
-  --color-accent-error:  #e06c75;
-  --color-accent-info:   #61afef;
-}
-
-/* Dark (shadcn zinc) — runtime override via data-theme attribute on <html>.
-   Same --color-* var names so all utility classes update automatically. */
-:root[data-theme="dark"] {
-  /* bg */
+  /* bg — dark zinc */
   --color-background:    #09090b;
   --color-card:          #18181b;
   --color-secondary:     #27272a;
@@ -122,7 +29,7 @@
   --color-destructive:            #ef4444;
   --color-destructive-foreground: #fafafa;
 
-  /* zinc-friendly accent palette (mapped to gruvbox var names for compatibility) */
+  /* accent palette (zinc-dark) */
   --color-gruvbox-yellow:  #eab308;
   --color-gruvbox-green:   #22c55e;
   --color-gruvbox-aqua:    #2dd4bf;
@@ -132,16 +39,15 @@
   --color-gruvbox-red:     #ef4444;
   --color-gruvbox-gray:    #71717a;
 
-  /* semantic status overrides */
+  /* semantic status */
   --color-accent-ok:     #22c55e;
   --color-accent-warn:   #eab308;
   --color-accent-error:  #ef4444;
   --color-accent-info:   #3b82f6;
 }
 
-/* Light (shadcn zinc) — runtime override via data-theme attribute on <html>. */
+/* Light override */
 :root[data-theme="light"] {
-  /* bg */
   --color-background:    #ffffff;
   --color-card:          #fafafa;
   --color-secondary:     #f4f4f5;
@@ -150,7 +56,6 @@
   --color-input:         #ffffff;
   --color-popover:       #ffffff;
 
-  /* fg */
   --color-foreground:             #09090b;
   --color-card-foreground:        #09090b;
   --color-popover-foreground:     #09090b;
@@ -159,15 +64,12 @@
   --color-accent:                 #2563eb;
   --color-accent-foreground:      #ffffff;
 
-  /* primary */
   --color-primary:            #18181b;
   --color-primary-foreground: #fafafa;
 
-  /* semantic */
   --color-destructive:            #dc2626;
   --color-destructive-foreground: #ffffff;
 
-  /* darker accent palette for light bg (mapped to gruvbox var names) */
   --color-gruvbox-yellow:  #ca8a04;
   --color-gruvbox-green:   #16a34a;
   --color-gruvbox-aqua:    #0d9488;
@@ -177,40 +79,22 @@
   --color-gruvbox-red:     #dc2626;
   --color-gruvbox-gray:    #71717a;
 
-  /* semantic status overrides */
   --color-accent-ok:     #16a34a;
   --color-accent-warn:   #ca8a04;
   --color-accent-error:  #dc2626;
   --color-accent-info:   #2563eb;
 }
 
-/* Accent overrides — runtime via data-accent attribute on <html>.
-   data-accent absent OR "default" → accent stays at the theme's own value. */
-:root[data-accent="teal"] {
-  --color-accent:            #2f9e6e;
-  --color-accent-foreground: #ffffff;
-}
-:root[data-accent="violet"] {
-  --color-accent:            #8b5cf6;
-  --color-accent-foreground: #ffffff;
-}
-:root[data-accent="amber"] {
-  --color-accent:            #d97706;
-  --color-accent-foreground: #ffffff;
-}
-
-/* Density — switched via data-density attribute on root <div> in +page.svelte.
-   Default (no attribute or "comfortable") = py-1.5 equiv. "compact" = py-1 equiv.
-   Components opt-in by using py-[var(--row-py)] instead of hardcoded py-1/py-1.5. */
+/* Density */
 :root,
 [data-density="comfortable"] {
-	--row-py: 0.375rem;  /* matches Tailwind py-1.5 */
-	--row-gap: 0.5rem;   /* matches Tailwind gap-2 */
+	--row-py: 0.375rem;
+	--row-gap: 0.5rem;
 }
 
 [data-density="compact"] {
-	--row-py: 0.25rem;   /* matches Tailwind py-1 */
-	--row-gap: 0.375rem; /* matches Tailwind gap-1.5 */
+	--row-py: 0.25rem;
+	--row-gap: 0.375rem;
 }
 
 @layer base {
