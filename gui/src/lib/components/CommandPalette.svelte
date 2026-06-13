@@ -23,6 +23,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Home from '@lucide/svelte/icons/home';
+	import FolderKanban from '@lucide/svelte/icons/folder-kanban';
 
 	type ActionItem = {
 		id: string;
@@ -132,6 +133,20 @@
 				category: 'Navigate',
 				icon: Terminal,
 				run: () => setView('terminal')
+			},
+			{
+				id: 'nav:projects',
+				title: 'Manage Projects',
+				category: 'Navigate',
+				icon: FolderKanban,
+				run: () => setView('projects')
+			},
+			{
+				id: 'projects:new',
+				title: 'New project…',
+				category: 'Projects',
+				icon: Plus,
+				run: () => setView('projects')
 			},
 			{
 				id: 'nav:profiles',

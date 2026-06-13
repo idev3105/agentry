@@ -18,6 +18,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 	import OverviewView from '$lib/views/OverviewView.svelte';
 	import SettingsView from '$lib/views/SettingsView.svelte';
 	import R9DashboardView from '$lib/views/R9DashboardView.svelte';
+	import ProjectsView from '$lib/views/ProjectsView.svelte';
 	import { projects, addProject } from '$lib/stores/projects';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Command from '@lucide/svelte/icons/command';
@@ -686,6 +687,10 @@ import { listen } from '@tauri-apps/api/event';
 			{:else if $ui.view === 'overview'}
 				<div class="flex-1 overflow-hidden">
 					<OverviewView />
+				</div>
+			{:else if $ui.view === 'projects'}
+				<div class="flex-1 overflow-hidden">
+					<ProjectsView />
 				</div>
 			{:else if $ui.view === 'profiles'}
 				<div class="flex-1 overflow-hidden">

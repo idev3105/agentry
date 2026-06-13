@@ -13,3 +13,10 @@ export function addProject(p: ProjectState) {
 export function getProject(id: string): ProjectState | undefined {
 	return get(projects).get(id);
 }
+
+export function removeProject(id: string) {
+	projects.update((m) => {
+		m.delete(id);
+		return m;
+	});
+}

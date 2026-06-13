@@ -5,6 +5,7 @@
 	import Router from '@lucide/svelte/icons/router';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Plus from '@lucide/svelte/icons/plus';
+	import FolderKanban from '@lucide/svelte/icons/folder-kanban';
 	import { ui, setView, openOnboarding } from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { cn } from '$lib/utils/cn';
@@ -13,6 +14,7 @@
 	const items: { id: View; icon: typeof Home; label: string; shortcut?: string }[] = [
 		{ id: 'overview', icon: Home, label: 'Overview' },
 		{ id: 'terminal', icon: Folders, label: 'Sessions' },
+		{ id: 'projects', icon: FolderKanban, label: 'Projects' },
 		{ id: 'profiles', icon: User, label: 'Profiles' },
 		{ id: 'r9', icon: Router, label: '9Router' },
 		{ id: 'settings', icon: Settings, label: 'Settings' }

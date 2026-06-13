@@ -2,6 +2,7 @@
 	import { projects } from '$lib/stores/projects';
 	import { sessions } from '$lib/stores/sessions';
 	import { ui, openPalette } from '$lib/stores/ui';
+	import { setView } from '$lib/stores/ui';
 	import { cn, fmtChord } from '$lib/utils/cn';
 import Search from '@lucide/svelte/icons/search';
 import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -33,6 +34,16 @@ import Check from '@lucide/svelte/icons/check';
 	let activeProject = $derived(
 		$ui.activeProjectId ? $projects.get($ui.activeProjectId) : undefined
 	);
+
+	function liveCount(projectId: string): number {
+		let n = 0;
+		for (const s of sessionList) {
+			if (s.projectId !== projectId) continue;
+			if (s.status === 'finished' || s.status === 'failed') continue;
+			n++;
+		}
+		return n;
+	}
 </script>
 
 <div class="flex items-center gap-3 px-3 py-1.5 border-b border-border flex-shrink-0 bg-background">
@@ -59,7 +70,7 @@ import Check from '@lucide/svelte/icons/check';
 				{#each projectList as p (p.id)}
 					<button
 						class={cn(
-							'w-full text-left px-3 py-1.5 text-sm hover:bg-secondary',
+							'w-full text-left px-3 py-1.5 text-sm hover:bg-secondary flex items-center gap-2',
 							$ui.activeProjectId === p.id && 'text-gruvbox-yellow'
 						)}
 						onclick={() => {
@@ -67,13 +78,29 @@ import Check from '@lucide/svelte/icons/check';
 							projectMenuOpen = false;
 						}}
 					>
-						<div>{p.name}</div>
-						<div class="text-xs text-muted-foreground font-mono truncate">{p.path}</div>
+						<div class="flex-1 min-w-0">
+							<div class="flex items-center gap-1.5">
+								{#if $ui.activeProjectId === p.id}<Check size={12} />{/if}
+								<span class="truncate">{p.name}</span>
+							</div>
+							<div class="text-xs text-muted-foreground font-mono truncate">{p.path}</div>
+						</div>
+						{#if liveCount(p.id) > 0}
+							<span class="text-[10px] px-1.5 py-0.5 rounded bg-accent-ok/15 text-accent-ok">{liveCount(p.id)}</span>
+						{/if}
 					</button>
 				{/each}
 				{#if projectList.length === 0}
 					<div class="px-3 py-1.5 text-xs text-muted-foreground">No projects</div>
 				{/if}
+				<div class="border-t border-border mt-1 pt-1">
+					<button
+						class="w-full text-left px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+						onclick={() => { setView('projects'); projectMenuOpen = false; }}
+					>
+						Manage projects…
+					</button>
+				</div>
 			</div>
 		{/if}
 	</div>

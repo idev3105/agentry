@@ -65,6 +65,10 @@ export async function createProject(name: string, path: string): Promise<void> {
 	await rpc({ cmd: 'create_project', name, path });
 }
 
+export async function removeProject(projectId: string): Promise<void> {
+	await rpc({ cmd: 'remove_project', project_id: projectId });
+}
+
 export async function startSession(
 	projectId: string,
 	profileId: string,
