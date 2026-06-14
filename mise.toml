@@ -134,12 +134,23 @@ echo "Done. Launch app on device."
 """
 
 [tasks.android-run]
-description = "Build APK debug + install + launch trên device (all-in-one)"
+description = "Build APK debug + start emulator (nếu cần) + install + launch"
 run = """
 #!/usr/bin/env bash
 set -e
 mise run android-build
 APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+# Start emulator nếu chưa có device nào
+if ! adb devices | grep -qE "emulator|device$"; then
+  AVD=$(emulator -list-avds | head -1)
+  if [ -z "$AVD" ]; then echo "No AVD found. Create one in Android Studio."; exit 1; fi
+  echo "Starting emulator $AVD..."
+  emulator -avd "$AVD" -no-snapshot-load &
+  adb wait-for-device
+  # Chờ boot hoàn tất
+  until [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" = "1" ]; do sleep 2; done
+  echo "Emulator ready."
+fi
 adb install -r "$APK"
 adb shell am start -n dev.agentry.app/.MainActivity
 echo "Done."
