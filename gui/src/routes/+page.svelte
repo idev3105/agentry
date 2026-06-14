@@ -9,6 +9,8 @@
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import LaunchSheet from '$lib/components/LaunchSheet.svelte';
+	import ConnectScreen from '$lib/components/ConnectScreen.svelte';
+	import { isMobile } from '$lib/platform';
 import SplitPane from '$lib/components/SplitPane.svelte';
 import SessionTabs from '$lib/components/SessionTabs.svelte';
 import TerminalFindBar from '$lib/components/TerminalFindBar.svelte';
@@ -37,33 +39,25 @@ import { toasts } from '$lib/stores/toasts.svelte';
 		setView
 	} from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
-	import {
-		listProjects,
-		listProfiles,
-		listSessions,
-		getSettings,
-		sendInput,
-		focusSession,
-		readBuffer,
-		killSession,
-		startSession,
-		resize,
-		sendCmd,
-		onProjectCreated,
-		onSessionStarted,
-		onAgentOutput,
-		onSessionActivity,
-		onSessionFinished,
-		onSessionFailed,
-		onAgentSessionCaptured,
-		onDaemonConnected,
-		onBootstrapError
-	} from '$lib/ipc';
+	// Transport: desktop → Tauri/Unix socket, mobile → WebSocket
+	import * as ipcDesktop from '$lib/ipc';
+	import * as ipcWs from '$lib/ipc-ws';
+	const ipc = isMobile ? ipcWs : ipcDesktop;
+	const {
+		listProjects, listProfiles, listSessions, getSettings,
+		sendInput, focusSession, readBuffer, killSession, startSession, resize, sendCmd,
+		onProjectCreated, onSessionStarted, onAgentOutput, onSessionActivity,
+		onSessionFinished, onSessionFailed, onAgentSessionCaptured,
+		onDaemonConnected, onBootstrapError
+	} = ipc;
 	import { bindKeys } from '$lib/utils/keybindings';
 	import { fmtChord } from '$lib/utils/cn';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
-import { listen } from '@tauri-apps/api/event';
+	import { listen } from '@tauri-apps/api/event';
 	import type { SessionState } from '$lib/types';
+
+	// Mobile: show connect screen until WS connected
+	let mobileConnected = $state(!isMobile || !!ipcWs.getSavedHost());
 
 	let termRef: TerminalView | undefined = $state();
 	let termCtl = $state<{ findNext: (q: string) => void; findPrev: (q: string) => void } | null>(null);
@@ -586,6 +580,9 @@ import { listen } from '@tauri-apps/api/event';
 	let sidebarDefault = $state(260);
 </script>
 
+{#if isMobile && !mobileConnected}
+	<ConnectScreen onConnected={() => { mobileConnected = true; }} />
+{:else}
 <div class="flex h-screen bg-background text-foreground overflow-hidden" data-density={$density}>
 	<ActivityBar />
 	
@@ -722,3 +719,4 @@ import { listen } from '@tauri-apps/api/event';
 	{/if}
 {/if}
 <OnboardingTour />
+{/if}
