@@ -70,37 +70,44 @@ dir = "{{cwd}}"
 description = "Kill mọi process Agentry (daemon + GUI shim + Tauri/Vite) và dọn socket/pid"
 run = """
 #!/usr/bin/env bash
-# Best-effort: pkill returns 1 when nothing matched — that's fine.
 pkill -TERM -f 'agentry-daemon'   2>/dev/null || true
 pkill -TERM -f 'agentry-gui'      2>/dev/null || true
 pkill -TERM -f 'tauri.js dev'     2>/dev/null || true
 pkill -TERM -f 'vite.*gui'        2>/dev/null || true
 sleep 0.3
-# Anything still alive after SIGTERM gets SIGKILL.
 pkill -KILL -f 'agentry-daemon'   2>/dev/null || true
 pkill -KILL -f 'agentry-gui'      2>/dev/null || true
 pkill -KILL -f 'tauri.js dev'     2>/dev/null || true
 pkill -KILL -f 'vite.*gui'        2>/dev/null || true
-
-# Remove stale runtime files so the next start spawns cleanly.
 rm -f "$HOME/.agentry/daemon.pid" "$HOME/.agentry/daemon.sock" "$HOME/.agentry/daemon.log"
-
-echo "agentry: killed daemon/GUI/dev processes and cleaned $HOME/.agentry/{daemon.pid,daemon.sock,daemon.log}"
+echo "agentry: killed daemon/GUI/dev processes and cleaned runtime files"
 """
 
-[tasks.android-install]
-description = "Cài APK debug lên Android device (adb install)"
+[tasks.reset]
+description = "Như 'kill' nhưng XÓA cả database — fresh start (mất hết projects/profiles/sessions)"
+run = """
+#!/usr/bin/env bash
+mise run kill
+rm -f "$HOME/.agentry/daemon.db" "$HOME/.agentry/daemon.db-shm" "$HOME/.agentry/daemon.db-wal"
+echo "agentry: database wiped"
+"""
+
+# ── Android ──────────────────────────────────────────────────────────────────
+
+[tasks.android-setup]
+description = "Cài Android SDK platform-tools (adb) nếu chưa có"
 run = """
 #!/usr/bin/env bash
 set -e
-APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
-if [ ! -f "$APK" ]; then
-  echo "APK không tồn tại, build trước..."
-  mise run android-build
+SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+CMDLINE="$SDK/cmdline-tools/latest/bin/sdkmanager"
+if ! command -v adb &>/dev/null; then
+  echo "adb not found — installing platform-tools via sdkmanager..."
+  "$CMDLINE" "platform-tools"
+  echo "Done. Add to PATH: export PATH=$SDK/platform-tools:$PATH"
+else
+  echo "adb already installed: $(adb version | head -1)"
 fi
-echo "Installing $APK..."
-adb install -r "$APK"
-echo "Done. Launch app trên device."
 """
 
 [tasks.android-build]
@@ -112,20 +119,18 @@ export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.120
 cd gui && pnpm tauri android build --debug
 """
 
-[tasks.android-dev]
-description = "Chạy Tauri Android dev mode (hot-reload trên device/emulator)"
+[tasks.android-install]
+description = "Cài APK debug lên Android device qua adb"
 run = """
 #!/usr/bin/env bash
 set -e
-export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
-echo "Building daemon..."
-cargo build -p agentry-daemon
-echo "Starting daemon in background..."
-cargo run -p agentry-daemon &
-DAEMON_PID=$!
-trap "kill $DAEMON_PID 2>/dev/null" EXIT
-echo "Starting Tauri Android dev (hot-reload)..."
-cd gui && pnpm tauri android dev
+APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+if [ ! -f "$APK" ]; then
+  echo "APK not found, building first..."
+  mise run android-build
+fi
+adb install -r "$APK"
+echo "Done. Launch app on device."
 """
 
 [tasks.android-run]
@@ -135,19 +140,20 @@ run = """
 set -e
 mise run android-build
 APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
-echo "Installing..."
 adb install -r "$APK"
-echo "Launching..."
 adb shell am start -n dev.agentry.app/.MainActivity
 echo "Done."
 """
 
-
-[tasks.reset]
-description = "Như 'kill' nhưng XÓA cả database — fresh start (mất hết projects/profiles/sessions)"
+[tasks.android-dev]
+description = "Tauri Android dev mode — hot-reload trên device/emulator"
 run = """
 #!/usr/bin/env bash
-mise run kill
-rm -f "$HOME/.agentry/daemon.db" "$HOME/.agentry/daemon.db-shm" "$HOME/.agentry/daemon.db-wal"
-echo "agentry: database wiped"
+set -e
+export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
+cargo build -p agentry-daemon
+cargo run -p agentry-daemon &
+DAEMON_PID=$!
+trap "kill $DAEMON_PID 2>/dev/null" EXIT
+cd gui && pnpm tauri android dev
 """
