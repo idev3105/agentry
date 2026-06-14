@@ -88,6 +88,61 @@ rm -f "$HOME/.agentry/daemon.pid" "$HOME/.agentry/daemon.sock" "$HOME/.agentry/d
 echo "agentry: killed daemon/GUI/dev processes and cleaned $HOME/.agentry/{daemon.pid,daemon.sock,daemon.log}"
 """
 
+[tasks.android-install]
+description = "Cài APK debug lên Android device (adb install)"
+run = """
+#!/usr/bin/env bash
+set -e
+APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+if [ ! -f "$APK" ]; then
+  echo "APK không tồn tại, build trước..."
+  mise run android-build
+fi
+echo "Installing $APK..."
+adb install -r "$APK"
+echo "Done. Launch app trên device."
+"""
+
+[tasks.android-build]
+description = "Build APK debug cho Android"
+run = """
+#!/usr/bin/env bash
+set -e
+export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
+cd gui && pnpm tauri android build --debug
+"""
+
+[tasks.android-dev]
+description = "Chạy Tauri Android dev mode (hot-reload trên device/emulator)"
+run = """
+#!/usr/bin/env bash
+set -e
+export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
+echo "Building daemon..."
+cargo build -p agentry-daemon
+echo "Starting daemon in background..."
+cargo run -p agentry-daemon &
+DAEMON_PID=$!
+trap "kill $DAEMON_PID 2>/dev/null" EXIT
+echo "Starting Tauri Android dev (hot-reload)..."
+cd gui && pnpm tauri android dev
+"""
+
+[tasks.android-run]
+description = "Build APK debug + install + launch trên device (all-in-one)"
+run = """
+#!/usr/bin/env bash
+set -e
+mise run android-build
+APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+echo "Installing..."
+adb install -r "$APK"
+echo "Launching..."
+adb shell am start -n dev.agentry.app/.MainActivity
+echo "Done."
+"""
+
+
 [tasks.reset]
 description = "Như 'kill' nhưng XÓA cả database — fresh start (mất hết projects/profiles/sessions)"
 run = """
