@@ -85,6 +85,19 @@
   --color-accent-info:   #2563eb;
 }
 
+:root[data-accent="teal"] {
+  --color-accent: #14b8a6;
+  --color-accent-foreground: #ffffff;
+}
+:root[data-accent="violet"] {
+  --color-accent: #8b5cf6;
+  --color-accent-foreground: #ffffff;
+}
+:root[data-accent="amber"] {
+  --color-accent: #f59e0b;
+  --color-accent-foreground: #000000;
+}
+
 /* Density */
 :root,
 [data-density="comfortable"] {

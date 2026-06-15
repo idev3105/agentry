@@ -25,7 +25,6 @@ import { toasts } from '$lib/stores/toasts.svelte';
 	import { projects, addProject } from '$lib/stores/projects';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Command from '@lucide/svelte/icons/command';
-	import LayoutGrid from '@lucide/svelte/icons/layout-grid';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
 	import { settings, density } from '$lib/stores/settings';
@@ -583,7 +582,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 {#if isMobile && !mobileConnected}
 	<ConnectScreen onConnected={() => { mobileConnected = true; }} />
 {:else}
-<div class="flex h-screen bg-background text-foreground overflow-hidden" data-density={$density}>
+<div class="flex h-screen bg-background text-foreground overflow-hidden">
 	<ActivityBar />
 	
 	<div class="flex flex-col flex-1 min-w-0">
@@ -658,7 +657,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 								<h2 class="text-base font-semibold">No session focused</h2>
 								<p class="text-xs text-muted-foreground mt-1">Pick one from the sidebar, or:</p>
 							</div>
-							<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
 								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors group"
 										onclick={() => quickStartDefault()}>
 									<Plus size={18} class="text-accent mb-2" />
@@ -673,13 +672,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 									<div class="text-[11px] text-muted-foreground mt-0.5">Switch session, run actions</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','k'])}</kbd>
 								</button>
-								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors"
-										onclick={() => setView('overview')}>
-									<LayoutGrid size={18} class="text-gruvbox-blue mb-2" />
-									<div class="text-sm font-medium">Overview</div>
-									<div class="text-[11px] text-muted-foreground mt-0.5">All projects & sessions</div>
-								</button>
-							</div>
+								</div>
 						</div>
 					{/if}
 						</div>

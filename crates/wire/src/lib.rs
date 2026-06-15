@@ -61,6 +61,10 @@ pub enum Cmd {
     GetSettings,
     SetDefaultProfile(SetDefaultProfileCmd),
     GetRemoteStatus,
+
+    // Agent integrations (hook scripts that report session id + activity)
+    CheckIntegrations,
+    InstallIntegration(InstallIntegrationCmd),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,6 +179,12 @@ pub struct ListSessionsCmd {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetDefaultProfileCmd {
     pub profile_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstallIntegrationCmd {
+    /// "claude" | "opencode" | "codex"
+    pub agent: String,
 }
 
 // ── Events (Daemon → Client, push) ───────────────────────────────────────────
@@ -293,6 +303,7 @@ pub enum RespData {
     ListProfiles(ListProfilesResp),
     GetSettings(GetSettingsResp),
     GetRemoteStatus(GetRemoteStatusResp),
+    CheckIntegrations(CheckIntegrationsResp),
     Empty(EmptyResp),
 }
 
@@ -426,6 +437,31 @@ pub struct ProfileInfo {
     pub params: Vec<ParamEntry>,
     pub env: Vec<EnvEntry>,
     pub start_script: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckIntegrationsResp {
+    pub integrations: Vec<IntegrationStatus>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntegrationStatus {
+    /// "claude" | "opencode" | "codex"
+    pub agent: String,
+    /// Whether the agent's CLI is detected on PATH.
+    pub agent_detected: bool,
+    /// Whether the integration script is installed at the expected path.
+    pub installed: bool,
+    /// Installed script version (parsed from header), if any.
+    pub installed_version: Option<u32>,
+    /// Latest version this daemon ships.
+    pub latest_version: u32,
+    /// Whether installed but out of date.
+    pub needs_update: bool,
+    /// Absolute path where the script is/would be installed.
+    pub install_path: String,
+    /// Extra manual step the user must do (e.g. claude settings.json), if any.
+    pub manual_step: Option<String>,
 }
 
 // ── Codec: JSON-line encode/decode ────────────────────────────────────────────

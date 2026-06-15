@@ -15,7 +15,10 @@ export type Density = 'comfortable' | 'compact';
 
 export const density = writable<Density>(loadDensity());
 
-density.subscribe(v => saveDensity(v));
+density.subscribe(v => {
+  saveDensity(v);
+  if (typeof document !== 'undefined') document.documentElement.dataset.density = v;
+});
 
 export const settings = writable<Settings>({
 	defaultProfileId: null,

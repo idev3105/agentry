@@ -1,8 +1,12 @@
 # Dev toolchain cho Agentry (xem docs/implementation-plan.md)
 [tools]
-rust = "stable"   # daemon + Tauri shim (cargo, rustc, clippy, rustfmt)
-node = "24"       # SvelteKit frontend (LTS)
-pnpm = "11"       # package manager
+rust = "stable"        # daemon + Tauri shim (cargo, rustc, clippy, rustfmt)
+node = "24"            # SvelteKit frontend (LTS)
+pnpm = "11"            # package manager
+java = "temurin-21"    # required by Android sdkmanager/Gradle
+"android-sdk" = "20.0" # Android cmdline-tools; sets ANDROID_HOME/ANDROID_SDK_ROOT
+                       # SDK packages (platform-tools, emulator, ndk, system-images)
+                       # installed into $ANDROID_HOME via: sdkmanager "<pkg>"
 
 # Tauri v2 trên Ubuntu còn cần system libs (apt) — không quản qua mise:
 #   sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
@@ -95,19 +99,14 @@ echo "agentry: database wiped"
 # ── Android ──────────────────────────────────────────────────────────────────
 
 [tasks.android-setup]
-description = "Cài Android SDK platform-tools (adb) nếu chưa có"
+description = "Xác nhận Android SDK đã được cài qua mise (platform-tools, emulator, ndk, system-images)"
 run = """
 #!/usr/bin/env bash
 set -e
-SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-CMDLINE="$SDK/cmdline-tools/latest/bin/sdkmanager"
-if ! command -v adb &>/dev/null; then
-  echo "adb not found — installing platform-tools via sdkmanager..."
-  "$CMDLINE" "platform-tools"
-  echo "Done. Add to PATH: export PATH=$SDK/platform-tools:$PATH"
-else
-  echo "adb already installed: $(adb version | head -1)"
-fi
+echo "ANDROID_HOME=$ANDROID_HOME"
+echo -n "adb: "; "$ANDROID_HOME/platform-tools/adb" version 2>/dev/null | head -1 || echo "NOT FOUND — run: sdkmanager platform-tools"
+echo -n "emulator: "; "$ANDROID_HOME/emulator/emulator" -version 2>/dev/null | head -1 || echo "NOT FOUND — run: sdkmanager emulator"
+echo -n "ndk: "; ls "$ANDROID_HOME/ndk" 2>/dev/null | head -3 || echo "NOT FOUND — run: sdkmanager 'ndk;27.0.12077973'"
 """
 
 [tasks.android-build]
@@ -115,7 +114,7 @@ description = "Build APK debug cho Android"
 run = """
 #!/usr/bin/env bash
 set -e
-export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
+export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 cd gui && pnpm tauri android build --debug
 """
 
@@ -124,12 +123,13 @@ description = "Cài APK debug lên Android device qua adb"
 run = """
 #!/usr/bin/env bash
 set -e
+ADB="$ANDROID_HOME/platform-tools/adb"
 APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
 if [ ! -f "$APK" ]; then
   echo "APK not found, building first..."
   mise run android-build
 fi
-adb install -r "$APK"
+"$ADB" install -r "$APK"
 echo "Done. Launch app on device."
 """
 
@@ -138,21 +138,23 @@ description = "Build APK debug + start emulator (nếu cần) + install + launch
 run = """
 #!/usr/bin/env bash
 set -e
+ADB="$ANDROID_HOME/platform-tools/adb"
+EMU="$ANDROID_HOME/emulator/emulator"
 mise run android-build
 APK="gui/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
 # Start emulator nếu chưa có device nào
-if ! adb devices | grep -qE "emulator|device$"; then
-  AVD=$(emulator -list-avds | head -1)
-  if [ -z "$AVD" ]; then echo "No AVD found. Create one in Android Studio."; exit 1; fi
+if ! "$ADB" devices | grep -qE "emulator|device$"; then
+  AVD=$("$EMU" -list-avds | head -1)
+  if [ -z "$AVD" ]; then echo "No AVD found. Run: mise run android-avd"; exit 1; fi
   echo "Starting emulator $AVD..."
-  emulator -avd "$AVD" -no-snapshot-load &
-  adb wait-for-device
+  "$EMU" -avd "$AVD" -no-snapshot-load &
+  "$ADB" wait-for-device
   # Chờ boot hoàn tất
-  until [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" = "1" ]; do sleep 2; done
+  until [ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null)" = "1" ]; do sleep 2; done
   echo "Emulator ready."
 fi
-adb install -r "$APK"
-adb shell am start -n dev.agentry.app/.MainActivity
+"$ADB" install -r "$APK"
+"$ADB" shell am start -n dev.agentry.app/.MainActivity
 echo "Done."
 """
 
@@ -161,10 +163,37 @@ description = "Tauri Android dev mode — hot-reload trên device/emulator"
 run = """
 #!/usr/bin/env bash
 set -e
-export ANDROID_NDK_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}/ndk/27.0.12077973"
+export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 cargo build -p agentry-daemon
 cargo run -p agentry-daemon &
 DAEMON_PID=$!
 trap "kill $DAEMON_PID 2>/dev/null" EXIT
 cd gui && pnpm tauri android dev
 """
+
+[tasks.android-avd]
+description = "Tạo AVD Pixel_9a (android-34, arm64) qua avdmanager — thay cho Android Studio"
+run = """
+#!/usr/bin/env bash
+set -e
+AVD="${1:-Pixel_9a}"
+IMG="system-images;android-34;google_apis;arm64-v8a"
+if "$ANDROID_HOME/emulator/emulator" -list-avds | grep -qx "$AVD"; then
+  echo "AVD '$AVD' already exists."; exit 0
+fi
+echo "Creating AVD '$AVD' from $IMG..."
+printf "no\n" | avdmanager create avd -n "$AVD" -k "$IMG" --force
+echo "Done. Start with: emulator -avd $AVD  (or 'mise run android-run')"
+"""
+
+[tasks.android-log]
+description = "Xem logcat realtime của app Agentry (lọc tag liên quan)"
+run = """
+#!/usr/bin/env bash
+ADB="$ANDROID_HOME/platform-tools/adb"
+echo "Clearing logcat buffer..."
+"$ADB" logcat -c
+echo "Tailing logcat (Ctrl+C to stop)..."
+"$ADB" logcat | grep -E "agentry|dev\\.agentry|Tauri|Console|RustStdout|chromium"
+"""
+

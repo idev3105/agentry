@@ -94,6 +94,17 @@ export interface Settings {
 	ringBufferBytes: number;
 }
 
+export interface IntegrationStatus {
+	agent: string;
+	agent_detected: boolean;
+	installed: boolean;
+	installed_version: number | null;
+	latest_version: number;
+	needs_update: boolean;
+	install_path: string;
+	manual_step: string | null;
+}
+
 // ── Wire events (from daemon via Tauri) ───────────────────────────────────────
 
 export interface ProjectCreatedEvent {

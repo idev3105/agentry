@@ -61,6 +61,22 @@ impl SessionManager {
         })
     }
 
+    /// Externally set a session's activity from an agent integration hook.
+    /// Returns the current ring tail seq so the caller can emit a coherent
+    /// SessionActivityEvent (unread_seq). Returns None if session not live.
+    pub async fn set_activity(&self, session_id: &str, state: ActivityState) -> Option<u64> {
+        let inner = {
+            let sessions = self.sessions.read().await;
+            sessions.get(session_id).map(|h| h.inner.clone())?
+        };
+        let mut g = inner.lock().ok()?;
+        g.activity = state;
+        // Stamp last_output_at so the idle/awaiting timer doesn't immediately
+        // override a hook-reported state on the next poll tick.
+        g.last_output_at = std::time::Instant::now();
+        Some(g.ring.back().map(|c| c.seq).unwrap_or(0))
+    }
+
     pub async fn read_buffer(
         &self,
         session_id: &str,
@@ -115,6 +131,7 @@ impl SessionManager {
 
     /// Spawn a fresh session
     #[allow(clippy::too_many_arguments)]
+    #[cfg(all(unix, not(target_os = "android")))]
     pub async fn spawn(
         self: Arc<Self>,
         session_id: String,
@@ -134,6 +151,7 @@ impl SessionManager {
 
     /// Spawn a resume session (pass agent_session_id to `--resume`)
     #[allow(clippy::too_many_arguments)]
+    #[cfg(all(unix, not(target_os = "android")))]
     pub async fn spawn_resume(
         self: Arc<Self>,
         session_id: String,
@@ -151,6 +169,7 @@ impl SessionManager {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[cfg(all(unix, not(target_os = "android")))]
     async fn do_spawn(
         self: Arc<Self>,
         session_id: String,
@@ -297,6 +316,13 @@ impl SessionManager {
             for arg in &argv[1..] { cmd.arg(arg); }
             cmd.cwd(&cwd_clone);
             for (k, v) in &env_pairs { cmd.env(k, v); }
+
+            // Inject agent integration env so hook scripts can call back.
+            let home_dir = std::env::var("HOME").unwrap_or_default();
+            let hook_sock = format!("{home_dir}/.agentry/agent-hook.sock");
+            cmd.env("AGENTRY_ENV", "1");
+            cmd.env("AGENTRY_SOCKET_PATH", &hook_sock);
+            cmd.env("AGENTRY_PANE_ID", &session_id_clone);
 
             let mut child = match pair.slave.spawn_command(cmd) {
                 Ok(c) => c,

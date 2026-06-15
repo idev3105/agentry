@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { settings, density } from '$lib/stores/settings';
 	import { profiles } from '$lib/stores/profiles';
-	import { sendCmd } from '$lib/ipc';
+	import { sendCmd, checkIntegrations, installIntegration } from '$lib/ipc';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { theme, accent, type Theme, type Accent } from '$lib/stores/theme.svelte';
 	import { remote } from '$lib/stores/remote.svelte';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import { onMount } from 'svelte';
+	import type { IntegrationStatus } from '$lib/types';
 	import Wifi from '@lucide/svelte/icons/wifi';
 	import Copy from '@lucide/svelte/icons/copy';
 	import { cn, fmtChord } from '$lib/utils/cn';
@@ -14,6 +15,9 @@
 	import Square from '@lucide/svelte/icons/square';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Download from '@lucide/svelte/icons/download';
+	import Check from '@lucide/svelte/icons/check';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 
 	const shortcuts: { keys: string[]; desc: string }[] = [
 		{ keys: ['mod', 'k'], desc: 'Open command palette' },
@@ -42,9 +46,45 @@
 	}
 	let confirmEnable = $state(false);
 
+	// ── Agent integrations ───────────────────────────────────────────────────
+	let integrations = $state<IntegrationStatus[]>([]);
+	let integrationsLoading = $state(false);
+	let installingAgent = $state<string | null>(null);
+
+	async function loadIntegrations() {
+		integrationsLoading = true;
+		try {
+			integrations = await checkIntegrations();
+		} catch (e) {
+			toasts.error(`Failed to check integrations: ${e}`);
+		} finally {
+			integrationsLoading = false;
+		}
+	}
+
+	async function install(agent: string) {
+		installingAgent = agent;
+		try {
+			const updated = await installIntegration(agent);
+			integrations = integrations.map((i) => (i.agent === agent ? updated : i));
+			toasts.success(`${agent} integration installed`);
+		} catch (e) {
+			toasts.error(`Install failed: ${e}`);
+		} finally {
+			installingAgent = null;
+		}
+	}
+
 	onMount(() => {
 		remote.startPolling();
+		if (tab === 'integrations') loadIntegrations();
 		return () => remote.stopPolling();
+	});
+
+	$effect(() => {
+		if (tab === 'integrations' && integrations.length === 0 && !integrationsLoading) {
+			loadIntegrations();
+		}
 	});
 
 	function copyAddr() {
@@ -152,6 +192,87 @@
 				</div>
 			</section>
 		{:else if tab === 'integrations'}
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<div class="flex items-center justify-between">
+					<div>
+						<h2 class="text-sm font-semibold">Agent State Hooks</h2>
+						<p class="text-xs text-muted-foreground mt-0.5">
+							Install hooks so agents report their session id and live state
+							(working / idle / blocked) directly — more reliable than screen scraping.
+						</p>
+					</div>
+					<button
+						class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+						disabled={integrationsLoading}
+						onclick={loadIntegrations}
+						title="Re-check"
+					>
+						<RefreshCw class={cn('size-3', integrationsLoading && 'animate-spin')} />
+						Check
+					</button>
+				</div>
+
+				{#if integrationsLoading && integrations.length === 0}
+					<p class="text-xs text-muted-foreground">Checking…</p>
+				{:else}
+					<div class="space-y-2">
+						{#each integrations as it (it.agent)}
+							<div class="flex items-start justify-between gap-3 border border-border rounded px-3 py-2">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<span class="text-sm font-medium capitalize">{it.agent}</span>
+										{@render integrationBadge(it)}
+										{#if !it.agent_detected}
+											<span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+												CLI not found
+											</span>
+										{/if}
+									</div>
+									<p class="text-[11px] text-muted-foreground font-mono mt-0.5 truncate">
+										{it.install_path}
+									</p>
+									{#if it.manual_step && (it.installed || installingAgent === it.agent)}
+										<p class="text-[11px] text-yellow-600 dark:text-yellow-400 mt-1">
+											⚠ {it.manual_step}
+										</p>
+									{/if}
+								</div>
+								<div class="shrink-0">
+									{#if it.installed && !it.needs_update}
+										<button
+											class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+											disabled={installingAgent === it.agent}
+											onclick={() => install(it.agent)}
+											title="Reinstall / overwrite"
+										>
+											{#if installingAgent === it.agent}
+												<Loader2 class="size-3 animate-spin" />
+											{:else}
+												<Check class="size-3 text-emerald-500" />
+											{/if}
+											Reinstall
+										</button>
+									{:else}
+										<button
+											class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-accent bg-accent/10 hover:bg-accent/20 disabled:opacity-50"
+											disabled={installingAgent === it.agent}
+											onclick={() => install(it.agent)}
+										>
+											{#if installingAgent === it.agent}
+												<Loader2 class="size-3 animate-spin" />
+											{:else}
+												<Download class="size-3" />
+											{/if}
+											{it.needs_update ? 'Update' : 'Install'}
+										</button>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</section>
+
 			<section class="bg-card border border-border rounded p-4 space-y-3">
 				<div class="flex items-center justify-between">
 					<div>
@@ -288,6 +409,22 @@
 		<span class="text-muted-foreground">{label}</span>
 		<span class="font-mono">{value}</span>
 	</div>
+{/snippet}
+
+{#snippet integrationBadge(it: IntegrationStatus)}
+	{#if it.installed && !it.needs_update}
+		<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+			installed{#if it.installed_version} v{it.installed_version}{/if}
+		</span>
+	{:else if it.needs_update}
+		<span class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30">
+			update available
+		</span>
+	{:else}
+		<span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+			not installed
+		</span>
+	{/if}
 {/snippet}
 
 {#snippet r9Badge()}

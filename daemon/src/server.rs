@@ -31,6 +31,14 @@ impl Server {
         self.event_tx.clone()
     }
 
+    /// Expose store + sessions + event_tx for the agent hook server.
+    #[cfg(all(unix, not(target_os = "android")))]
+    pub fn hook_resources(
+        &self,
+    ) -> (Arc<crate::store::Store>, Arc<crate::session::SessionManager>, EventTx) {
+        (self.store.clone(), self.sessions.clone(), self.event_tx.clone())
+    }
+
     pub async fn listen(self: Arc<Self>, sock_path: &str) -> anyhow::Result<()> {
         let _ = std::fs::remove_file(sock_path);
         let listener = UnixListener::bind(sock_path)?;
@@ -271,7 +279,10 @@ impl Server {
                     let profile_clone = profile;
                     let initial_input = c.initial_input;
                     tokio::spawn(async move {
+                        #[cfg(all(unix, not(target_os = "android")))]
                         let _ = sessions.spawn(sid, profile_clone, cwd, initial_input, initial_size, store, event_tx).await;
+                        #[cfg(not(all(unix, not(target_os = "android"))))]
+                        eprintln!("[session {}] spawn not supported on this platform", sid);
                     });
                 }
 
@@ -407,7 +418,10 @@ impl Server {
                     let resume_from = original.agent_session_id;
                     let cwd = original.cwd;
                     tokio::spawn(async move {
+                        #[cfg(all(unix, not(target_os = "android")))]
                         let _ = sessions.spawn_resume(sid, profile, cwd, resume_from, initial_size, store, event_tx).await;
+                        #[cfg(not(all(unix, not(target_os = "android"))))]
+                        eprintln!("[session {}] spawn_resume not supported on this platform", sid);
                     });
                 }
 
@@ -446,6 +460,18 @@ impl Server {
                     "address": address,
                     "error": error,
                 }))
+            }
+
+            Cmd::CheckIntegrations => {
+                let integrations = crate::integrations::check_all();
+                Ok(serde_json::json!({ "ok": true, "integrations": integrations }))
+            }
+
+            Cmd::InstallIntegration(c) => {
+                match crate::integrations::install(&c.agent) {
+                    Ok(status) => Ok(serde_json::json!({ "ok": true, "integration": status })),
+                    Err(e) => Err(e),
+                }
             }
         }
     }

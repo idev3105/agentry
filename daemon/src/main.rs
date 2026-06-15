@@ -4,9 +4,12 @@ mod server;
 mod session;
 mod profile;
 mod remote;
-#[cfg(not(windows))]
+mod integrations;
+#[cfg(all(unix, not(target_os = "android")))]
+mod agent_hook_server;
+#[cfg(all(unix, not(target_os = "android")))]
 mod codex_watch;
-#[cfg(not(windows))]
+#[cfg(all(unix, not(target_os = "android")))]
 mod opencode_capture;
 
 use std::sync::Arc;
@@ -38,6 +41,21 @@ async fn run_daemon() -> anyhow::Result<()> {
     }).ok();
 
     eprintln!("agentry-daemon listening on {sock_path}");
+
+    // Spawn agent integration hook server on its own socket. Agents call back
+    // here (claude/opencode/codex hooks) to report session id + activity state.
+    let hook_sock_path = std::path::PathBuf::from(format!("{agentry_dir}/agent-hook.sock"));
+    {
+        let (store_h, sessions_h, event_tx_h) = server.hook_resources();
+        let hook_path = hook_sock_path.clone();
+        tokio::spawn(async move {
+            if let Err(e) =
+                agent_hook_server::run(store_h, sessions_h, event_tx_h, hook_path).await
+            {
+                tracing::warn!("agent hook server error: {e}");
+            }
+        });
+    }
 
     // Spawn remote WS server on Tailscale interface (non-fatal if no tailnet).
     let home2 = home.clone();

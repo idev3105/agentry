@@ -10,6 +10,7 @@ import type {
 	SessionStartedEvent,
 	ProjectInfo,
 	ProfileInfo,
+	IntegrationStatus,
 	R9StatusResp,
 	RemoteStatus,
 	SessionInfo
@@ -77,6 +78,16 @@ export async function getRemoteStatus(): Promise<RemoteStatus> {
 
 export async function removeProject(projectId: string): Promise<void> {
 	await rpc({ cmd: 'remove_project', project_id: projectId });
+}
+
+export async function checkIntegrations(): Promise<IntegrationStatus[]> {
+	const r = await rpc({ cmd: 'check_integrations' });
+	return (r.integrations as IntegrationStatus[]) ?? [];
+}
+
+export async function installIntegration(agent: string): Promise<IntegrationStatus> {
+	const r = await rpc({ cmd: 'install_integration', agent });
+	return r.integration as IntegrationStatus;
 }
 
 export async function startSession(
