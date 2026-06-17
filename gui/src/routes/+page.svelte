@@ -25,6 +25,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 	import { projects, addProject } from '$lib/stores/projects';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Command from '@lucide/svelte/icons/command';
+	import SquareTerminal from '@lucide/svelte/icons/square-terminal';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
 	import { settings, density } from '$lib/stores/settings';
@@ -50,7 +51,10 @@ import { toasts } from '$lib/stores/toasts.svelte';
 		onDaemonConnected, onBootstrapError
 	} = ipc;
 	import { bindKeys } from '$lib/utils/keybindings';
+	// Importing the font store applies the persisted zoom/family on boot.
+	import { zoom } from '$lib/stores/font.svelte';
 	import { fmtChord } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
 	import type { UnlistenFn } from '@tauri-apps/api/event';
 	import { listen } from '@tauri-apps/api/event';
 	import type { SessionState } from '$lib/types';
@@ -546,6 +550,28 @@ import { toasts } from '$lib/stores/toasts.svelte';
 				mod: true,
 				handler: () => findOpen = true
 			},
+			// UI zoom: Ctrl/Cmd + = (and +), Ctrl/Cmd + -, Ctrl/Cmd + 0 to reset.
+			{
+				key: '=',
+				mod: true,
+				handler: () => zoom.zoomIn()
+			},
+			{
+				key: '+',
+				mod: true,
+				shift: true,
+				handler: () => zoom.zoomIn()
+			},
+			{
+				key: '-',
+				mod: true,
+				handler: () => zoom.zoomOut()
+			},
+			{
+				key: '0',
+				mod: true,
+				handler: () => zoom.reset()
+			},
 			...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => ({
 				key: digit,
 				mod: true,
@@ -610,7 +636,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 								<SessionSidebar projectId={activeProject.id} onSelect={pickSession} />
 							{:else}
 								<div class="p-4 text-xs text-muted-foreground">
-									No project — press <kbd class="font-mono">⌘T</kbd> to start.
+									No project — press <kbd class="font-mono">{fmtChord(['mod', 't'])}</kbd> to start.
 								</div>
 							{/if}
 						</div>
@@ -652,26 +678,31 @@ import { toasts } from '$lib/stores/toasts.svelte';
 							{/snippet}
 						</SplitPane>
 					{:else}
-						<div class="flex flex-col items-center justify-center h-full gap-6 p-8 text-center">
-							<div>
-								<h2 class="text-base font-semibold">No session focused</h2>
-								<p class="text-xs text-muted-foreground mt-1">Pick one from the sidebar, or:</p>
-							</div>
+						<div class="flex flex-col items-center justify-center h-full gap-5 p-8 text-center">
+								<div class="flex flex-col items-center gap-3">
+									<div class="grid place-items-center w-14 h-14 rounded-2xl bg-secondary/60 border border-border text-muted-foreground">
+										<SquareTerminal size={26} class="text-accent" />
+									</div>
+									<div>
+										<h2 class="text-base font-semibold">No session focused</h2>
+										<p class="text-xs text-muted-foreground mt-1">Pick one from the sidebar, or:</p>
+									</div>
+								</div>
 							<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
-								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors group"
+								<Button variant="outline" class="bg-card hover:border-accent rounded-lg p-4 h-auto flex-col items-start text-left gap-0 group"
 										onclick={() => quickStartDefault()}>
 									<Plus size={18} class="text-accent mb-2" />
 									<div class="text-sm font-medium">New session</div>
 									<div class="text-[11px] text-muted-foreground mt-0.5">Start with default profile</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','t'])}</kbd>
-								</button>
-								<button class="bg-card border border-border hover:border-accent rounded-lg p-4 text-left transition-colors"
+								</Button>
+								<Button variant="outline" class="bg-card hover:border-accent rounded-lg p-4 h-auto flex-col items-start text-left gap-0"
 										onclick={() => openPalette()}>
 									<Command size={18} class="text-gruvbox-aqua mb-2" />
 									<div class="text-sm font-medium">Command palette</div>
 									<div class="text-[11px] text-muted-foreground mt-0.5">Switch session, run actions</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','k'])}</kbd>
-								</button>
+								</Button>
 								</div>
 						</div>
 					{/if}

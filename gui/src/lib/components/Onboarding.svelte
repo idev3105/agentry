@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { ui, closeOnboarding } from '$lib/stores/ui';
-	import { cn } from '$lib/utils/cn';
+	import { cn, fmtChord } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import { detectAgents, type AgentAvailability } from '$lib/utils/detect-agents';
 	import type { AgentType } from '$lib/types';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
@@ -182,9 +185,9 @@
 				<span class="text-sm font-semibold">Agentry</span>
 			</div>
 			{#if canSkip}
-				<button class="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={skip}>
+				<Button variant="link" size="xs" class="text-muted-foreground hover:text-foreground h-auto p-0" onclick={skip}>
 					Skip onboarding →
-				</button>
+				</Button>
 			{/if}
 		</header>
 
@@ -197,16 +200,17 @@
 						{@const completed = i < stepIndex}
 						{@const current = i === stepIndex}
 						<li>
-							<button
-								class={cn(
-									'w-full flex items-start gap-3 px-3 py-3 rounded text-left transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
-									completed && 'hover:bg-secondary/50 cursor-pointer',
-									current && 'bg-secondary/30 ring-1 ring-accent/50',
-									!completed && !current && 'opacity-50 cursor-not-allowed'
-								)}
-								disabled={!completed}
-								onclick={() => goto(s.id)}
-							>
+							<Button
+							variant="ghost"
+							class={cn(
+								'w-full h-auto flex items-start gap-3 px-3 py-3 justify-start text-left',
+								completed && 'hover:bg-secondary/50',
+								current && 'bg-secondary/30 ring-1 ring-accent/50',
+								!completed && !current && 'opacity-50'
+							)}
+							disabled={!completed}
+							onclick={() => goto(s.id)}
+						>
 								<span class={cn(
 									'mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0',
 									completed && 'bg-gruvbox-green text-background',
@@ -219,8 +223,8 @@
 									<span class="block text-sm font-medium">{s.label}</span>
 									<span class="block text-xs text-muted-foreground mt-0.5">{s.desc}</span>
 								</span>
-							</button>
-						</li>
+								</Button>
+								</li>
 					{/each}
 				</ol>
 			</aside>
@@ -245,7 +249,7 @@
 								</div>
 								<div class="rounded border border-border p-3">
 									<div class="text-xs font-medium mb-1">Switch quickly</div>
-									<div class="text-xs text-muted-foreground">Tabs, MRU palette (⌘K), filters</div>
+									<div class="text-xs text-muted-foreground">Tabs, MRU palette ({fmtChord(['mod', 'k'])}), filters</div>
 								</div>
 								<div class="rounded border border-border p-3">
 									<div class="text-xs font-medium mb-1">Resume sessions</div>
@@ -254,12 +258,9 @@
 							</div>
 
 							<div class="pt-2">
-								<button
-									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
-									onclick={() => step = 'agents'}
-								>
+								<Button onclick={() => step = 'agents'}>
 									Get started →
-								</button>
+								</Button>
 							</div>
 						</div>
 
@@ -278,17 +279,17 @@
 								<div class="space-y-2">
 									{#each detection as a (a.id)}
 										{@const meta = AGENT_LABELS[a.id]}
-										<button
+										<Button
+											variant="outline"
 											class={cn(
-												'w-full text-left px-4 py-3 rounded border transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
+												'w-full h-auto text-left px-4 py-3 justify-start',
 												pickedAgent === a.id  && 'border-accent bg-secondary/30',
-												pickedAgent !== a.id && a.installed && 'border-border hover:border-secondary',
-												!a.installed && 'border-border/50 opacity-60 cursor-not-allowed'
+												!a.installed && 'opacity-60'
 											)}
 											disabled={!a.installed}
 											onclick={() => a.installed && (pickedAgent = a.id)}
 										>
-											<div class="flex items-center justify-between">
+											<div class="flex items-center justify-between w-full">
 												<div class="min-w-0">
 													<div class="text-sm font-medium flex items-center gap-2">
 														{meta.label}
@@ -307,21 +308,20 @@
 													{/if}
 												</div>
 											</div>
-										</button>
+										</Button>
 									{/each}
 								</div>
 
 								<div class="flex items-center justify-between pt-2">
-									<button class="text-xs text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={runDetection}>
+									<Button variant="link" size="xs" class="text-muted-foreground hover:text-foreground h-auto p-0" onclick={runDetection}>
 										↻ Re-detect
-									</button>
-									<button
-										class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+									</Button>
+									<Button
 										disabled={!pickedAgent}
 										onclick={() => step = 'project'}
 									>
 										Continue with {pickedAgent ? AGENT_LABELS[pickedAgent].label : '…'} →
-									</button>
+									</Button>
 								</div>
 							{/if}
 						</div>
@@ -335,8 +335,9 @@
 								</p>
 							</div>
 
-							<button
-								class="w-full px-4 py-4 rounded border border-dashed border-border hover:border-accent hover:bg-secondary/30 transition-colors flex items-center gap-3 text-left focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+							<Button
+								variant="outline"
+								class="w-full h-auto px-4 py-4 border-dashed hover:border-accent justify-start gap-3 text-left"
 								onclick={pickFolder}
 							>
 								<FolderOpen size={18} class="text-muted-foreground shrink-0" />
@@ -347,37 +348,35 @@
 										<div class="text-sm text-muted-foreground">Click to choose a folder…</div>
 									{/if}
 								</div>
-							</button>
+							</Button>
 
 							{#if homeDirPath && !folder}
 								<div class="space-y-1">
 									<div class="text-xs text-muted-foreground">Or quick pick:</div>
 									<div class="flex flex-wrap gap-2">
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath!, 'Home')}>~/</button>
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Documents', 'Documents')}>~/Documents</button>
-										<button class="text-xs px-2 py-1 rounded border border-border hover:border-accent font-mono focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => useCommonFolder(homeDirPath + '/Projects', 'Projects')}>~/Projects</button>
+										<Button variant="outline" size="xs" class="font-mono" onclick={() => useCommonFolder(homeDirPath!, 'Home')}>~/</Button>
+										<Button variant="outline" size="xs" class="font-mono" onclick={() => useCommonFolder(homeDirPath + '/Documents', 'Documents')}>~/Documents</Button>
+										<Button variant="outline" size="xs" class="font-mono" onclick={() => useCommonFolder(homeDirPath + '/Projects', 'Projects')}>~/Projects</Button>
 									</div>
 								</div>
 							{/if}
 
-							<label class="block">
-								<span class="block text-xs text-muted-foreground mb-1">Project name</span>
-								<input
+							<div class="block space-y-1">
+								<Label class="block text-xs text-muted-foreground">Project name</Label>
+								<Input
 									type="text"
 									bind:value={projectName}
-									class="w-full bg-input rounded px-3 py-2 text-sm border border-border focus:border-accent focus:outline-none"
 									placeholder="My App"
 								/>
-							</label>
+							</div>
 
 							<div class="flex justify-end">
-								<button
-									class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+								<Button
 									disabled={!folder.trim() || !projectName.trim()}
 									onclick={() => step = 'launch'}
 								>
 									Create project →
-								</button>
+								</Button>
 							</div>
 						</div>
 
@@ -416,20 +415,20 @@
 							{#if launchError}
 								<div class="rounded border border-destructive/40 bg-destructive/10 p-3 space-y-2">
 									<div class="text-xs font-mono text-destructive-foreground break-all">{launchError}</div>
-									<button class="text-xs underline hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={runLaunch}>Retry</button>
+									<Button variant="link" size="xs" class="h-auto p-0 underline hover:text-foreground" onclick={runLaunch}>Retry</Button>
 								</div>
-							{/if}
+								{/if}
 
-							{#if allOk}
+								{#if allOk}
 								<div class="flex gap-2 pt-2">
-									<button class="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={startTour}>
+									<Button onclick={startTour}>
 										Take a quick tour
-									</button>
-									<button class="px-4 py-2 rounded border border-border hover:bg-secondary/30 text-sm focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={openTerminal}>
+									</Button>
+									<Button variant="outline" onclick={openTerminal}>
 										Just open terminal
-									</button>
+									</Button>
 								</div>
-							{/if}
+								{/if}
 						</div>
 					{/if}
 				</div>

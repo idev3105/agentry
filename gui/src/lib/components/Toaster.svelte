@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toasts } from '$lib/stores/toasts.svelte';
   import { cn } from '$lib/utils/cn';
+  import { Button } from '$lib/components/ui/button';
   import { fly } from 'svelte/transition';
   import X from '@lucide/svelte/icons/x';
   import CheckCircle from '@lucide/svelte/icons/check-circle-2';
@@ -25,9 +26,9 @@
         <div class="text-sm">{t.title}</div>
         {#if t.detail}<div class="text-[11px] text-muted-foreground break-words">{t.detail}</div>{/if}
       </div>
-      <button class="text-muted-foreground hover:text-foreground focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none" onclick={() => toasts.dismiss(t.id)} aria-label="Dismiss">
+      <Button variant="ghost" size="icon-xs" class="text-muted-foreground hover:text-foreground" onclick={() => toasts.dismiss(t.id)} aria-label="Dismiss">
         <X size={12} />
-      </button>
+      </Button>
     </div>
   {/each}
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
 	let { icon: Icon, title, hint, action }: {
 		icon: Component;
 		title: string;
@@ -13,9 +14,6 @@
 	<p class="text-sm font-medium">{title}</p>
 	{#if hint}<p class="text-xs text-muted-foreground max-w-xs">{hint}</p>{/if}
 	{#if action}
-		<button
-			class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary"
-			onclick={action.onClick}
-		>{action.label}</button>
+		<Button variant="outline" size="xs" class="mt-2" onclick={action.onClick}>{action.label}</Button>
 	{/if}
 </div>

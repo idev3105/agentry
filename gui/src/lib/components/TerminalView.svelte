@@ -9,7 +9,6 @@
 
 	const FONT_KEY = 'agentry:term:fontsize';
 	function loadFont(): number { return Number(localStorage.getItem(FONT_KEY) ?? '13') || 13; }
-	function saveFont(n: number) { localStorage.setItem(FONT_KEY, String(n)); }
 
 	let { sessionId, onInput, ctl = $bindable<{findNext:(q:string)=>void; findPrev:(q:string)=>void} | null>(null) }: {
 		sessionId: string | null;
@@ -108,27 +107,6 @@
 	$effect(() => {
 		void sessionId;
 		scheduleFit();
-	});
-
-	$effect(() => {
-		function onKey(e: KeyboardEvent) {
-			const mod = e.metaKey || e.ctrlKey;
-			if (!mod || !term) return;
-			if (e.key === '=' || e.key === '+') {
-				e.preventDefault();
-				term.options.fontSize = Math.min(28, (term.options.fontSize ?? 13) + 1);
-				saveFont(term.options.fontSize!); scheduleFit();
-			} else if (e.key === '-') {
-				e.preventDefault();
-				term.options.fontSize = Math.max(8, (term.options.fontSize ?? 13) - 1);
-				saveFont(term.options.fontSize!); scheduleFit();
-			} else if (e.key === '0') {
-				e.preventDefault();
-				term.options.fontSize = 13; saveFont(13); scheduleFit();
-			}
-		}
-		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
 	});
 
 	const THEMES = {

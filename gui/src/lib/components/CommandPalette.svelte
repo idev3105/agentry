@@ -7,6 +7,7 @@
 	import { startSession, killSession, focusSession } from '$lib/ipc';
 	import { markSessionEnding } from '$lib/stores/sessions';
 	import { cn, fmtChord } from '$lib/utils/cn';
+	import { Input } from '$lib/components/ui/input';
 
 	const MRU_KEY = 'agentry:palette:mru';
 	function loadMru(): string[] { try { return JSON.parse(localStorage.getItem(MRU_KEY) ?? '[]'); } catch { return []; } }
@@ -285,13 +286,13 @@
 			class="bg-card border border-border rounded-lg shadow-2xl w-[640px] max-w-[90vw] overflow-hidden"
 			onclick={(e) => e.stopPropagation()}
 		>
-			<input
-				bind:this={inputEl}
+			<Input
+				bind:ref={inputEl}
 				type="text"
 				bind:value={query}
 				onkeydown={onKey}
 				placeholder="Type a command or session name…"
-				class="w-full px-4 py-3 bg-transparent border-b border-border text-sm focus:outline-none placeholder:text-muted-foreground"
+				class="w-full border-0 border-b border-border rounded-none px-4 py-3 h-auto bg-transparent focus-visible:ring-0 shadow-none"
 			/>
 
 			<div class="max-h-96 overflow-y-auto py-1">

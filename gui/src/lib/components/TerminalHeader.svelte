@@ -5,6 +5,7 @@
   import { toasts } from '$lib/stores/toasts.svelte';
   import { agentMeta } from '$lib/utils/agent';
   import { cn } from '$lib/utils/cn';
+  import { Button } from '$lib/components/ui/button';
   import Square from '@lucide/svelte/icons/square';
   import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
   import Copy from '@lucide/svelte/icons/copy';
@@ -21,20 +22,20 @@
       {s.status}{s.activity ? ` · ${s.activity.replace('_',' ')}` : ''}
     </span>
     {#if s.status === 'running' || s.status === 'queued'}
-      <button class="p-1 rounded hover:bg-secondary text-gruvbox-red" title="Kill"
+      <Button variant="ghost" size="icon-xs" class="text-gruvbox-red" title="Kill" aria-label="Kill"
               onclick={() => { markSessionEnding(s!.id); killSession(s!.id).catch(e => toasts.error('Kill failed', String(e))); }}>
         <Square size={12} fill="currentColor" />
-      </button>
+      </Button>
     {/if}
     {#if (s.status === 'finished' || s.status === 'failed') && (s.agent === 'claude_code' || s.agent_session_id)}
-      <button class="p-1 rounded hover:bg-secondary" title="Resume"
+      <Button variant="ghost" size="icon-xs" title="Resume" aria-label="Resume"
               onclick={() => resumeSession(s!.id)}>
         <RotateCcw size={12} />
-      </button>
+      </Button>
     {/if}
-    <button class="p-1 rounded hover:bg-secondary" title="Copy session ID"
+    <Button variant="ghost" size="icon-xs" title="Copy session ID" aria-label="Copy session ID"
             onclick={() => { navigator.clipboard.writeText(s!.id); toasts.info('Copied session ID'); }}>
       <Copy size={12} />
-    </button>
+    </Button>
   </div>
 {/if}

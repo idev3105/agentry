@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fmtChord } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
 	import X from '@lucide/svelte/icons/x';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	const steps = [
 		{ id: 'activity', title: 'Activity Bar', text: 'Switch between Sessions, Projects, Profiles, 9Router, and Settings.', pos: 'right' },
-		{ id: 'sidebar', title: 'Session Sidebar', text: 'Your sessions live here. Click to focus, ⌘1–9 for quick switch, ▾ for profile picker.', pos: 'right' },
-		{ id: 'terminal', title: 'Terminal Pane', text: 'This is where your agent runs. Use the tab strip above to switch sessions, ⌘F to find.', pos: 'left' },
+		{ id: 'sidebar', title: 'Session Sidebar', text: `Your sessions live here. Click to focus, ${fmtChord(['mod', '1'])}–${fmtChord(['mod', '9'])} for quick switch, ▾ for profile picker.`, pos: 'right' },
+		{ id: 'terminal', title: 'Terminal Pane', text: `This is where your agent runs. Use the tab strip above to switch sessions, ${fmtChord(['mod', 'f'])} to find.`, pos: 'left' },
 		{ id: 'inspector', title: 'Inspector', text: 'Session details, rename (F2), duplicate, kill, resume, and copy paths or IDs.', pos: 'left' },
-		{ id: 'palette', title: 'Command Palette', text: 'Press ⌘K anywhere to search sessions, run commands, and navigate.', pos: 'left' },
+		{ id: 'palette', title: 'Command Palette', text: `Press ${fmtChord(['mod', 'k'])} anywhere to search sessions, run commands, and navigate.`, pos: 'left' },
 	];
 
 	let currentStep = $state(0);
@@ -70,21 +71,21 @@
 	style={cardStyle()}>
 		<div class="flex items-start justify-between gap-2 mb-2">
 			<h3 class="text-sm font-semibold">{steps[currentStep].title}</h3>
-			<button class="text-muted-foreground hover:text-foreground" onclick={skip}><X size={14} /></button>
+			<Button variant="ghost" size="icon-xs" class="text-muted-foreground hover:text-foreground" aria-label="Close tour" onclick={skip}><X size={14} /></Button>
 		</div>
 		<p class="text-xs text-muted-foreground mb-4">{steps[currentStep].text}</p>
 		<div class="flex items-center justify-between">
 			<span class="text-[10px] text-muted-foreground">{currentStep + 1} / {steps.length}</span>
 			<div class="flex gap-2">
 				{#if currentStep > 0}
-					<button class="px-2 py-1 text-xs rounded border border-border hover:bg-secondary" onclick={prev}>
+					<Button variant="outline" size="xs" onclick={prev}>
 						Back
-					</button>
+					</Button>
 				{/if}
-				<button class="px-3 py-1.5 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1" onclick={next}>
+				<Button size="xs" onclick={next}>
 					{currentStep === steps.length - 1 ? 'Got it' : 'Next'}
 					{#if currentStep < steps.length - 1}<ChevronRight size={12} />{/if}
-				</button>
+				</Button>
 			</div>
 		</div>
 	</div>

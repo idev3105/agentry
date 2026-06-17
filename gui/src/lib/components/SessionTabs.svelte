@@ -4,6 +4,7 @@
   import { focusSession, killSession } from '$lib/ipc';
   import { agentMeta } from '$lib/utils/agent';
   import { cn } from '$lib/utils/cn';
+  import { Button } from '$lib/components/ui/button';
   import X from '@lucide/svelte/icons/x';
 
   let tabs = $derived(
@@ -43,11 +44,12 @@
         {#if s.unread > 0 && !active}
           <span class="text-[9px] px-1 rounded bg-accent text-background font-mono">{s.unread}</span>
         {/if}
-        <button class="ml-1 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-secondary focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+        <Button variant="ghost" size="icon-xs"
+                class="ml-1 size-4 opacity-0 group-hover:opacity-100 hover:bg-secondary"
                 onclick={(e) => closeTab(e, s.id)}
                 aria-label="Close session">
           <X size={10} />
-        </button>
+        </Button>
       </div>
     {/each}
   </div>

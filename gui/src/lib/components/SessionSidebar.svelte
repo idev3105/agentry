@@ -9,7 +9,11 @@
     import { toasts } from "$lib/stores/toasts.svelte";
     import type { SessionState } from "$lib/types";
     import { cn, fmtChord } from "$lib/utils/cn";
+    import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input";
+    import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import BrandIcon from "./BrandIcon.svelte";
     import EmptyState from "./EmptyState.svelte";
     import { slide } from 'svelte/transition';
     import Plus from "@lucide/svelte/icons/plus";
@@ -31,7 +35,6 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
     let filter = $state("");
     let filterEl: HTMLInputElement | null = $state(null);
-    let profileMenuOpen = $state(false);
     let confirmTarget = $state<SessionState | null>(null);
     let clearConfirmOpen = $state(false);
 
@@ -148,12 +151,12 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 size={12}
                 class="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
-            <input
+            <Input
                 type="text"
                 bind:value={filter}
-                bind:this={filterEl}
+                bind:ref={filterEl}
                 placeholder="Filter sessions"
-                class="w-full bg-input rounded pl-7 pr-2 py-1 text-xs border border-border focus:outline-none focus:border-accent"
+                class="w-full pl-7 pr-2 text-xs"
             />
         </div>
     </div>
@@ -167,7 +170,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 <EmptyState
                     icon={Inbox}
                     title="No sessions yet"
-                    hint="Press ⌘T to start one"
+                    hint={`Press ${fmtChord(['mod', 't'])} to start one`}
                     action={$ui.activeProjectId && defaultProfile
                         ? { label: 'New session', onClick: () => $ui.activeProjectId && defaultProfile && startSession($ui.activeProjectId, defaultProfile.id) }
                         : undefined}
@@ -189,48 +192,48 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
     <!-- New session bar -->
     <div class="border-t border-border p-2 relative">
         <div class="flex items-stretch rounded overflow-hidden border border-border">
-            <button class="flex-1 px-2 py-1.5 text-xs bg-secondary/40 hover:bg-secondary inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
-                    disabled={!$ui.activeProjectId || !defaultProfile}
-                    onclick={() => $ui.activeProjectId && defaultProfile && startSession($ui.activeProjectId, defaultProfile.id)}>
+            <Button
+                variant="ghost"
+                class="flex-1 rounded-none px-2 py-1.5 text-xs bg-secondary/40 hover:bg-secondary gap-1.5"
+                disabled={!$ui.activeProjectId || !defaultProfile}
+                onclick={() => $ui.activeProjectId && defaultProfile && startSession($ui.activeProjectId, defaultProfile.id)}>
                 <Plus size={12} />
                 New {defaultProfile?.name ?? 'session'}
-            </button>
-            <button class="px-2 bg-secondary/40 hover:bg-secondary border-l border-border"
-                    onclick={() => (profileMenuOpen = !profileMenuOpen)}
+            </Button>
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger
+                    class="px-2 bg-secondary/40 hover:bg-secondary border-l border-border inline-flex items-center"
                     aria-label="Choose profile">
-                <ChevronDown size={12} />
-            </button>
+                    <ChevronDown size={12} />
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content class="w-56" align="end" side="top">
+                    {#each $profiles as p (p.id)}
+                        {@const m = agentMeta(p.agent_type)}
+                        <DropdownMenu.Item
+                            class="text-xs"
+                            onclick={() => { $ui.activeProjectId && startSession($ui.activeProjectId, p.id); }}>
+                            <m.icon size={12} class={m.color} />
+                            <span class="flex-1 truncate">{p.name}</span>
+                            {#if $settings.defaultProfileId === p.id}
+                                <Check size={12} class="text-accent" />
+                            {/if}
+                        </DropdownMenu.Item>
+                    {/each}
+                    <DropdownMenu.Separator />
+                    <DropdownMenu.Item class="text-xs" onclick={() => setView('profiles')}>
+                        <Settings size={12} /> Manage profiles…
+                    </DropdownMenu.Item>
+                </DropdownMenu.Content>
+            </DropdownMenu.Root>
         </div>
 
-        {#if profileMenuOpen}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="fixed inset-0 z-40" onclick={() => (profileMenuOpen = false)}></div>
-            <div class="absolute bottom-12 left-2 right-2 z-50 bg-card border border-border rounded shadow-lg py-1 max-h-64 overflow-y-auto">
-                {#each $profiles as p (p.id)}
-                    {@const m = agentMeta(p.agent_type)}
-                    <button class="w-full px-3 py-1.5 text-left text-xs hover:bg-secondary flex items-center gap-2"
-                            onclick={() => { profileMenuOpen = false; $ui.activeProjectId && startSession($ui.activeProjectId, p.id); }}>
-                        <m.icon size={12} class={m.color} />
-                        <span class="flex-1 truncate">{p.name}</span>
-                        {#if $settings.defaultProfileId === p.id}
-                            <Check size={12} class="text-accent" />
-                        {/if}
-                    </button>
-                {/each}
-                <div class="border-t border-border mt-1 pt-1">
-                    <button class="w-full px-3 py-1.5 text-left text-xs hover:bg-secondary inline-flex items-center gap-2"
-                            onclick={() => { profileMenuOpen = false; setView('profiles'); }}>
-                        <Settings size={12} /> Manage profiles…
-                    </button>
-                </div>
-            </div>
-        {/if}
         {#if completed.length > 0}
-            <button class="w-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary/40 text-left inline-flex items-center gap-1.5"
-                    onclick={() => (clearConfirmOpen = true)}>
+            <Button
+                variant="ghost"
+                class="w-full justify-start px-2 py-1 h-auto text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary/40 gap-1.5"
+                onclick={() => (clearConfirmOpen = true)}>
                 <Trash2 size={11} /> Clear {completed.length} completed
-            </button>
+            </Button>
         {/if}
     </div>
 </div>
@@ -273,9 +276,8 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
             onclick={() => pick(s.id)}
             transition:slide={{ duration: 120 }}
         >
-            {#if m.logoUrl}
-                <img src={m.logoUrl} alt={m.label}
-                    class={cn('w-3.5 h-3.5 flex-shrink-0 object-contain', m.label === 'OpenCode' && 'invert brightness-150')} />
+            {#if m.brand}
+                <BrandIcon name={m.brand} size={14} class="flex-shrink-0" />
             {:else}
                 <m.icon size={11} class={cn('flex-shrink-0', m.color)} />
             {/if}
@@ -305,10 +307,12 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 </span>
             {/if}
             {#if s.status === "running" || s.status === "queued"}
-            <button
+            <Button
+                variant="ghost"
+                size="icon-xs"
                 title="Kill session"
                 aria-label="Kill session"
-                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+                class="text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 shrink-0"
                 onclick={(e) => {
                     e.stopPropagation();
                     markSessionEnding(s.id);
@@ -318,28 +322,32 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                             failReason: `kill failed: ${err}`,
                         });
                     });
-                }}><X size={14} /></button>
+                }}><X size={14} /></Button>
         {/if}
         {#if s.status === "finished" || s.status === "failed"}
-            <button
+            <Button
+                variant="ghost"
+                size="icon-xs"
                 title="Restart session (same profile)"
                 aria-label="Restart session"
-                class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 transition-colors shrink-0 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+                class="text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 shrink-0"
                 onclick={(e) => {
                     e.stopPropagation();
                     startSession(s.projectId, s.profileId).catch((err) =>
                         toasts.error('Restart failed', String(err))
                     );
-                }}><RotateCcw size={13} /></button>
+                }}><RotateCcw size={13} /></Button>
         {/if}
-        <button
+        <Button
+            variant="ghost"
+            size="icon-xs"
             title="Delete session"
             aria-label="Delete session"
-            class="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 transition-colors shrink-0 opacity-0 group-hover:opacity-100 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+            class="text-muted-foreground hover:text-gruvbox-red hover:bg-background/60 shrink-0 opacity-0 group-hover:opacity-100"
                 onclick={(e) => {
                     e.stopPropagation();
                     confirmTarget = s;
-                }}><Trash size={12} /></button>
+                }}><Trash size={12} /></Button>
         </div>
     {/each}
 {/snippet}

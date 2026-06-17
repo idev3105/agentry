@@ -8,6 +8,10 @@
 	import { killSession, resumeSession, sendCmd, startSession } from '$lib/ipc';
 	import { cn } from '$lib/utils/cn';
 	import { shellQuote } from '$lib/utils/shell';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import Square from '@lucide/svelte/icons/square';
@@ -187,54 +191,65 @@
 			<div class="flex items-center gap-2">
 				<span class={cn('w-2 h-2 rounded-full', statusDot(session))}></span>
 				{#if renaming}
-					<input
+					<Input
 						bind:value={renameValue}
-						bind:this={renameEl}
-						class="flex-1 bg-input border border-border rounded px-2 py-0.5 text-sm font-medium"
+						bind:ref={renameEl}
+						class="flex-1 h-auto py-0.5 text-sm font-medium"
 						onkeydown={(e) => e.key === 'Enter' && commitRename(session!.id)}
 						onblur={() => commitRename(session!.id)}
 					/>
 				{:else}
-					<button
-						class="flex-1 text-left font-medium truncate hover:text-accent"
+					<Button
+						variant="ghost"
+						class="flex-1 justify-start px-0 h-auto text-left font-medium truncate hover:text-accent hover:bg-transparent"
 						onclick={() => startRename(session!)}
 					>
 						{session.title}
-					</button>
+					</Button>
 				{/if}
 			</div>
-			<div class={cn('text-xs', statusColor(session))}>
-				{statusLabel(session)}
+			<div>
+				<Badge variant="outline" class={cn('text-xs', statusColor(session))}>
+					{statusLabel(session)}
+				</Badge>
 			</div>
 
 			<div class="flex gap-1.5 pt-1">
-				<button
+				<Button
+					variant="secondary"
+					size="xs"
 					title="Rename (F2)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+					class="flex-1 gap-1"
 					onclick={() => startRename(session!)}
 				>
 					<Pencil size={12} /> Rename
-				</button>
-				<button
+				</Button>
+				<Button
+					variant="secondary"
+					size="xs"
 					title="Duplicate (same profile + cwd)"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+					class="flex-1 gap-1"
 					onclick={() => duplicate(session!)}
 				>
 					<Copy size={12} /> Duplicate
-				</button>
+				</Button>
 				{#if session.status === 'running' || session.status === 'queued'}
-					<button
+					<Button
+						variant="destructive"
+						size="xs"
 						title="Kill session"
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+						class="flex-1"
 						onclick={() => doKill(session!)}
 					>
 						<Square size={14} fill="currentColor" />
-					</button>
+					</Button>
 				{/if}
 				{#if session.status === 'finished' || session.status === 'failed'}
 					{@const canResume = session.agent === 'claude_code' || !!session.agent_session_id}
-					<button
-						class="flex-1 flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+					<Button
+						variant="secondary"
+						size="xs"
+						class="flex-1"
 						disabled={!canResume}
 						title={canResume
 							? 'Resume session'
@@ -242,37 +257,42 @@
 						onclick={() => canResume && resumeSession(session!.id)}
 					>
 						<RotateCcw size={14} />
-					</button>
+					</Button>
 				{/if}
-				<button
+				<Button
+					variant="secondary"
+					size="xs"
 					title="Copy as CLI command"
-					class="flex-1 flex items-center justify-center gap-1 p-1.5 rounded bg-secondary hover:bg-secondary/80 text-xs focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+					class="flex-1 gap-1"
 					onclick={() => copyAsCli(session!)}
 				>
 					<Terminal size={12} /> CLI
-				</button>
-				<button
+				</Button>
+				<Button
+					variant="secondary"
+					size="xs"
 					title="Delete session permanently"
-					class="flex items-center justify-center p-1.5 rounded bg-secondary hover:bg-destructive hover:text-destructive-foreground transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+					class="hover:bg-destructive hover:text-destructive-foreground"
 					onclick={() => (confirmTarget = session!)}
 				>
 					<Trash size={14} />
-				</button>
+				</Button>
 			</div>
 		</div>
 
 		<!-- Tab bar -->
 		<div class="flex border-b border-border px-4">
 			{#each [['info', 'Info'], ['timeline', 'Timeline']] as [id, label]}
-				<button
+				<Button
+					variant="ghost"
 					class={cn(
-						'px-3 py-2 text-xs border-b-2 transition-colors',
+						'rounded-none px-3 py-2 h-auto text-xs border-b-2 hover:bg-transparent',
 						activeTab === id
 							? 'border-accent text-foreground'
 							: 'border-transparent text-muted-foreground hover:text-foreground'
 					)}
 					onclick={() => (activeTab = id as InspectorTab)}
-				>{label}</button>
+				>{label}</Button>
 			{/each}
 		</div>
 
@@ -287,13 +307,14 @@
 			{#if sessionProject}
 				<div class="flex items-baseline justify-between gap-2">
 					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Project</span>
-					<button
-						class="text-xs hover:text-accent truncate"
+					<Button
+						variant="link"
+						class="h-auto p-0 text-xs hover:text-accent truncate"
 						title="Switch to this project"
 						onclick={() => switchToProject(sessionProject!.id)}
 					>
 						{sessionProject.name}
-					</button>
+					</Button>
 				</div>
 			{/if}
 			{@render row('Status', session.status)}
@@ -303,13 +324,16 @@
 			<div>
 				<div class="flex items-center justify-between mb-1">
 					<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Session ID</span>
-					<button
-						class="p-0.5 text-muted-foreground hover:text-foreground"
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						class="text-muted-foreground hover:text-foreground"
 						onclick={() => copy(session!.id)}
 						title="Copy ID"
+						aria-label="Copy ID"
 					>
 						<Copy size={10} />
-					</button>
+					</Button>
 				</div>
 				<div class="font-mono text-[10px] break-all text-muted-foreground select-all">
 					{session.id}
@@ -319,13 +343,16 @@
 				<div>
 					<div class="flex items-center justify-between mb-1">
 						<span class="text-[10px] uppercase tracking-wider text-muted-foreground">Agent ID</span>
-						<button
-							class="p-0.5 text-muted-foreground hover:text-foreground"
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							class="text-muted-foreground hover:text-foreground"
 							onclick={() => copy(session!.agent_session_id!)}
 							title="Copy Agent ID"
+							aria-label="Copy Agent ID"
 						>
 							<Copy size={10} />
-						</button>
+						</Button>
 					</div>
 					<div class="font-mono text-[10px] break-all text-muted-foreground select-all">
 						{session.agent_session_id}
@@ -338,21 +365,25 @@
 			<div>
 				<div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Working dir</div>
 				<div class="flex items-center gap-1">
-					<button
-						class="flex-1 font-mono text-xs break-all text-left hover:text-accent inline-flex items-start gap-1.5"
+					<Button
+						variant="ghost"
+						class="flex-1 justify-start h-auto p-0 font-mono text-xs break-all text-left hover:text-accent hover:bg-transparent items-start gap-1.5"
 						onclick={() => openCwd(session!.cwd)}
 						title="Open in file manager"
 					>
 						<FolderOpen size={11} class="mt-0.5 text-muted-foreground flex-shrink-0" />
 						<span>{session.cwd}</span>
-					</button>
-					<button
-						class="p-1 text-muted-foreground hover:text-foreground"
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						class="text-muted-foreground hover:text-foreground"
 						onclick={() => copy(session!.cwd)}
 						title="Copy path"
+						aria-label="Copy path"
 					>
 						<Copy size={11} />
-					</button>
+					</Button>
 				</div>
 			</div>
 			{@render row('Unread', String(session.unread), session.unread === 0)}
@@ -367,7 +398,11 @@
 		{#if session.failReason}
 			<section class="px-4 py-3 border-b border-border space-y-2">
 				<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">Fail reason</h3>
-				<pre class="text-xs text-gruvbox-red bg-card rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
+				<Card.Root class="border-0 bg-card py-0">
+					<Card.Content class="px-0">
+						<pre class="text-xs text-gruvbox-red rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
+					</Card.Content>
+				</Card.Root>
 			</section>
 		{/if}
 		{:else}

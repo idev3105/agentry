@@ -3,6 +3,8 @@
 	import { projects } from '$lib/stores/projects';
 	import { ui, setView, openOnboarding } from '$lib/stores/ui';
 	import { cn } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Terminal from '@lucide/svelte/icons/terminal';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
@@ -51,33 +53,36 @@
 
 		<!-- Per-project -->
 		{#if projectList.length === 0}
-			<div class="bg-card border border-border rounded p-6 text-center">
+			<Card.Root class="p-6 text-center">
 				<p class="text-sm text-muted-foreground mb-3">No projects yet.</p>
-				<button
+				<Button
+					variant="default"
+					size="icon"
 					title="Get started"
-					class="inline-flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+					class="mx-auto"
 					onclick={() => openOnboarding()}
 				>
 					<Plus size={14} />
-				</button>
-			</div>
+				</Button>
+			</Card.Root>
 		{:else}
 			<div class="space-y-4">
 				{#each projectList as p (p.id)}
 					{@const inProj = sessionList.filter((s) => s.projectId === p.id)}
-					<div class="bg-card border border-border rounded">
+					<Card.Root class="p-0 overflow-hidden">
 						<div class="flex items-center justify-between px-4 py-2 border-b border-border">
 							<div class="min-w-0">
 								<div class="text-sm font-medium">{p.name}</div>
 								<div class="text-[11px] text-muted-foreground font-mono truncate">{p.path}</div>
 							</div>
-						<button
-							title="Open sessions"
-							class="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary"
-							onclick={() => {
-								ui.update((u) => ({ ...u, activeProjectId: p.id, view: 'terminal' }));
-							}}
-						><ExternalLink size={14} /></button>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								title="Open sessions"
+								onclick={() => {
+									ui.update((u) => ({ ...u, activeProjectId: p.id, view: 'terminal' }));
+								}}
+							><ExternalLink size={14} /></Button>
 						</div>
 						{#if inProj.length === 0}
 							<div class="px-4 py-3 text-xs text-muted-foreground">No sessions.</div>
@@ -99,7 +104,7 @@
 								{/each}
 							</div>
 						{/if}
-					</div>
+					</Card.Root>
 				{/each}
 			</div>
 		{/if}
@@ -107,8 +112,8 @@
 </div>
 
 {#snippet stat(label: string, n: number, color: string)}
-	<div class="bg-card border border-border rounded px-3 py-2">
+	<Card.Root class="px-3 py-2">
 		<div class="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
 		<div class={cn('text-2xl font-light tabular-nums', color)}>{n}</div>
-	</div>
+	</Card.Root>
 {/snippet}

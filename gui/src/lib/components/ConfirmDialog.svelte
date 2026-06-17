@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import X from '@lucide/svelte/icons/x';
-	import Check from '@lucide/svelte/icons/check';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
 
 	const {
 		open,
@@ -23,63 +22,26 @@
 		onCancel: () => void;
 	} = $props();
 
-	let confirmBtn: HTMLButtonElement | undefined = $state();
-
-	$effect(() => {
-		if (open && confirmBtn) confirmBtn.focus();
-	});
-
-	function onKey(e: KeyboardEvent) {
-		if (!open) return;
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			onCancel();
-		} else if (e.key === 'Enter') {
-			e.preventDefault();
-			onConfirm();
-		}
+	// bits-ui Dialog drives open state; bridge its close events back to onCancel
+	// so Escape / overlay-click / X all route through the caller's handler.
+	function onOpenChange(next: boolean) {
+		if (!next) onCancel();
 	}
-
-	onMount(() => {
-		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
-	});
 </script>
 
-{#if open}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-		onclick={onCancel}
-	>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="bg-card border border-border rounded shadow-lg w-[min(420px,90vw)] p-4"
-			onclick={(e) => e.stopPropagation()}
-		>
-			<div class="text-sm font-semibold mb-2">{title}</div>
-			<div class="text-xs text-muted-foreground mb-4 whitespace-pre-line">{message}</div>
-		<div class="flex justify-end gap-2">
-			<button
-				title={cancelLabel}
-				class="flex items-center justify-center p-2 rounded bg-secondary hover:bg-secondary/80"
-				onclick={onCancel}
+<Dialog.Root {open} {onOpenChange}>
+	<Dialog.Content class="w-[min(420px,90vw)]" showCloseButton={false}>
+		<Dialog.Header>
+			<Dialog.Title>{title}</Dialog.Title>
+			<Dialog.Description class="whitespace-pre-line">{message}</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer>
+			<Button variant="secondary" onclick={onCancel}>{cancelLabel}</Button>
+			<Button
+				variant={destructive ? 'destructive' : 'default'}
+				autofocus
+				onclick={onConfirm}>{confirmLabel}</Button
 			>
-				<X size={14} />
-			</button>
-			<button
-				bind:this={confirmBtn}
-				title={confirmLabel}
-				class={destructive
-					? 'flex items-center justify-center p-2 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80'
-					: 'flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90'}
-				onclick={onConfirm}
-			>
-				<Check size={14} />
-			</button>
-		</div>
-		</div>
-	</div>
-{/if}
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

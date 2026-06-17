@@ -4,6 +4,7 @@
 	import { sendCmd, checkIntegrations, installIntegration } from '$lib/ipc';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { theme, accent, type Theme, type Accent } from '$lib/stores/theme.svelte';
+	import { zoom, fontFamily, type FontFamily } from '$lib/stores/font.svelte';
 	import { remote } from '$lib/stores/remote.svelte';
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import { onMount } from 'svelte';
@@ -11,6 +12,9 @@
 	import Wifi from '@lucide/svelte/icons/wifi';
 	import Copy from '@lucide/svelte/icons/copy';
 	import { cn, fmtChord } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Select from '$lib/components/ui/select';
 	import Play from '@lucide/svelte/icons/play';
 	import Square from '@lucide/svelte/icons/square';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
@@ -18,15 +22,18 @@
 	import Download from '@lucide/svelte/icons/download';
 	import Check from '@lucide/svelte/icons/check';
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+	import Minus from '@lucide/svelte/icons/minus';
+	import Plus from '@lucide/svelte/icons/plus';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 
 	const shortcuts: { keys: string[]; desc: string }[] = [
 		{ keys: ['mod', 'k'], desc: 'Open command palette' },
 		{ keys: ['mod', 't'], desc: 'New session' },
 		{ keys: ['mod', 'p'], desc: 'Switch project' },
 		{ keys: ['mod', 'f'], desc: 'Find in terminal' },
-		{ keys: ['mod', '='], desc: 'Increase terminal font size' },
-		{ keys: ['mod', '-'], desc: 'Decrease terminal font size' },
-		{ keys: ['mod', '0'], desc: 'Reset terminal font size' },
+		{ keys: ['mod', '='], desc: 'Zoom in' },
+		{ keys: ['mod', '-'], desc: 'Zoom out' },
+		{ keys: ['mod', '0'], desc: 'Reset zoom' },
 		{ keys: ['mod', '1'], desc: 'Focus session 1' },
 		{ keys: ['mod', '2'], desc: 'Focus session 2' },
 		{ keys: ['mod', '9'], desc: 'Focus last session' },
@@ -134,16 +141,20 @@
 				<h2 class="text-sm font-semibold">Daemon</h2>
 				<div class="flex items-center justify-between gap-4">
 					<span class="text-xs text-muted-foreground shrink-0">Default profile</span>
-					<select
-						class="bg-input rounded px-2 py-1 text-xs border border-border focus:border-accent focus:outline-none max-w-[200px]"
+					<Select.Root
+						type="single"
 						value={$settings.defaultProfileId ?? ''}
-						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; if (v) setDefaultProfile(v); }}
+						onValueChange={(v) => { if (v) setDefaultProfile(v); }}
 					>
-						<option value="">— none —</option>
-						{#each $profiles as p (p.id)}
-							<option value={p.id}>{p.name}</option>
-						{/each}
-					</select>
+						<Select.Trigger class="max-w-[200px] h-7 text-xs">
+							{$profiles.find((p) => p.id === $settings.defaultProfileId)?.name ?? '— none —'}
+						</Select.Trigger>
+						<Select.Content>
+							{#each $profiles as p (p.id)}
+								<Select.Item value={p.id}>{p.name}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 				{@render row('Max concurrent sessions', String($settings.maxConcurrentSessions))}
 				{@render row('Idle threshold', `${$settings.idleThresholdS}s`)}
@@ -158,8 +169,11 @@
 				<h2 class="text-sm font-semibold">Theme</h2>
 				<div class="flex gap-2 flex-wrap">
 					{#each (['dark', 'light'] as Theme[]) as t (t)}
-						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', theme.value === t ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
-								onclick={() => theme.set(t)}>{t}</button>
+						<Button
+							variant={theme.value === t ? 'default' : 'outline'}
+							size="xs"
+							class="capitalize"
+							onclick={() => theme.set(t)}>{t}</Button>
 					{/each}
 				</div>
 			</section>
@@ -168,8 +182,10 @@
 				<h2 class="text-sm font-semibold">Accent</h2>
 				<div class="flex gap-2 flex-wrap">
 					{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
-						<button
-							class={cn('flex items-center gap-2 px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', accent.value === a ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
+						<Button
+							variant={accent.value === a ? 'default' : 'outline'}
+							size="xs"
+							class="capitalize"
 							onclick={() => accent.set(a)}
 						>
 							<span
@@ -177,7 +193,7 @@
 								style={`background:${a === 'teal' ? '#2f9e6e' : a === 'violet' ? '#8b5cf6' : a === 'amber' ? '#d97706' : 'var(--color-accent)'}`}
 							></span>
 							{a}
-						</button>
+						</Button>
 					{/each}
 				</div>
 			</section>
@@ -186,10 +202,71 @@
 				<h2 class="text-sm font-semibold">Density</h2>
 				<div class="flex gap-2">
 					{#each (['comfortable', 'compact'] as const) as d}
-						<button class={cn('px-3 py-1.5 rounded text-xs border focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none', $density === d ? 'border-accent bg-secondary' : 'border-border hover:border-secondary')}
-								onclick={() => density.set(d)}>{d}</button>
+						<Button
+							variant={$density === d ? 'default' : 'outline'}
+							size="xs"
+							class="capitalize"
+							onclick={() => density.set(d)}>{d}</Button>
 					{/each}
 				</div>
+			</section>
+
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Font family</h2>
+				<div class="flex gap-2 flex-wrap">
+					{#each (['system', 'inter', 'geist', 'mono'] as FontFamily[]) as f (f)}
+						<Button
+							variant={fontFamily.value === f ? 'default' : 'outline'}
+							size="xs"
+							class="capitalize"
+							onclick={() => fontFamily.set(f)}>{f}</Button>
+					{/each}
+				</div>
+				<p class="text-[11px] text-muted-foreground">
+					Uses fonts already installed on your system; an unavailable choice falls back to the system default.
+				</p>
+			</section>
+
+			<section class="bg-card border border-border rounded p-4 space-y-3">
+				<h2 class="text-sm font-semibold">Zoom</h2>
+				<div class="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="icon-sm"
+						disabled={!zoom.canZoomOut}
+						onclick={() => zoom.zoomOut()}
+						title="Zoom out ({fmtChord(['mod', '-'])})"
+						aria-label="Zoom out"
+					>
+						<Minus class="size-4" />
+					</Button>
+					<span class="min-w-[3.5rem] text-center text-sm tabular-nums font-medium">{zoom.percent}%</span>
+					<Button
+						variant="outline"
+						size="icon-sm"
+						disabled={!zoom.canZoomIn}
+						onclick={() => zoom.zoomIn()}
+						title="Zoom in ({fmtChord(['mod', '='])})"
+						aria-label="Zoom in"
+					>
+						<Plus class="size-4" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						disabled={zoom.isDefault}
+						onclick={() => zoom.reset()}
+						title="Reset zoom ({fmtChord(['mod', '0'])})"
+						class="ml-1"
+					>
+						<RotateCcw class="size-3.5" />
+						Reset
+					</Button>
+				</div>
+				<p class="text-[11px] text-muted-foreground">
+					Scales the whole interface. Use {fmtChord(['mod', '='])} / {fmtChord(['mod', '-'])} to zoom
+					in/out and {fmtChord(['mod', '0'])} to reset — works anywhere in the app.
+				</p>
 			</section>
 		{:else if tab === 'integrations'}
 			<section class="bg-card border border-border rounded p-4 space-y-3">
@@ -201,15 +278,16 @@
 							(working / idle / blocked) directly — more reliable than screen scraping.
 						</p>
 					</div>
-					<button
-						class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+					<Button
+						variant="outline"
+						size="xs"
 						disabled={integrationsLoading}
 						onclick={loadIntegrations}
 						title="Re-check"
 					>
 						<RefreshCw class={cn('size-3', integrationsLoading && 'animate-spin')} />
 						Check
-					</button>
+					</Button>
 				</div>
 
 				{#if integrationsLoading && integrations.length === 0}
@@ -223,9 +301,9 @@
 										<span class="text-sm font-medium capitalize">{it.agent}</span>
 										{@render integrationBadge(it)}
 										{#if !it.agent_detected}
-											<span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+											<Badge variant="secondary" class="text-muted-foreground">
 												CLI not found
-											</span>
+											</Badge>
 										{/if}
 									</div>
 									<p class="text-[11px] text-muted-foreground font-mono mt-0.5 truncate">
@@ -239,8 +317,9 @@
 								</div>
 								<div class="shrink-0">
 									{#if it.installed && !it.needs_update}
-										<button
-											class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+										<Button
+											variant="outline"
+											size="xs"
 											disabled={installingAgent === it.agent}
 											onclick={() => install(it.agent)}
 											title="Reinstall / overwrite"
@@ -251,10 +330,12 @@
 												<Check class="size-3 text-emerald-500" />
 											{/if}
 											Reinstall
-										</button>
-									{:else}
-										<button
-											class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-accent bg-accent/10 hover:bg-accent/20 disabled:opacity-50"
+										</Button>
+										{:else}
+										<Button
+											variant="outline"
+											size="xs"
+											class="border-accent bg-accent/10 hover:bg-accent/20"
 											disabled={installingAgent === it.agent}
 											onclick={() => install(it.agent)}
 										>
@@ -264,7 +345,7 @@
 												<Download class="size-3" />
 											{/if}
 											{it.needs_update ? 'Update' : 'Install'}
-										</button>
+										</Button>
 									{/if}
 								</div>
 							</div>
@@ -293,8 +374,9 @@
 				{:else}
 					<div class="flex items-center gap-2">
 						{#if r9.status.running}
-							<button
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+							<Button
+								variant="outline"
+								size="sm"
 								disabled={r9.busy}
 								onclick={() => r9.stop()}
 							>
@@ -304,17 +386,19 @@
 									<Square class="size-3" />
 								{/if}
 								Stop
-							</button>
-							<button
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent"
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
 								onclick={() => r9.openDashboard()}
 							>
 								<ExternalLink class="size-3" />
 								Open dashboard
-							</button>
+							</Button>
 						{:else}
-							<button
-								class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-accent disabled:opacity-50"
+							<Button
+								variant="outline"
+								size="sm"
 								disabled={r9.busy}
 								onclick={() => r9.start()}
 							>
@@ -324,7 +408,7 @@
 									<Play class="size-3" />
 								{/if}
 								Start
-							</button>
+							</Button>
 						{/if}
 						<span class="text-xs text-muted-foreground ml-auto">
 							via {r9.status.resolved}
@@ -350,9 +434,9 @@
 						</p>
 					</div>
 					{#if remote.status.listening}
-						<span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">on</span>
+						<Badge class="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">on</Badge>
 					{:else}
-						<span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">off</span>
+						<Badge variant="secondary" class="text-muted-foreground">off</Badge>
 					{/if}
 				</div>
 
@@ -367,9 +451,9 @@
 				{#if remote.status.listening && remote.status.address}
 					<div class="flex items-center gap-2">
 						<code class="text-xs px-2 py-1 rounded bg-muted font-mono">http://{remote.status.address}</code>
-						<button class="p-1 rounded hover:bg-secondary" title="Copy address" onclick={copyAddr}>
+						<Button variant="ghost" size="icon-xs" title="Copy address" aria-label="Copy address" onclick={copyAddr}>
 							<Copy class="size-3.5" />
-						</button>
+						</Button>
 					</div>
 					<p class="text-xs text-muted-foreground">
 						Open this address in a browser on any device in your tailnet.
@@ -413,32 +497,32 @@
 
 {#snippet integrationBadge(it: IntegrationStatus)}
 	{#if it.installed && !it.needs_update}
-		<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+		<Badge class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
 			installed{#if it.installed_version} v{it.installed_version}{/if}
-		</span>
+		</Badge>
 	{:else if it.needs_update}
-		<span class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30">
+		<Badge class="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30">
 			update available
-		</span>
+		</Badge>
 	{:else}
-		<span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+		<Badge variant="secondary" class="text-muted-foreground">
 			not installed
-		</span>
+		</Badge>
 	{/if}
 {/snippet}
 
 {#snippet r9Badge()}
 	{#if r9.status.running}
-		<span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+		<Badge class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
 			running
-		</span>
+		</Badge>
 	{:else if r9.status.resolved === 'missing'}
-		<span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+		<Badge variant="secondary" class="text-muted-foreground">
 			not installed
-		</span>
+		</Badge>
 	{:else}
-		<span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+		<Badge variant="secondary" class="text-muted-foreground">
 			stopped
-		</span>
+		</Badge>
 	{/if}
 {/snippet}

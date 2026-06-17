@@ -3,21 +3,21 @@
 /* Tailwind v4: @theme inline — dark (zinc) as default base.
    data-theme="light" overrides at runtime. */
 @theme inline {
-  /* bg — dark zinc */
-  --color-background:    #09090b;
-  --color-card:          #18181b;
-  --color-secondary:     #27272a;
-  --color-muted:         #27272a;
-  --color-border:        #27272a;
-  --color-input:         #18181b;
-  --color-popover:       #18181b;
+  /* bg — dark zinc (lifted one step lighter for less eye strain) */
+  --color-background:    #131316;
+  --color-card:          #1d1d21;
+  --color-secondary:     #2e2e33;
+  --color-muted:         #2e2e33;
+  --color-border:        #34343a;
+  --color-input:         #1d1d21;
+  --color-popover:       #1d1d21;
 
   /* fg */
   --color-foreground:             #fafafa;
   --color-card-foreground:        #fafafa;
   --color-popover-foreground:     #fafafa;
   --color-secondary-foreground:   #fafafa;
-  --color-muted-foreground:       #a1a1aa;
+  --color-muted-foreground:       #b4b4bd;
   --color-accent:                 #3b82f6;
   --color-accent-foreground:      #ffffff;
 
@@ -110,10 +110,27 @@
 	--row-gap: 0.375rem;
 }
 
+/* UI zoom + font family.
+   Zoom uses CSS `zoom` on the document root, driven by --app-zoom which the
+   font store sets as an inline style on <html> (continuous value, adjusted via
+   Ctrl +/- / Ctrl 0 keyboard shortcuts). Unlike scaling Tailwind's --text-*
+   tokens (which the v4 vite plugin bakes to static px at build time, so runtime
+   overrides have no effect), `zoom` is applied by the browser at render time
+   and scales everything uniformly — including bits-ui portalled content
+   (dialogs, selects, tooltips) since they still live in the document. */
+:root {
+  --app-zoom: 1;
+  --app-font-family: system-ui, -apple-system, sans-serif;
+}
+
+html {
+  zoom: var(--app-zoom);
+}
+
 @layer base {
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: var(--app-font-family);
   }
 }

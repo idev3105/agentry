@@ -7,6 +7,12 @@
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { cn } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import FolderKanban from '@lucide/svelte/icons/folder-kanban';
@@ -110,12 +116,9 @@
 			<h1 class="text-base font-semibold">Projects</h1>
 			<p class="text-xs text-muted-foreground mt-0.5">Switch, create, or remove projects.</p>
 		</div>
-		<button
-			class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary"
-			onclick={() => (showNew = true)}
-		>
+		<Button variant="outline" size="xs" onclick={() => (showNew = true)}>
 			<Plus class="size-3.5" /> New project
-		</button>
+		</Button>
 	</header>
 
 	{#if projectList.length === 0}
@@ -125,29 +128,28 @@
 				<p class="text-sm font-medium">No projects yet</p>
 				<p class="text-xs text-muted-foreground mt-1">Create a project to start launching agents.</p>
 			</div>
-			<button
-				class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded bg-secondary hover:bg-secondary/70"
-				onclick={() => (showNew = true)}
-			>
+			<Button variant="secondary" size="xs" onclick={() => (showNew = true)}>
 				<Plus class="size-3.5" /> Create project
-			</button>
+			</Button>
 		</div>
 	{:else}
 		<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-3">
 			{#each projectList as p (p.id)}
-				<div class="bg-card border border-border rounded p-4 flex flex-col gap-2">
+				<Card.Root class="p-4 flex flex-col gap-2">
 					<div class="flex items-center gap-2">
 						<span class="font-medium text-sm truncate">{p.name}</span>
 						{#if $ui.activeProjectId === p.id}
-							<span class="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground">active</span>
+							<Badge variant="secondary" class="text-[10px]">active</Badge>
 						{/if}
-						<button
-							class="ml-auto p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							class="ml-auto text-muted-foreground hover:text-destructive"
 							title="Remove project"
 							onclick={() => (pendingDelete = p.id)}
 						>
 							<Trash class="size-3.5" />
-						</button>
+						</Button>
 					</div>
 					<div class="text-xs text-muted-foreground font-mono truncate">{p.path}</div>
 					<div class="flex items-center gap-3 text-xs text-muted-foreground mt-1">
@@ -155,14 +157,16 @@
 						<span>{totalCount(p.id)} total</span>
 					</div>
 					{#if $ui.activeProjectId !== p.id}
-						<button
-							class="mt-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary"
+						<Button
+							variant="outline"
+							size="xs"
+							class="mt-1 justify-center"
 							onclick={() => switchTo(p.id)}
 						>
 							<Check class="size-3.5" /> Switch to this project
-						</button>
+						</Button>
 					{/if}
-				</div>
+				</Card.Root>
 			{/each}
 		</div>
 	{/if}
@@ -179,55 +183,52 @@
 	onCancel={() => (pendingDelete = null)}
 />
 
-{#if showNew}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="fixed inset-0 z-40 bg-black/50" role="presentation" onclick={resetNew}></div>
-	<div class="fixed z-50 inset-0 grid place-items-center pointer-events-none">
-		<div class="pointer-events-auto w-full max-w-md bg-popover border border-border rounded-lg p-5 space-y-4 shadow-lg">
-			<h2 class="text-sm font-semibold">New project</h2>
+<Dialog.Root open={showNew} onOpenChange={(v) => { if (!v) resetNew(); }}>
+	<Dialog.Content class="w-full max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>New project</Dialog.Title>
+		</Dialog.Header>
 
-			<div class="space-y-1.5">
-				<label class="text-xs text-muted-foreground" for="np-path">Folder</label>
-				<div class="flex gap-2">
-					<input
-						id="np-path"
-						class="flex-1 px-2.5 py-1.5 text-sm rounded bg-input border border-border font-mono"
-						placeholder="/path/to/repo"
-						bind:value={newPath}
-						oninput={() => { pathError = ''; if (!nameTouched) newName = basename(newPath); }}
-					/>
-					<button class="px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary" onclick={browse}>
-						Browse
-					</button>
-				</div>
-				{#if pathError}
-					<p class="text-xs text-destructive">{pathError}</p>
-				{/if}
-			</div>
-
-			<div class="space-y-1.5">
-				<label class="text-xs text-muted-foreground" for="np-name">Name</label>
-				<input
-					id="np-name"
-					class="w-full px-2.5 py-1.5 text-sm rounded bg-input border border-border"
-					bind:value={newName}
-					oninput={() => (nameTouched = true)}
+		<div class="space-y-1.5">
+			<Label for="np-path" class="text-xs text-muted-foreground">Folder</Label>
+			<div class="flex gap-2">
+				<Input
+					id="np-path"
+					class="flex-1 font-mono"
+					placeholder="/path/to/repo"
+					bind:value={newPath}
+					oninput={() => { pathError = ''; if (!nameTouched) newName = basename(newPath); }}
 				/>
+				<Button variant="outline" size="xs" onclick={browse}>
+					Browse
+				</Button>
 			</div>
-
-			<div class="flex justify-end gap-2 pt-1">
-				<button class="px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary" onclick={resetNew}>
-					Cancel
-				</button>
-				<button
-					class="px-3 py-1.5 text-xs rounded bg-accent text-accent-foreground disabled:opacity-50"
-					disabled={submitting || !newPath.trim()}
-					onclick={submitNew}
-				>
-					{submitting ? 'Creating…' : 'Create'}
-				</button>
-			</div>
+			{#if pathError}
+				<p class="text-xs text-destructive">{pathError}</p>
+			{/if}
 		</div>
-	</div>
-{/if}
+
+		<div class="space-y-1.5">
+			<Label for="np-name" class="text-xs text-muted-foreground">Name</Label>
+			<Input
+				id="np-name"
+				class="w-full"
+				bind:value={newName}
+				oninput={() => (nameTouched = true)}
+			/>
+		</div>
+
+		<Dialog.Footer>
+			<Button variant="outline" size="xs" onclick={resetNew}>
+				Cancel
+			</Button>
+			<Button
+				size="xs"
+				disabled={submitting || !newPath.trim()}
+				onclick={submitNew}
+			>
+				{submitting ? 'Creating…' : 'Create'}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

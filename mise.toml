@@ -17,6 +17,36 @@ java = "temurin-21"    # required by Android sdkmanager/Gradle
 GDK_BACKEND = "x11"
 WEBKIT_DISABLE_DMABUF_RENDERER = "1"
 
+[tasks.install]
+description = "Install all project deps: pnpm node_modules + cargo-watch + cargo fetch (+ warn on missing apt libs)"
+run = """
+#!/usr/bin/env bash
+set -e
+
+echo "==> pnpm install (gui/node_modules)"
+(cd gui && pnpm install)
+
+echo "==> cargo-watch (used by 'mise run daemon')"
+cargo watch --version >/dev/null 2>&1 || cargo install cargo-watch
+
+echo "==> cargo fetch (prefetch Rust crate deps)"
+cargo fetch
+
+echo "==> Checking system libs (Tauri v2 — not managed by mise)"
+missing=""
+for pkg in build-essential libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev; do
+  dpkg -s "$pkg" >/dev/null 2>&1 || missing="$missing $pkg"
+done
+if [ -n "$missing" ]; then
+  echo "⚠️  Missing apt packages:$missing"
+  echo "    Run: sudo apt install curl wget file$missing"
+else
+  echo "✓ system libs OK"
+fi
+
+echo "Done. Run 'mise run dev' to start."
+"""
+
 [tasks.daemon]
 description = "Build và chạy daemon ở dev mode (watch)"
 run = "cargo watch -x 'run -p agentry-daemon' 2>/dev/null || cargo run -p agentry-daemon"

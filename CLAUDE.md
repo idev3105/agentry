@@ -115,6 +115,21 @@ Events fan out through one `tokio::sync::broadcast::Sender<Event>` (capacity 512
 - `lib/components/` — `TerminalView` (xterm.js), `SessionSidebar`, `Inspector`, `TopBar`, `ActivityBar`, `CommandPalette`, `SetupWizard`, `SplitPane`
 - `routes/+page.svelte` — single-page app: 3-pane layout (sidebar / terminal / inspector), keybindings, optimistic kill, first-prompt → title auto-rename
 
+### UI component convention (single design concept — no ad-hoc views)
+
+The frontend has **one** component vocabulary. Do not hand-roll primitives (`<div class="...border rounded...">`, custom `<button>`, bespoke modals). Compose from the layers below:
+
+1. **shadcn-svelte** — styled components live in `lib/components/ui/` (copy-in code, owned by us, editable). Added via `npx shadcn-svelte add <name>` (`components.json` already configured; `utils` alias → `$lib/utils/cn`). These wrap **bits-ui** headless primitives — never reimplement focus-trap / a11y / keyboard yourself.
+2. **Icons (UI/generic):** `@lucide/svelte` only.
+3. **Icons (brand / AI logos):** `<BrandIcon name="..." />` (`lib/components/BrandIcon.svelte`). SVGs are **local** under `lib/assets/brands/`, inlined at build time via `import.meta.glob(..., ?raw)` — **no CDN, no runtime fetch**. Brand name comes from `agentMeta(agent).brand` (`lib/utils/agent.ts`). To add a brand: drop the raw SVG from `@lobehub/icons-static-svg` into `lib/assets/brands/<name>.svg` and reference it by basename. (`@lobehub/icons` itself is React-only — do not add it.)
+
+Feature components **only compose** `ui/` + icons. The full GUI has been migrated: dialogs/buttons/inputs/selects/switches/badges/cards now come from `ui/`. Reference patterns: `ConfirmDialog.svelte` (Dialog + Button), `LaunchSheet.svelte` (Dialog + Select + Input), `SettingsView.svelte` (Select + Badge). Selectable/toggle "pills" (theme/accent/density/font in `SettingsView.svelte`, agent-picker / folder-picker / quick-pick / step-rail in `Onboarding.svelte`, the large action cards in `routes/+page.svelte`) are **shadcn `Button` with a class override** — selected = `variant="default"` (filled), unselected = `variant="outline"`; for multi-line/card layouts add `h-auto flex-col items-start text-left justify-start` to the Button's class. Do NOT hand-roll a `<button class="...border rounded...">` for these.
+
+**Still intentionally raw** (shadcn would break them, leave alone): the `SettingsView.svelte` tab bar (proper `role="tablist"`/`role="tab"`/`aria-selected` — already a11y-correct; shadcn `Tabs` would force a segmented-control look) and the `CommandPalette.svelte` result-list rows (custom ⌘K arrow-key nav — only its search field is an `Input`).
+
+**Keyboard-shortcut labels:** never hardcode `⌘`/`Ctrl`/`⇧`/`⌥` in markup. Use `fmtChord(['mod','k'])` → `⌘K` on macOS / `Ctrl+K` elsewhere, or the `modKey` constant (`⌘`/`Ctrl`) for one-off glyphs like `{modKey}↩`. Both live in `lib/utils/cn.ts`. Actual key handling goes through `bindKeys()` (`lib/utils/keybindings.ts`); a binding with `mod:true` maps to ⌘ on mac, Ctrl elsewhere. UI zoom (Ctrl/Cmd +`=`/`-`/`0`) is bound once in `routes/+page.svelte` and drives the `zoom` store in `lib/stores/font.svelte.ts` (CSS `zoom` on `<html>`); the terminal no longer owns those keys.
+
+
 ## Wire protocol — invariants to keep
 
 `crates/wire/src/lib.rs` is the source of truth. When changing it:

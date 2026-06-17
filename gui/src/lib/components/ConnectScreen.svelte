@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { connect, getSavedHost, onConnStateChange, type WsConnState } from '$lib/ipc-ws';
+	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import { Label } from '$lib/components/ui/label';
 
 	let { onConnected }: { onConnected: () => void } = $props();
 
@@ -48,10 +51,10 @@
 
 	<!-- Input card -->
 	<div class="w-full max-w-sm bg-card border border-border rounded-lg p-4 space-y-3">
-		<label class="text-xs text-muted-foreground font-medium" for="host-input">
+		<Label class="text-xs text-muted-foreground" for="host-input">
 			Dev machine address
-		</label>
-		<input
+		</Label>
+		<Input
 			id="host-input"
 			type="text"
 			inputmode="url"
@@ -62,25 +65,24 @@
 			bind:value={host}
 			onkeydown={onKeydown}
 			placeholder={placeholder}
-			class="w-full bg-input rounded px-3 py-2 text-sm border border-border focus:border-accent focus:outline-none font-mono"
+			class="font-mono"
 		/>
 
 		{#if error}
 			<p class="text-xs text-destructive">{error}</p>
 		{/if}
 
-		<button
+		<Button
+			class="w-full"
 			onclick={tryConnect}
 			disabled={loading || !host.trim()}
-			class="w-full py-2 rounded bg-accent text-accent-foreground text-sm font-medium
-				   disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
 		>
 			{#if loading}
 				Connecting…
 			{:else}
 				Connect
 			{/if}
-		</button>
+		</Button>
 	</div>
 
 	<!-- Help -->

@@ -8,6 +8,12 @@
 	import type { AgentType, ProfileInfo } from '$lib/types';
 	import { cn } from '$lib/utils/cn';
 	import { agentMeta } from '$lib/utils/agent';
+	import BrandIcon from '$lib/components/BrandIcon.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Card from '$lib/components/ui/card';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import Star from '@lucide/svelte/icons/star';
@@ -169,49 +175,44 @@
 			</p>
 		</div>
 		{#if !creating && !editingId}
-			<button
+			<Button
+				variant="default"
+				size="icon"
 				title="New profile"
-				class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 				onclick={startNew}
 			>
 				<Plus size={14} />
-			</button>
+			</Button>
 		{/if}
 	</header>
 
 	<div class="flex-1 overflow-y-auto p-6">
 		{#if creating || editingId}
-			<div class="max-w-xl bg-card border border-border rounded p-4 space-y-3">
+			<Card.Root class="max-w-xl p-4 space-y-3">
 				<div class="flex items-center justify-between">
 					<h2 class="text-sm font-semibold">{creating ? 'New profile' : 'Edit profile'}</h2>
-					<button class="text-muted-foreground hover:text-foreground" onclick={cancel}>
+					<Button variant="ghost" size="icon-sm" class="text-muted-foreground" onclick={cancel}>
 						<X size={16} />
-					</button>
+					</Button>
 				</div>
 
 				<label class="block">
 					<span class="block text-xs text-muted-foreground mb-1">Name</span>
-					<input
-						bind:value={draftName}
-						class="w-full bg-input rounded px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-accent"
-					/>
+					<Input bind:value={draftName} class="w-full" />
 				</label>
 
 				<div>
 					<span class="block text-xs text-muted-foreground mb-1">Agent</span>
 					<div class="flex gap-2">
 						{#each agents as a (a)}
-							<button
-								class={cn(
-									'px-3 py-1.5 rounded text-xs border',
-									draftAgent === a
-										? 'border-accent bg-secondary'
-										: 'border-border hover:border-secondary'
-								)}
+							<Button
+								variant="outline"
+								size="xs"
+								class={cn(draftAgent === a && 'border-accent bg-secondary')}
 								onclick={() => (draftAgent = a)}
 							>
 								{a}
-							</button>
+							</Button>
 						{/each}
 					</div>
 				</div>
@@ -220,36 +221,36 @@
 					<span class="block text-xs text-muted-foreground mb-1">
 						CLI flags (one per line, <code>--flag</code> or <code>--flag=value</code>)
 					</span>
-					<textarea
+					<Textarea
 						bind:value={draftParamsText}
-						rows="3"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
+						rows={3}
+						class="w-full text-xs font-mono"
 						placeholder="--model=sonnet&#10;--no-banner"
-					></textarea>
+					/>
 				</label>
 
 				<label class="block">
 					<span class="block text-xs text-muted-foreground mb-1">
 						Environment vars (KEY=VALUE per line)
 					</span>
-					<textarea
+					<Textarea
 						bind:value={draftEnvText}
-						rows="3"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
+						rows={3}
+						class="w-full text-xs font-mono"
 						placeholder="ANTHROPIC_API_KEY=sk-..."
-					></textarea>
+					/>
 				</label>
 
 				<label class="block">
 					<span class="block text-xs text-muted-foreground mb-1">
 						Start script (optional shell snippet — if it exits non-zero the session fails)
 					</span>
-					<textarea
+					<Textarea
 						bind:value={draftStartScript}
-						rows="2"
-						class="w-full bg-input rounded px-2 py-1.5 text-xs font-mono border border-border focus:outline-none focus:border-accent"
+						rows={2}
+						class="w-full text-xs font-mono"
 						placeholder="source .env && nvm use"
-					></textarea>
+					/>
 				</label>
 
 				{#if saveError}
@@ -257,18 +258,21 @@
 				{/if}
 
 				<div class="flex justify-end gap-2 pt-2">
-					<button
+					<Button
+						variant="ghost"
+						size="icon-sm"
 						title="Cancel"
-						class="flex items-center justify-center p-2 rounded text-muted-foreground hover:text-foreground"
+						class="text-muted-foreground"
 						onclick={cancel}
-					><X size={14} /></button>
-					<button
+					><X size={14} /></Button>
+					<Button
+						variant="default"
+						size="icon-sm"
 						title={creating ? 'Create profile' : 'Save profile'}
-						class="flex items-center justify-center p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90"
 						onclick={save}
-					><Check size={14} /></button>
+					><Check size={14} /></Button>
 				</div>
-			</div>
+			</Card.Root>
 		{:else if $profiles.length === 0}
 			<div class="text-sm text-muted-foreground">
 				No profiles yet. Click <strong>New profile</strong> to create one.
@@ -277,50 +281,57 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl">
 				{#each $profiles as p (p.id)}
 					{@const m = agentMeta(p.agent_type)}
-					<div class="bg-card border border-border rounded p-3">
+					<Card.Root class="p-3">
 						<div class="flex items-start justify-between gap-2">
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-2">
 									<span class="font-medium text-sm truncate">{p.name}</span>
 									{#if $settings.defaultProfileId === p.id}
-										<span class="text-[10px] uppercase tracking-wider text-accent flex items-center gap-0.5">
+										<Badge variant="outline" class="text-[10px] uppercase tracking-wider text-accent gap-0.5">
 											<Star size={10} /> default
-										</span>
+										</Badge>
 									{/if}
 								</div>
 								<div class="flex items-center gap-1.5 mt-0.5">
-										{#if m.logoUrl}
-										<img src={m.logoUrl} alt={m.label}
-											class={cn('w-3.5 h-3.5 object-contain', m.label === 'OpenCode' && 'invert brightness-150')} />
-									{:else}
+										{#if m.brand}
+										<BrandIcon name={m.brand} size={14} />
+										{:else}
 										<m.icon size={12} class={m.color} />
-									{/if}
+										{/if}
 									<span class="text-xs text-muted-foreground">{m.label}</span>
 								</div>
 							</div>
 							<div class="flex items-center gap-1">
 								{#if $settings.defaultProfileId !== p.id}
-									<button
+									<Button
+										variant="ghost"
+										size="icon-xs"
 										title="Set as default"
-										class="p-1 rounded text-muted-foreground hover:text-accent hover:bg-secondary"
+										class="text-muted-foreground hover:text-accent"
 										onclick={() => setDefault(p.id)}
-									><Star size={14} /></button>
+									><Star size={14} /></Button>
 								{/if}
-								<button
+								<Button
+									variant="ghost"
+									size="icon-xs"
 									title="Test"
-									class="p-1 rounded text-muted-foreground hover:text-gruvbox-green hover:bg-secondary"
+									class="text-muted-foreground hover:text-gruvbox-green"
 									onclick={() => testProfile(p)}
-								><Play size={14} /></button>
-								<button
+								><Play size={14} /></Button>
+								<Button
+									variant="ghost"
+									size="icon-xs"
 									title="Edit"
-									class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary"
+									class="text-muted-foreground hover:text-foreground"
 									onclick={() => startEdit(p)}
-								><Pencil size={14} /></button>
-								<button
+								><Pencil size={14} /></Button>
+								<Button
+									variant="ghost"
+									size="icon-xs"
 									title="Delete"
-									class="p-1 rounded text-muted-foreground hover:text-gruvbox-red hover:bg-secondary"
+									class="text-muted-foreground hover:text-gruvbox-red"
 									onclick={() => deleteProfile(p.id)}
-								><Trash size={14} /></button>
+								><Trash size={14} /></Button>
 							</div>
 						</div>
 						{#if p.params.length > 0 || p.env.length > 0}
@@ -339,7 +350,7 @@
 								{/if}
 							</div>
 						{/if}
-					</div>
+					</Card.Root>
 				{/each}
 			</div>
 		{/if}

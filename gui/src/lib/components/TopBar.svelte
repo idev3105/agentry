@@ -4,6 +4,10 @@
 	import { ui, openPalette, setView } from '$lib/stores/ui';
 	import { remote } from '$lib/stores/remote.svelte';
 	import { cn, fmtChord } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
+	import { Separator } from '$lib/components/ui/separator';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import { createProject, removeProject as removeProjectCmd } from '$lib/ipc';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { toasts } from '$lib/stores/toasts.svelte';
@@ -130,10 +134,13 @@
 				{#if live > 0}
 					<span class="text-[10px] px-1 py-0 rounded bg-accent-ok/20 text-accent-ok flex-shrink-0">{live}</span>
 				{/if}
-				<button
+				<Button
+					variant="ghost"
+					size="icon-xs"
 					title="Remove project"
+					aria-label="Remove project"
 					class={cn(
-						'flex-shrink-0 rounded p-0.5 transition-colors ml-0.5',
+						'flex-shrink-0 size-4 ml-0.5',
 						active
 							? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-60 group-hover:opacity-100'
 							: 'opacity-0 group-hover:opacity-60 hover:!opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10'
@@ -141,18 +148,21 @@
 					onclick={(e) => doRemove(p.id, e)}
 				>
 					<X size={10} />
-				</button>
+				</Button>
 			</div>
 		{/each}
 
 		<!-- Add project button -->
-		<button
+		<Button
+			variant="ghost"
+			size="xs"
 			title="Add project"
-			class="flex items-center gap-1 px-2 py-1 text-xs rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors flex-shrink-0"
+			aria-label="Add project"
+			class="flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary/40"
 			onclick={() => (showNew = true)}
 		>
 			<Plus size={12} />
-		</button>
+		</Button>
 
 		<div class="flex-1"></div>
 	</div>
@@ -160,8 +170,9 @@
 	<!-- Main toolbar row -->
 	<div class="flex items-center gap-3 px-3 py-1.5">
 		<!-- Command palette button -->
-		<button
-			class="flex items-center gap-2 flex-1 max-w-md px-3 py-1 text-xs rounded bg-card border border-border text-muted-foreground hover:text-foreground hover:border-secondary transition-colors"
+		<Button
+			variant="outline"
+			class="flex items-center gap-2 flex-1 max-w-md h-auto px-3 py-1 text-xs justify-start font-normal text-muted-foreground hover:text-foreground"
 			onclick={() => openPalette()}
 		>
 			<Search size={12} />
@@ -169,7 +180,7 @@
 			<kbd class="px-1.5 py-0.5 rounded bg-secondary text-foreground text-[10px] font-mono">
 				{fmtChord(['mod', 'k'])}
 			</kbd>
-		</button>
+		</Button>
 
 		<!-- Status counts -->
 		<div class="flex items-center gap-2 text-xs">
@@ -203,11 +214,15 @@
 			{/if}
 		</div>
 
+		<Separator orientation="vertical" class="h-4 self-center" />
+
 		<!-- Remote pill -->
-		<button
+		<Button
+			variant="outline"
+			size="xs"
 			title={remote.status.listening ? `Remote on · ${remote.status.address}` : 'Remote off — click to configure'}
 			class={cn(
-				'flex items-center gap-1 text-xs px-2 py-0.5 rounded border transition-colors',
+				'flex items-center gap-1 px-2',
 				remote.status.listening
 					? 'border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10'
 					: 'border-border text-muted-foreground hover:bg-secondary'
@@ -220,7 +235,9 @@
 			{:else}
 				<span class="hidden sm:inline">Remote off</span>
 			{/if}
-		</button>
+		</Button>
+
+		<Separator orientation="vertical" class="h-4 self-center" />
 
 		<!-- Connection -->
 		<span
@@ -249,18 +266,18 @@
 			<h2 class="text-sm font-semibold">New project</h2>
 
 			<div class="space-y-1.5">
-				<label class="text-xs text-muted-foreground" for="nb-path">Folder</label>
+				<Label for="nb-path" class="text-xs text-muted-foreground">Folder</Label>
 				<div class="flex gap-2">
-					<input
+					<Input
 						id="nb-path"
-						class="flex-1 px-2.5 py-1.5 text-sm rounded bg-input border border-border font-mono"
+						class="flex-1 font-mono"
 						placeholder="/path/to/repo"
 						bind:value={newPath}
 						oninput={() => { pathError = ''; if (!nameTouched) newName = basename(newPath); }}
 					/>
-					<button class="px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary" onclick={browse}>
+					<Button variant="outline" size="sm" onclick={browse}>
 						Browse
-					</button>
+					</Button>
 				</div>
 				{#if pathError}
 					<p class="text-xs text-destructive">{pathError}</p>
@@ -268,26 +285,26 @@
 			</div>
 
 			<div class="space-y-1.5">
-				<label class="text-xs text-muted-foreground" for="nb-name">Name</label>
-				<input
+				<Label for="nb-name" class="text-xs text-muted-foreground">Name</Label>
+				<Input
 					id="nb-name"
-					class="w-full px-2.5 py-1.5 text-sm rounded bg-input border border-border"
+					class="w-full"
 					bind:value={newName}
 					oninput={() => (nameTouched = true)}
 				/>
 			</div>
 
 			<div class="flex justify-end gap-2 pt-1">
-				<button class="px-3 py-1.5 text-xs rounded border border-border hover:bg-secondary" onclick={resetNew}>
+				<Button variant="outline" size="sm" onclick={resetNew}>
 					Cancel
-				</button>
-				<button
-					class="px-3 py-1.5 text-xs rounded bg-accent text-accent-foreground disabled:opacity-50"
+				</Button>
+				<Button
+					size="sm"
 					disabled={submitting || !newPath.trim()}
 					onclick={submitNew}
 				>
 					{submitting ? 'Creating…' : 'Create'}
-				</button>
+				</Button>
 			</div>
 		</div>
 	</div>

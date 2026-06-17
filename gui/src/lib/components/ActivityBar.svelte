@@ -7,6 +7,7 @@
 	import { ui, setView, openOnboarding } from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { cn } from '$lib/utils/cn';
+	import { Button } from '$lib/components/ui/button';
 	import type { View } from '$lib/stores/ui';
 
 	const items: { id: View; icon: typeof Folders; label: string; shortcut?: string }[] = [
@@ -19,12 +20,13 @@
 
 <div data-tour="activity" class="flex flex-col items-center gap-1 py-2 w-16 bg-card border-r border-border flex-shrink-0">
 	{#each items as item (item.id)}
-		<button
+		<Button
+			variant="ghost"
 			title={item.label}
 			class={cn(
-				'flex flex-col items-center justify-center w-full py-2 gap-0.5 transition-colors relative group focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none',
+				'flex flex-col items-center justify-center w-full h-auto py-2 gap-0.5 rounded-none relative group',
 				$ui.view === item.id
-					? 'text-foreground bg-secondary/60'
+					? 'text-foreground bg-secondary/60 hover:bg-secondary/60'
 					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
 			)}
 			onclick={() => setView(item.id)}
@@ -37,17 +39,18 @@
 			{#if $ui.view === item.id}
 				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-r"></span>
 			{/if}
-		</button>
+		</Button>
 	{/each}
 
 	<div class="flex-1"></div>
 
-	<button
+	<Button
+		variant="ghost"
 		title="New session"
-		class="flex flex-col items-center justify-center w-full py-2 gap-0.5 text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
+		class="flex flex-col items-center justify-center w-full h-auto py-2 gap-0.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-secondary/40"
 		onclick={() => openOnboarding()}
 	>
 		<Plus size={18} />
 		<span class="text-[9px] leading-tight">New</span>
-	</button>
+	</Button>
 </div>

@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+// shadcn-svelte element-ref / child helper types (used by lib/components/ui/*).
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
+	ref?: U | null;
+};
+
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+
 // Detect macOS for ⌘ vs Ctrl prompt.
 export const isMac =
 	typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.platform);
