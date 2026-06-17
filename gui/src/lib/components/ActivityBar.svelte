@@ -3,8 +3,7 @@
 	import User from '@lucide/svelte/icons/user-cog';
 	import Router from '@lucide/svelte/icons/router';
 	import Settings from '@lucide/svelte/icons/settings';
-	import Plus from '@lucide/svelte/icons/plus';
-	import { ui, setView, openOnboarding } from '$lib/stores/ui';
+	import { ui, setView } from '$lib/stores/ui';
 	import { r9 } from '$lib/stores/r9.svelte';
 	import { cn } from '$lib/utils/cn';
 	import { Button } from '$lib/components/ui/button';
@@ -24,10 +23,10 @@
 			variant="ghost"
 			title={item.label}
 			class={cn(
-				'flex flex-col items-center justify-center w-full h-auto py-2 gap-0.5 rounded-none relative group',
+				'flex flex-col items-center justify-center w-full h-auto py-2 gap-0.5 rounded-none relative group transition-colors',
 				$ui.view === item.id
-					? 'text-foreground bg-secondary/60 hover:bg-secondary/60'
-					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+					? 'text-foreground hover:bg-transparent'
+					: 'text-muted-foreground hover:text-foreground hover:bg-secondary/30'
 			)}
 			onclick={() => setView(item.id)}
 		>
@@ -43,14 +42,4 @@
 	{/each}
 
 	<div class="flex-1"></div>
-
-	<Button
-		variant="ghost"
-		title="New session"
-		class="flex flex-col items-center justify-center w-full h-auto py-2 gap-0.5 rounded-none text-muted-foreground hover:text-foreground hover:bg-secondary/40"
-		onclick={() => openOnboarding()}
-	>
-		<Plus size={18} />
-		<span class="text-[9px] leading-tight">New</span>
-	</Button>
 </div>

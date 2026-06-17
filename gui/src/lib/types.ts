@@ -27,6 +27,7 @@ export interface ProfileInfo {
 	params: ParamEntry[];
 	env: EnvEntry[];
 	start_script: string | null;
+	is_builtin?: boolean;
 }
 
 export interface SessionInfo {
@@ -84,6 +85,7 @@ export interface RemoteStatus {
 	listening: boolean;
 	address: string | null;
 	error: string | null;
+	enabled: boolean;
 }
 
 export interface Settings {

@@ -280,78 +280,90 @@
 		{:else}
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl">
 				{#each $profiles as p (p.id)}
-					{@const m = agentMeta(p.agent_type)}
-					<Card.Root class="p-3">
-						<div class="flex items-start justify-between gap-2">
-							<div class="flex-1 min-w-0">
-								<div class="flex items-center gap-2">
-									<span class="font-medium text-sm truncate">{p.name}</span>
-									{#if $settings.defaultProfileId === p.id}
-										<Badge variant="outline" class="text-[10px] uppercase tracking-wider text-accent gap-0.5">
-											<Star size={10} /> default
-										</Badge>
-									{/if}
-								</div>
-								<div class="flex items-center gap-1.5 mt-0.5">
-										{#if m.brand}
-										<BrandIcon name={m.brand} size={14} />
+							{@const m = agentMeta(p.agent_type)}
+							<Card.Root class="p-3">
+								<div class="flex items-start justify-between gap-2">
+									<div class="flex-1 min-w-0">
+										<div class="flex items-center gap-2">
+											<span class="font-medium text-sm truncate">{p.name}</span>
+											{#if p.is_builtin}
+												<Badge variant="outline" class="text-[10px] uppercase tracking-wider text-muted-foreground">built-in</Badge>
+											{:else if $settings.defaultProfileId === p.id}
+												<Badge variant="outline" class="text-[10px] uppercase tracking-wider text-accent gap-0.5">
+													<Star size={10} /> default
+												</Badge>
+											{/if}
+										</div>
+										<div class="flex items-center gap-1.5 mt-0.5">
+												{#if m.brand}
+												<BrandIcon name={m.brand} size={14} />
+												{:else}
+												<m.icon size={12} class={m.color} />
+												{/if}
+											<span class="text-xs text-muted-foreground">{m.label}</span>
+										</div>
+									</div>
+									<div class="flex items-center gap-1">
+										{#if !p.is_builtin}
+											{#if $settings.defaultProfileId !== p.id}
+												<Button
+													variant="ghost"
+													size="icon-xs"
+													title="Set as default"
+													class="text-muted-foreground hover:text-accent"
+													onclick={() => setDefault(p.id)}
+												><Star size={14} /></Button>
+											{/if}
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												title="Test"
+												class="text-muted-foreground hover:text-gruvbox-green"
+												onclick={() => testProfile(p)}
+											><Play size={14} /></Button>
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												title="Edit"
+												class="text-muted-foreground hover:text-foreground"
+												onclick={() => startEdit(p)}
+											><Pencil size={14} /></Button>
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												title="Delete"
+												class="text-muted-foreground hover:text-gruvbox-red"
+												onclick={() => deleteProfile(p.id)}
+											><Trash size={14} /></Button>
 										{:else}
-										<m.icon size={12} class={m.color} />
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												title="Test"
+												class="text-muted-foreground hover:text-gruvbox-green"
+												onclick={() => testProfile(p)}
+											><Play size={14} /></Button>
 										{/if}
-									<span class="text-xs text-muted-foreground">{m.label}</span>
+									</div>
 								</div>
-							</div>
-							<div class="flex items-center gap-1">
-								{#if $settings.defaultProfileId !== p.id}
-									<Button
-										variant="ghost"
-										size="icon-xs"
-										title="Set as default"
-										class="text-muted-foreground hover:text-accent"
-										onclick={() => setDefault(p.id)}
-									><Star size={14} /></Button>
-								{/if}
-								<Button
-									variant="ghost"
-									size="icon-xs"
-									title="Test"
-									class="text-muted-foreground hover:text-gruvbox-green"
-									onclick={() => testProfile(p)}
-								><Play size={14} /></Button>
-								<Button
-									variant="ghost"
-									size="icon-xs"
-									title="Edit"
-									class="text-muted-foreground hover:text-foreground"
-									onclick={() => startEdit(p)}
-								><Pencil size={14} /></Button>
-								<Button
-									variant="ghost"
-									size="icon-xs"
-									title="Delete"
-									class="text-muted-foreground hover:text-gruvbox-red"
-									onclick={() => deleteProfile(p.id)}
-								><Trash size={14} /></Button>
-							</div>
-						</div>
-						{#if p.params.length > 0 || p.env.length > 0}
-							<div class="mt-2 space-y-1">
-								{#if p.params.length > 0}
-									<div class="text-[10px] uppercase tracking-wider text-muted-foreground">Flags</div>
-									<div class="text-xs font-mono text-muted-foreground">
-										{p.params.map((x) => (x.value !== null ? `${x.flag}=${x.value}` : x.flag)).join(' ')}
+								{#if p.params.length > 0 || p.env.length > 0}
+									<div class="mt-2 space-y-1">
+										{#if p.params.length > 0}
+											<div class="text-[10px] uppercase tracking-wider text-muted-foreground">Flags</div>
+											<div class="text-xs font-mono text-muted-foreground">
+												{p.params.map((x) => (x.value !== null ? `${x.flag}=${x.value}` : x.flag)).join(' ')}
+											</div>
+										{/if}
+										{#if p.env.length > 0}
+											<div class="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Env</div>
+											<div class="text-xs font-mono text-muted-foreground">
+												{p.env.map((e) => e.key).join(', ')}
+											</div>
+										{/if}
 									</div>
 								{/if}
-								{#if p.env.length > 0}
-									<div class="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Env</div>
-									<div class="text-xs font-mono text-muted-foreground">
-										{p.env.map((e) => e.key).join(', ')}
-									</div>
-								{/if}
-							</div>
-						{/if}
-					</Card.Root>
-				{/each}
+							</Card.Root>
+						{/each}
 			</div>
 		{/if}
 	</div>

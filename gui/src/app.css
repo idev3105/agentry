@@ -1,113 +1,100 @@
 @import "tailwindcss";
 
-/* Tailwind v4: @theme inline — dark (zinc) as default base.
-   data-theme="light" overrides at runtime. */
-@theme inline {
-  /* bg — dark zinc (lifted one step lighter for less eye strain) */
-  --color-background:    #131316;
-  --color-card:          #1d1d21;
-  --color-secondary:     #2e2e33;
-  --color-muted:         #2e2e33;
-  --color-border:        #34343a;
-  --color-input:         #1d1d21;
-  --color-popover:       #1d1d21;
+/* Map Tailwind's `dark:` modifier to the app's runtime theme (data-theme on
+   <html>) instead of the OS prefers-color-scheme. Dark is the default base;
+   only data-theme="light" opts out. Without this, `dark:` variants in the
+   component lib (e.g. button outline borders/bg) fire on the OS scheme and
+   desync from the in-app theme toggle. */
+@custom-variant dark (&:where(:root:not([data-theme="light"]) *, :root:not([data-theme="light"])));
 
-  /* fg */
-  --color-foreground:             #fafafa;
-  --color-card-foreground:        #fafafa;
-  --color-popover-foreground:     #fafafa;
-  --color-secondary-foreground:   #fafafa;
-  --color-muted-foreground:       #b4b4bd;
-  --color-accent:                 #3b82f6;
+/* Tailwind v4: @theme — dark (zinc) as default base.
+   data-theme="light" overrides at runtime. */
+@theme {
+  /* bg — Cursor-like: muted near-neutral, low contrast, soft borders */
+  --color-background:    #181818;
+  --color-card:          #1e1e1e;
+  --color-secondary:     #262626;
+  --color-muted:         #242424;
+  --color-border:        #2a2a2a;
+  --color-input:         #1e1e1e;
+  --color-popover:       #202020;
+
+  /* fg — softened whites, dimmer muted text */
+  --color-foreground:             #d4d4d4;
+  --color-card-foreground:        #d4d4d4;
+  --color-popover-foreground:     #d4d4d4;
+  --color-secondary-foreground:   #d4d4d4;
+  --color-muted-foreground:       #8a8a8a;
+  --color-accent:                 #4a8cca;
   --color-accent-foreground:      #ffffff;
 
-  /* primary */
-  --color-primary:            #fafafa;
-  --color-primary-foreground: #18181b;
+  /* primary — not pure white, avoids glare */
+  --color-primary:            #d4d4d4;
+  --color-primary-foreground: #1e1e1e;
 
   /* semantic */
-  --color-destructive:            #ef4444;
-  --color-destructive-foreground: #fafafa;
+  --color-destructive:            #c75c5c;
+  --color-destructive-foreground: #f0f0f0;
 
-  /* accent palette (zinc-dark) */
-  --color-gruvbox-yellow:  #eab308;
-  --color-gruvbox-green:   #22c55e;
-  --color-gruvbox-aqua:    #2dd4bf;
-  --color-gruvbox-blue:    #3b82f6;
-  --color-gruvbox-orange:  #f97316;
-  --color-gruvbox-purple:  #8b5cf6;
-  --color-gruvbox-red:     #ef4444;
-  --color-gruvbox-gray:    #71717a;
+  /* accent palette — desaturated, Cursor-muted */
+  --color-gruvbox-yellow:  #c9a84c;
+  --color-gruvbox-green:   #6a9955;
+  --color-gruvbox-aqua:    #4ec9b0;
+  --color-gruvbox-blue:    #4a8cca;
+  --color-gruvbox-orange:  #ce9178;
+  --color-gruvbox-purple:  #9d7cd8;
+  --color-gruvbox-red:     #c75c5c;
+  --color-gruvbox-gray:    #6e6e6e;
 
-  /* semantic status */
-  --color-accent-ok:     #22c55e;
-  --color-accent-warn:   #eab308;
-  --color-accent-error:  #ef4444;
-  --color-accent-info:   #3b82f6;
+  /* semantic status — muted */
+  --color-accent-ok:     #6a9955;
+  --color-accent-warn:   #c9a84c;
+  --color-accent-error:  #c75c5c;
+  --color-accent-info:   #4a8cca;
 }
 
 /* Light override */
 :root[data-theme="light"] {
-  --color-background:    #ffffff;
-  --color-card:          #fafafa;
-  --color-secondary:     #f4f4f5;
-  --color-muted:         #f4f4f5;
-  --color-border:        #e4e4e7;
-  --color-input:         #ffffff;
-  --color-popover:       #ffffff;
+  --color-background:    #f5f5f4;
+  --color-card:          #fbfbfa;
+  --color-secondary:     #eeeeec;
+  --color-muted:         #ececea;
+  --color-border:        #dededb;
+  --color-input:         #fbfbfa;
+  --color-popover:       #fbfbfa;
 
-  --color-foreground:             #09090b;
-  --color-card-foreground:        #09090b;
-  --color-popover-foreground:     #09090b;
-  --color-secondary-foreground:   #18181b;
-  --color-muted-foreground:       #71717a;
-  --color-accent:                 #2563eb;
+  --color-foreground:             #2a2a28;
+  --color-card-foreground:        #2a2a28;
+  --color-popover-foreground:     #2a2a28;
+  --color-secondary-foreground:   #2a2a28;
+  --color-muted-foreground:       #76767a;
+  --color-accent:                 #3a7bb8;
   --color-accent-foreground:      #ffffff;
 
-  --color-primary:            #18181b;
-  --color-primary-foreground: #fafafa;
+  --color-primary:            #2a2a28;
+  --color-primary-foreground: #fbfbfa;
 
-  --color-destructive:            #dc2626;
+  --color-destructive:            #b85454;
   --color-destructive-foreground: #ffffff;
 
-  --color-gruvbox-yellow:  #ca8a04;
-  --color-gruvbox-green:   #16a34a;
-  --color-gruvbox-aqua:    #0d9488;
-  --color-gruvbox-blue:    #2563eb;
-  --color-gruvbox-orange:  #ea580c;
-  --color-gruvbox-purple:  #7c3aed;
-  --color-gruvbox-red:     #dc2626;
-  --color-gruvbox-gray:    #71717a;
+  --color-gruvbox-yellow:  #b08a2e;
+  --color-gruvbox-green:   #5a8a47;
+  --color-gruvbox-aqua:    #3a9a86;
+  --color-gruvbox-blue:    #3a7bb8;
+  --color-gruvbox-orange:  #c0764e;
+  --color-gruvbox-purple:  #8a6cc0;
+  --color-gruvbox-red:     #b85454;
+  --color-gruvbox-gray:    #76767a;
 
-  --color-accent-ok:     #16a34a;
-  --color-accent-warn:   #ca8a04;
-  --color-accent-error:  #dc2626;
-  --color-accent-info:   #2563eb;
-}
-
-:root[data-accent="teal"] {
-  --color-accent: #14b8a6;
-  --color-accent-foreground: #ffffff;
-}
-:root[data-accent="violet"] {
-  --color-accent: #8b5cf6;
-  --color-accent-foreground: #ffffff;
-}
-:root[data-accent="amber"] {
-  --color-accent: #f59e0b;
-  --color-accent-foreground: #000000;
+  --color-accent-ok:     #5a8a47;
+  --color-accent-warn:   #b08a2e;
+  --color-accent-error:  #b85454;
+  --color-accent-info:   #3a7bb8;
 }
 
-/* Density */
-:root,
-[data-density="comfortable"] {
+:root {
 	--row-py: 0.375rem;
 	--row-gap: 0.5rem;
-}
-
-[data-density="compact"] {
-	--row-py: 0.25rem;
-	--row-gap: 0.375rem;
 }
 
 /* UI zoom + font family.

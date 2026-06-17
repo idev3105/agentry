@@ -4,7 +4,7 @@
     import { profiles } from "$lib/stores/profiles";
     import { settings } from "$lib/stores/settings";
     import { agentMeta } from "$lib/utils/agent";
-    import { startSession, killSession, sendCmd } from "$lib/ipc";
+    import { startSession, killSession, resumeSession, sendCmd } from "$lib/ipc";
     import { markSessionEnding } from "$lib/stores/sessions";
     import { toasts } from "$lib/stores/toasts.svelte";
     import type { SessionState } from "$lib/types";
@@ -23,7 +23,6 @@
     import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
     import Trash from "@lucide/svelte/icons/trash-2";
 import Trash2 from "@lucide/svelte/icons/trash";
-import ChevronRight from "@lucide/svelte/icons/chevron-right";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
     import Check from "@lucide/svelte/icons/check";
     import Settings from "@lucide/svelte/icons/settings";
@@ -145,7 +144,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
 <div data-tour="sidebar" class="flex flex-col h-full overflow-hidden bg-card">
     <!-- Filter -->
-    <div class="p-2 border-b border-border">
+    <div class="p-1.5 border-b border-border">
         <div class="relative">
             <Search
                 size={12}
@@ -212,7 +211,11 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                         <DropdownMenu.Item
                             class="text-xs"
                             onclick={() => { $ui.activeProjectId && startSession($ui.activeProjectId, p.id); }}>
-                            <m.icon size={12} class={m.color} />
+                            {#if m.brand}
+                                <BrandIcon name={m.brand} size={14} />
+                            {:else}
+                                <m.icon size={12} class={m.color} />
+                            {/if}
                             <span class="flex-1 truncate">{p.name}</span>
                             {#if $settings.defaultProfileId === p.id}
                                 <Check size={12} class="text-accent" />
@@ -257,10 +260,9 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
 {#snippet group(title: string, items: SessionState[])}
     <div
-        class="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"
+        class="px-3 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 flex items-center gap-1.5"
     >
-        <ChevronRight size={10} />
-        {title} <span class="font-normal">· {items.length}</span>
+        {title} <span class="text-muted-foreground/40">{items.length}</span>
     </div>
     {#each items as s, idx (s.id)}
         {@const m = agentMeta(s.agent)}
@@ -268,10 +270,10 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class={cn(
-                "group flex items-center gap-2 pl-3 pr-1 cursor-pointer hover:bg-secondary/60 border-l-2 transition-colors py-[var(--row-py)]",
+                "group flex items-center gap-2 mx-1 pl-2 pr-1 rounded-md cursor-pointer transition-colors py-[var(--row-py)]",
                 $ui.focusedSessionId === s.id
-                    ? "bg-secondary border-accent"
-                    : "border-transparent",
+                    ? "bg-secondary text-foreground"
+                    : "hover:bg-secondary/50",
             )}
             onclick={() => pick(s.id)}
             transition:slide={{ duration: 120 }}
@@ -295,7 +297,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 </div>
             </div>
             {#if idx < 9}
-                <kbd class="ml-1 px-1 py-px text-[9px] font-mono text-muted-foreground/60 group-hover:text-muted-foreground hidden sm:inline">
+                <kbd class="ml-1 px-1 py-px text-[9px] font-mono text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
                     {fmtChord(['mod', String(idx + 1)])}
                 </kbd>
             {/if}
@@ -325,18 +327,34 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
                 }}><X size={14} /></Button>
         {/if}
         {#if s.status === "finished" || s.status === "failed"}
-            <Button
-                variant="ghost"
-                size="icon-xs"
-                title="Restart session (same profile)"
-                aria-label="Restart session"
-                class="text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 shrink-0"
-                onclick={(e) => {
-                    e.stopPropagation();
-                    startSession(s.projectId, s.profileId).catch((err) =>
-                        toasts.error('Restart failed', String(err))
-                    );
-                }}><RotateCcw size={13} /></Button>
+            {@const profileExists = $profiles.some(p => p.id === s.profileId)}
+            {#if profileExists}
+                <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    title="Restart session (same profile)"
+                    aria-label="Restart session"
+                    class="text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 shrink-0"
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        startSession(s.projectId, s.profileId).catch((err) =>
+                            toasts.error('Restart failed', String(err))
+                        );
+                    }}><RotateCcw size={13} /></Button>
+            {:else if s.agent === 'claude_code' || !!s.agent_session_id}
+                <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    title="Resume session (profile đã xóa — restart không khả dụng)"
+                    aria-label="Resume session"
+                    class="text-muted-foreground hover:text-gruvbox-green hover:bg-background/60 shrink-0"
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        resumeSession(s.id).catch((err) =>
+                            toasts.error('Resume failed', String(err))
+                        );
+                    }}><RotateCcw size={13} /></Button>
+            {/if}
         {/if}
         <Button
             variant="ghost"

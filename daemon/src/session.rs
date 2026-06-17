@@ -247,8 +247,15 @@ impl SessionManager {
             && !argv.iter().any(|a| a == "-s")
         {
             let guard = self.opencode_lock.clone().lock_owned().await;
-            let before = crate::opencode_capture::snapshot().await;
-            Some((guard, before))
+            // Skip capture entirely if we can't read the session list now —
+            // an unreadable baseline would make every existing session look new.
+            match crate::opencode_capture::snapshot().await {
+                Ok(before) => Some((guard, before)),
+                Err(()) => {
+                    eprintln!("[opencode] session list unavailable; skipping capture");
+                    None
+                }
+            }
         } else {
             None
         };

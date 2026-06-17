@@ -60,10 +60,11 @@ async fn run_daemon() -> anyhow::Result<()> {
     // Spawn remote WS server on Tailscale interface (non-fatal if no tailnet).
     let home2 = home.clone();
     let remote_server = server.clone();
+    let remote_enabled_rx = server.remote_enabled_rx();
     tokio::spawn(async move {
         let static_dir = format!("{home2}/.agentry/static");
         std::fs::create_dir_all(&static_dir).ok();
-        if let Err(e) = remote::serve(remote_server, static_dir).await {
+        if let Err(e) = remote::serve(remote_server, static_dir, remote_enabled_rx).await {
             tracing::warn!("remote server error: {e}");
         }
     });

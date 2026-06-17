@@ -132,7 +132,7 @@
 			>
 				<span class="truncate font-medium">{p.name}</span>
 				{#if live > 0}
-					<span class="text-[10px] px-1 py-0 rounded bg-accent-ok/20 text-accent-ok flex-shrink-0">{live}</span>
+					<span class="text-[10px] px-1 py-0 rounded bg-secondary text-muted-foreground flex-shrink-0">{live}</span>
 				{/if}
 				<Button
 					variant="ghost"

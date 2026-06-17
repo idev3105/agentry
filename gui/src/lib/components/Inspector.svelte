@@ -189,7 +189,6 @@
 		<!-- Header -->
 		<div class="px-4 pt-4 pb-3 border-b border-border space-y-2">
 			<div class="flex items-center gap-2">
-				<span class={cn('w-2 h-2 rounded-full', statusDot(session))}></span>
 				{#if renaming}
 					<Input
 						bind:value={renameValue}
@@ -199,46 +198,28 @@
 						onblur={() => commitRename(session!.id)}
 					/>
 				{:else}
-					<Button
-						variant="ghost"
-						class="flex-1 justify-start px-0 h-auto text-left font-medium truncate hover:text-accent hover:bg-transparent"
-						onclick={() => startRename(session!)}
-					>
-						{session.title}
-					</Button>
+					<Badge variant="outline" class={cn('text-xs', statusColor(session))}>
+						{statusLabel(session)}
+					</Badge>
 				{/if}
 			</div>
-			<div>
-				<Badge variant="outline" class={cn('text-xs', statusColor(session))}>
-					{statusLabel(session)}
-				</Badge>
-			</div>
 
-			<div class="flex gap-1.5 pt-1">
+			<div class="flex gap-0.5 pt-1">
 				<Button
-					variant="secondary"
-					size="xs"
+					variant="ghost"
+					size="icon-xs"
+					class="text-muted-foreground hover:text-foreground"
 					title="Rename (F2)"
-					class="flex-1 gap-1"
 					onclick={() => startRename(session!)}
 				>
-					<Pencil size={12} /> Rename
-				</Button>
-				<Button
-					variant="secondary"
-					size="xs"
-					title="Duplicate (same profile + cwd)"
-					class="flex-1 gap-1"
-					onclick={() => duplicate(session!)}
-				>
-					<Copy size={12} /> Duplicate
+					<Pencil size={12} />
 				</Button>
 				{#if session.status === 'running' || session.status === 'queued'}
 					<Button
-						variant="destructive"
-						size="xs"
+						variant="ghost"
+						size="icon-xs"
+						class="text-muted-foreground hover:text-accent-error"
 						title="Kill session"
-						class="flex-1"
 						onclick={() => doKill(session!)}
 					>
 						<Square size={14} fill="currentColor" />
@@ -247,9 +228,9 @@
 				{#if session.status === 'finished' || session.status === 'failed'}
 					{@const canResume = session.agent === 'claude_code' || !!session.agent_session_id}
 					<Button
-						variant="secondary"
-						size="xs"
-						class="flex-1"
+						variant="ghost"
+						size="icon-xs"
+						class="text-muted-foreground hover:text-foreground"
 						disabled={!canResume}
 						title={canResume
 							? 'Resume session'
@@ -260,19 +241,10 @@
 					</Button>
 				{/if}
 				<Button
-					variant="secondary"
-					size="xs"
-					title="Copy as CLI command"
-					class="flex-1 gap-1"
-					onclick={() => copyAsCli(session!)}
-				>
-					<Terminal size={12} /> CLI
-				</Button>
-				<Button
-					variant="secondary"
-					size="xs"
+					variant="ghost"
+					size="icon-xs"
 					title="Delete session permanently"
-					class="hover:bg-destructive hover:text-destructive-foreground"
+					class="text-muted-foreground hover:text-accent-error"
 					onclick={() => (confirmTarget = session!)}
 				>
 					<Trash size={14} />
@@ -400,7 +372,7 @@
 				<h3 class="text-[10px] uppercase tracking-wider text-muted-foreground">Fail reason</h3>
 				<Card.Root class="border-0 bg-card py-0">
 					<Card.Content class="px-0">
-						<pre class="text-xs text-gruvbox-red rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
+						<pre class="text-xs text-accent-error rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{session.failReason}</pre>
 					</Card.Content>
 				</Card.Root>
 			</section>

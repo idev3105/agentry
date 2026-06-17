@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { settings, density } from '$lib/stores/settings';
+	import { settings } from '$lib/stores/settings';
 	import { profiles } from '$lib/stores/profiles';
 	import { sendCmd, checkIntegrations, installIntegration } from '$lib/ipc';
 	import { r9 } from '$lib/stores/r9.svelte';
-	import { theme, accent, type Theme, type Accent } from '$lib/stores/theme.svelte';
+	import QRCode from '$lib/components/QRCode.svelte';
+	import { theme, type Theme } from '$lib/stores/theme.svelte';
 	import { zoom, fontFamily, type FontFamily } from '$lib/stores/font.svelte';
 	import { remote } from '$lib/stores/remote.svelte';
 	import { toasts } from '$lib/stores/toasts.svelte';
@@ -14,6 +15,7 @@
 	import { cn, fmtChord } from '$lib/utils/cn';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Switch } from '$lib/components/ui/switch';
 	import * as Select from '$lib/components/ui/select';
 	import Play from '@lucide/svelte/icons/play';
 	import Square from '@lucide/svelte/icons/square';
@@ -93,6 +95,16 @@
 			loadIntegrations();
 		}
 	});
+
+	async function openExternal(url: string) {
+		try {
+			const { openUrl } = await import('@tauri-apps/plugin-opener');
+			await openUrl(url);
+		} catch (e) {
+			// fallback: shouldn't happen in Tauri context
+			window.open(url, '_blank');
+		}
+	}
 
 	function copyAddr() {
 		if (!remote.status.address) return;
@@ -174,39 +186,6 @@
 							size="xs"
 							class="capitalize"
 							onclick={() => theme.set(t)}>{t}</Button>
-					{/each}
-				</div>
-			</section>
-
-			<section class="bg-card border border-border rounded p-4 space-y-3">
-				<h2 class="text-sm font-semibold">Accent</h2>
-				<div class="flex gap-2 flex-wrap">
-					{#each (['default', 'teal', 'violet', 'amber'] as Accent[]) as a (a)}
-						<Button
-							variant={accent.value === a ? 'default' : 'outline'}
-							size="xs"
-							class="capitalize"
-							onclick={() => accent.set(a)}
-						>
-							<span
-								class="w-3 h-3 rounded-full border border-border"
-								style={`background:${a === 'teal' ? '#2f9e6e' : a === 'violet' ? '#8b5cf6' : a === 'amber' ? '#d97706' : 'var(--color-accent)'}`}
-							></span>
-							{a}
-						</Button>
-					{/each}
-				</div>
-			</section>
-
-			<section class="bg-card border border-border rounded p-4 space-y-3">
-				<h2 class="text-sm font-semibold">Density</h2>
-				<div class="flex gap-2">
-					{#each (['comfortable', 'compact'] as const) as d}
-						<Button
-							variant={$density === d ? 'default' : 'outline'}
-							size="xs"
-							class="capitalize"
-							onclick={() => density.set(d)}>{d}</Button>
 					{/each}
 				</div>
 			</section>
@@ -426,42 +405,72 @@
 			</section>
 
 			<section class="bg-card border border-border rounded p-4 space-y-3">
-				<div class="flex items-center justify-between">
+					<div class="flex items-center justify-between">
 					<div>
 						<h2 class="text-sm font-semibold">Remote Access</h2>
 						<p class="text-xs text-muted-foreground mt-0.5">
 							Control agents from your phone over Tailscale. Devices on your tailnet are trusted — no pairing needed.
 						</p>
 					</div>
-					{#if remote.status.listening}
-						<Badge class="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">on</Badge>
-					{:else}
-						<Badge variant="secondary" class="text-muted-foreground">off</Badge>
-					{/if}
+					<div class="flex items-center gap-2">
+						{#if remote.status.listening}
+							<Badge class="bg-emerald-500/10 text-emerald-500 border-emerald-500/30 text-xs">on</Badge>
+						{/if}
+						<Switch
+							checked={remote.status.enabled}
+							disabled={remote.busy}
+							onCheckedChange={(v) => remote.setEnabled(v)}
+						/>
+					</div>
 				</div>
 
-				{#if remote.status.error}
-					<div class="text-xs bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2">
-						{remote.status.error === 'tailscale interface not found'
-							? 'Tailscale is not running on this machine. Install/start Tailscale, then restart Agentry.'
-							: remote.status.error}
-					</div>
-				{/if}
-
-				{#if remote.status.listening && remote.status.address}
-					<div class="flex items-center gap-2">
-						<code class="text-xs px-2 py-1 rounded bg-muted font-mono">http://{remote.status.address}</code>
-						<Button variant="ghost" size="icon-xs" title="Copy address" aria-label="Copy address" onclick={copyAddr}>
-							<Copy class="size-3.5" />
-						</Button>
-					</div>
+				{#if !remote.status.enabled}
 					<p class="text-xs text-muted-foreground">
-						Open this address in a browser on any device in your tailnet.
+						Remote access is disabled. Toggle the switch above to enable it.
 					</p>
-				{:else if !remote.status.error}
-					<p class="text-xs text-muted-foreground">
-						Start Tailscale on this machine — Agentry will auto-detect and start listening.
-					</p>
+				{:else if remote.status.error}
+					<div class="text-xs bg-yellow-500/10 border border-yellow-500/30 rounded px-3 py-2 space-y-1.5">
+					{#if remote.status.error === 'tailscale interface not found'}
+						<p>Tailscale is not running on this machine.</p>
+						<p>
+							<button
+								onclick={() => openExternal('https://tailscale.com/download')}
+								class="underline underline-offset-2 text-foreground hover:text-primary cursor-pointer"
+							>Download Tailscale</button> → install → sign in → then restart Agentry.
+						</p>
+					{:else}
+						{remote.status.error}
+					{/if}
+				</div>
+				{:else if remote.status.listening && remote.status.address}
+					<div class="flex items-start gap-4">
+						<QRCode value="http://{remote.status.address}" size={120} />
+						<div class="flex flex-col gap-2 min-w-0">
+							<div class="flex items-center gap-2">
+								<code class="text-xs px-2 py-1 rounded bg-muted font-mono truncate">http://{remote.status.address}</code>
+								<Button variant="ghost" size="icon-xs" title="Copy address" aria-label="Copy address" onclick={copyAddr}>
+									<Copy class="size-3.5" />
+								</Button>
+							</div>
+							<p class="text-xs text-muted-foreground">
+								Scan with your phone or open this address in any browser on your tailnet.
+							</p>
+						</div>
+					</div>
+				{:else}
+					<div class="text-xs text-muted-foreground space-y-1">
+						<p>Tailscale is not detected. To enable Remote Access:</p>
+						<ol class="list-decimal list-inside space-y-0.5 pl-1">
+							<li>
+								<button
+									onclick={() => openExternal('https://tailscale.com/download')}
+									class="underline underline-offset-2 hover:text-foreground cursor-pointer"
+								>Download & install Tailscale</button>
+							</li>
+							<li>Sign in with your Tailscale account</li>
+							<li>Restart Agentry — it will auto-detect and start listening</li>
+						</ol>
+					</div>
 				{/if}
 
 				{#if remote.lastError}

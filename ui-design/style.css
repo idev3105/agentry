@@ -501,25 +501,29 @@ body {
 .session-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: var(--session-item-py) 12px;
+    gap: 9px;
+    padding: var(--session-item-py) 10px;
+    margin: 0 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    border-left: 2px solid transparent;
     position: relative;
-    transition:
-        background var(--t-fast),
-        border-color var(--t-fast);
+    transition: background var(--t-fast);
 }
 .session-item:hover {
     background: var(--surface-2);
 }
 .session-item.active {
-    background: linear-gradient(
-        90deg,
-        var(--accent-muted),
-        var(--surface-2) 65%
-    );
-    border-left-color: var(--accent);
+    background: var(--surface-2);
+}
+.session-item.active::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent);
 }
 .session-item.active .session-item-name {
     color: var(--fg);
@@ -560,6 +564,10 @@ body {
 
 .session-item-agent {
     font-size: 11px;
+    color: var(--fg-3);
+}
+/* Keep agent identity in the icon only — mute the text label for a calmer list */
+.session-item-meta .session-item-agent {
     color: var(--fg-3);
 }
 .session-item-time {

@@ -5,7 +5,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{broadcast, RwLock};
 use agentry_wire::*;
 
-use crate::store::Store;
+use crate::store::{Store, DbProfile};
 use crate::session::SessionManager;
 
 const BROADCAST_CAPACITY: usize = 512;
@@ -14,21 +14,73 @@ pub type EventTx = broadcast::Sender<Event>;
 #[allow(dead_code)]
 pub type EventRx = broadcast::Receiver<Event>;
 
+// ── Built-in profiles ──────────────────────────────────────────────────────
+// Three immutable "default" profiles, one per agent type.  They are always
+// returned by ListProfiles and cannot be deleted or edited.  They carry no
+// params / env / start_script so the agent runs with its own defaults.
+
+const BUILTIN_CLAUDE: &str = "__default_claude_code__";
+const BUILTIN_CODEX:  &str = "__default_codex__";
+const BUILTIN_OC:     &str = "__default_open_code__";
+
+fn is_builtin_profile(id: &str) -> bool {
+    matches!(id, "__default_claude_code__" | "__default_codex__" | "__default_open_code__")
+}
+
+fn builtin_to_db_profile(id: &str) -> Option<DbProfile> {
+    let (name, agent_type) = match id {
+        "__default_claude_code__" => ("Claude Code", "claude_code"),
+        "__default_codex__"       => ("Codex",       "codex"),
+        "__default_open_code__"   => ("OpenCode",    "open_code"),
+        _ => return None,
+    };
+    Some(DbProfile {
+        id: id.to_string(),
+        name: name.to_string(),
+        agent_type: agent_type.to_string(),
+        params: "[]".to_string(),
+        env: "[]".to_string(),
+        start_script: None,
+    })
+}
+
+fn builtin_profiles_json() -> Vec<serde_json::Value> {
+    vec![
+        serde_json::json!({
+            "id": BUILTIN_CLAUDE, "name": "Claude Code", "agent_type": "claude_code",
+            "params": [], "env": [], "start_script": null, "is_builtin": true,
+        }),
+        serde_json::json!({
+            "id": BUILTIN_CODEX, "name": "Codex", "agent_type": "codex",
+            "params": [], "env": [], "start_script": null, "is_builtin": true,
+        }),
+        serde_json::json!({
+            "id": BUILTIN_OC, "name": "OpenCode", "agent_type": "open_code",
+            "params": [], "env": [], "start_script": null, "is_builtin": true,
+        }),
+    ]
+}
+
 pub struct Server {
     store: Arc<Store>,
     sessions: Arc<SessionManager>,
     event_tx: EventTx,
+    remote_enabled_tx: tokio::sync::watch::Sender<bool>,
 }
 
 impl Server {
     pub fn new(store: Arc<Store>, sessions: Arc<SessionManager>) -> Self {
         let (event_tx, _) = broadcast::channel(BROADCAST_CAPACITY);
-        Server { store, sessions, event_tx }
+        let initial = store.get_setting("remote_enabled")
+            .ok().flatten()
+            .map(|v| v != "false" && v != "0")
+            .unwrap_or(true);
+        let (remote_enabled_tx, _) = tokio::sync::watch::channel(initial);
+        Server { store, sessions, event_tx, remote_enabled_tx }
     }
 
-    #[allow(dead_code)]
-    pub fn event_sender(&self) -> EventTx {
-        self.event_tx.clone()
+    pub fn remote_enabled_rx(&self) -> tokio::sync::watch::Receiver<bool> {
+        self.remote_enabled_tx.subscribe()
     }
 
     /// Expose store + sessions + event_tx for the agent hook server.
@@ -189,6 +241,9 @@ impl Server {
             }
 
             Cmd::UpdateProfile(c) => {
+                if is_builtin_profile(&c.profile_id) {
+                    return Err("Built-in default profiles cannot be edited.".to_string());
+                }
                 let agent_type_str_opt = c.agent_type.as_ref().map(agent_type_str);
                 let params_json = c.params.as_ref().map(|p| serde_json::to_string(p).unwrap());
                 let env_json = c.env.as_ref().map(|e| serde_json::to_string(e).unwrap());
@@ -205,20 +260,29 @@ impl Server {
             }
 
             Cmd::DeleteProfile(c) => {
+                if is_builtin_profile(&c.profile_id) {
+                    return Err("Built-in default profiles cannot be deleted.".to_string());
+                }
                 self.store.delete_profile(&c.profile_id).map_err(|e| e.to_string())?;
                 Ok(serde_json::json!({"ok":true}))
             }
 
             Cmd::ListProfiles => {
-                let profiles = self.store.list_profiles().map_err(|e| e.to_string())?;
-                let out: Vec<serde_json::Value> = profiles.into_iter().map(|p| {
+                let mut profiles = self.store.list_profiles().map_err(|e| e.to_string())?;
+                let mut out: Vec<serde_json::Value> = profiles.drain(..).map(|p| {
                     serde_json::json!({
                         "id": p.id, "name": p.name, "agent_type": p.agent_type,
                         "params": serde_json::from_str::<serde_json::Value>(&p.params).unwrap_or_default(),
                         "env": serde_json::from_str::<serde_json::Value>(&p.env).unwrap_or_default(),
                         "start_script": p.start_script,
+                        "is_builtin": false,
                     })
                 }).collect();
+                // Prepend the 3 immutable built-in profiles (one per agent type).
+                // They are always present so the user can start a session without
+                // having to create a profile first.
+                let builtins = builtin_profiles_json();
+                out.splice(0..0, builtins);
                 Ok(serde_json::json!({"ok":true, "profiles": out}))
             }
 
@@ -226,9 +290,15 @@ impl Server {
 
             Cmd::StartSession(c) => {
                 let settings = self.store.get_settings_all().map_err(|e| e.to_string())?;
-                let profile = self.store.get_profile(&c.profile_id)
-                    .map_err(|e| e.to_string())?
-                    .ok_or_else(|| "unknown_profile".to_string())?;
+                // Builtin profiles are not in DB — resolve them in-memory.
+                let profile = if is_builtin_profile(&c.profile_id) {
+                    builtin_to_db_profile(&c.profile_id)
+                        .ok_or_else(|| "unknown_profile".to_string())?
+                } else {
+                    self.store.get_profile(&c.profile_id)
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| "Profile đã bị xóa — không thể start session mới với profile này. Tạo profile mới hoặc dùng Resume.".to_string())?
+                };
 
                 let running = self.store.count_running_sessions().map_err(|e| e.to_string())?;
                 let status = if running >= settings.max_concurrent_sessions as i64 {
@@ -359,9 +429,38 @@ impl Server {
                     return Err("session_already_active".to_string());
                 }
 
-                let profile = self.store.get_profile(&original.profile_id)
+                let profile = if is_builtin_profile(&original.profile_id) {
+                    builtin_to_db_profile(&original.profile_id)
+                        .ok_or_else(|| "unknown_profile".to_string())?
+                } else { match self.store.get_profile(&original.profile_id)
                     .map_err(|e| e.to_string())?
-                    .ok_or_else(|| "unknown_profile".to_string())?;
+                {
+                    Some(p) => p,
+                    None => {
+                        // Profile was deleted out from under this session (legacy
+                        // orphan rows created before delete_profile blocked it).
+                        // Rebuild a minimal profile from the argv we snapshotted
+                        // at create time so resume still works. Custom
+                        // params/env/start_script are lost — best effort.
+                        let argv: Vec<String> = serde_json::from_str(&original.resolved_argv)
+                            .map_err(|_| "unknown_profile".to_string())?;
+                        let bin = argv.first().map(String::as_str).unwrap_or("");
+                        let agent_type = match bin {
+                            "claude" => "claude_code",
+                            "opencode" => "open_code",
+                            "codex" => "codex",
+                            _ => return Err("unknown_profile".to_string()),
+                        }.to_string();
+                        DbProfile {
+                            id: original.profile_id.clone(),
+                            name: format!("{} (deleted profile)", agent_type),
+                            agent_type,
+                            params: "[]".to_string(),
+                            env: "[]".to_string(),
+                            start_script: None,
+                        }
+                    }
+                } };
 
                 // Resume only works when we know the agent's own session id.
                 // Today only claude_code captures it (via pre-generated UUID
@@ -448,10 +547,27 @@ impl Server {
                 Ok(serde_json::json!({"ok":true}))
             }
 
+            Cmd::SetRemoteEnabled(c) => {
+                let val = if c.enabled { "true" } else { "false" };
+                self.store.set_setting("remote_enabled", val)
+                    .map_err(|e| e.to_string())?;
+                let _ = self.remote_enabled_tx.send(c.enabled);
+                Ok(serde_json::json!({"ok":true}))
+            }
+
             Cmd::GetRemoteStatus => {
-                let addr = crate::remote::remote_bind_addr();
-                let (listening, address, error) = match addr {
-                    Some(a) => (true, Some(a.to_string()), None),
+                let enabled = *self.remote_enabled_tx.borrow();
+                if !enabled {
+                    return Ok(serde_json::json!({
+                        "ok": true,
+                        "listening": false,
+                        "address": null,
+                        "error": null,
+                        "enabled": false,
+                    }));
+                }
+                let (listening, address, error) = match crate::remote::remote_info() {
+                    Some((_bind, display)) => (true, Some(display), None),
                     None => (false, None, Some("tailscale interface not found".to_string())),
                 };
                 Ok(serde_json::json!({
@@ -459,6 +575,7 @@ impl Server {
                     "listening": listening,
                     "address": address,
                     "error": error,
+                    "enabled": true,
                 }))
             }
 

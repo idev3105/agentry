@@ -18,11 +18,12 @@
   <div class="flex items-center gap-2 h-9 px-3 border-b border-border bg-card text-xs">
     <m.icon size={12} class={m.color} />
     <span class="font-medium truncate flex-1">{s.title}</span>
-    <span class={cn('text-[11px]', s.activity === 'awaiting_input' ? 'text-gruvbox-red' : s.activity === 'working' ? 'text-gruvbox-green' : 'text-muted-foreground')}>
-      {s.status}{s.activity ? ` · ${s.activity.replace('_',' ')}` : ''}
+    <span class={cn('flex items-center gap-1.5 text-[11px] text-muted-foreground')}>
+      <span class={cn('w-1.5 h-1.5 rounded-full', s.activity === 'awaiting_input' ? 'bg-accent-error' : s.activity === 'working' ? 'bg-accent-ok' : 'bg-muted-foreground/50')}></span>
+      {s.activity ? s.activity.replace('_',' ') : s.status}
     </span>
     {#if s.status === 'running' || s.status === 'queued'}
-      <Button variant="ghost" size="icon-xs" class="text-gruvbox-red" title="Kill" aria-label="Kill"
+      <Button variant="ghost" size="icon-xs" class="text-muted-foreground hover:text-gruvbox-red" title="Kill" aria-label="Kill"
               onclick={() => { markSessionEnding(s!.id); killSession(s!.id).catch(e => toasts.error('Kill failed', String(e))); }}>
         <Square size={12} fill="currentColor" />
       </Button>

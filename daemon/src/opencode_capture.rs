@@ -4,17 +4,22 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tokio::process::Command;
 
-/// Returns map: id -> title.
-pub async fn snapshot() -> HashMap<String, String> {
+/// Returns map: id -> title. `Err` if the command itself failed (binary
+/// missing, non-zero exit) so callers can distinguish "no sessions yet" from
+/// "couldn't read sessions" — the latter must NOT be treated as an empty
+/// baseline, or every pre-existing session looks brand new in the diff.
+pub async fn snapshot() -> Result<HashMap<String, String>, ()> {
     let out = Command::new("opencode")
         .arg("session")
         .arg("list")
         .output()
-        .await;
+        .await
+        .map_err(|_| ())?;
+    if !out.status.success() {
+        return Err(());
+    }
     let mut map = HashMap::new();
-    let Ok(o) = out else { return map };
-    if !o.status.success() { return map }
-    let stdout = String::from_utf8_lossy(&o.stdout);
+    let stdout = String::from_utf8_lossy(&out.stdout);
     for line in stdout.lines() {
         // Expect rows like: "ses_xxx   <title>   <updated>"
         // Split on 2+ whitespace; first column = id, second = title.
@@ -26,10 +31,11 @@ pub async fn snapshot() -> HashMap<String, String> {
         let title = parts[1..parts.len().saturating_sub(1)].join(" ");
         map.insert(id.to_string(), title);
     }
-    map
+    Ok(map)
 }
 
-/// Poll until a new id appears, or timeout.
+/// Poll until a new id appears, or timeout. `before` is the baseline captured
+/// before spawn; a failed poll snapshot is skipped rather than diffed against.
 pub async fn capture_new(
     before: HashMap<String, String>,
     timeout: Duration,
@@ -38,7 +44,7 @@ pub async fn capture_new(
     loop {
         if tokio::time::Instant::now() >= deadline { return None }
         tokio::time::sleep(Duration::from_millis(200)).await;
-        let after = snapshot().await;
+        let Ok(after) = snapshot().await else { continue };
         // Find ids in `after` not in `before`.
         let new_ids: Vec<&String> = after.keys().filter(|k| !before.contains_key(*k)).collect();
         if let Some(id) = new_ids.first() {

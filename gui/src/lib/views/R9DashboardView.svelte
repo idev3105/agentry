@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { r9 } from '$lib/stores/r9.svelte';
+	import { theme } from '$lib/stores/theme.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import RotateCw from '@lucide/svelte/icons/rotate-cw';
@@ -18,19 +19,16 @@
 
 	// Manual dashboard zoom multiplier (default 100%), persisted.
 	//
-	// Sizing strategy (cross-origin iframe → we cannot read or restyle the inner
-	// document, and on WebKitGTK `width/height:100%` gives the iframe a viewport
-	// wider than its box so the page overflows + shows scrollbars):
-	//   • Give the iframe a FIXED logical viewport width (BASE_WIDTH) so 9router
-	//     always lays out at a known desktop width.
-	//   • Scale it down with transform:scale(fit) so that BASE_WIDTH renders
-	//     exactly to the container width → no horizontal overflow, no h-scrollbar.
-	//   • The manual zoom multiplies that fit factor for user fine-tuning.
+	// Sizing strategy: the iframe fills 100% of its container (the app window),
+	// so the dashboard is responsive to the real window size — resize the
+	// window and 9router reflows itself. Manual zoom uses the CSS `zoom`
+	// property on the iframe element (not transform:scale): `zoom` re-lays-out
+	// the box at the new factor so there is no overflow / phantom scrollbars,
+	// and works for cross-origin frames where we cannot restyle the content.
 	const ZOOM_KEY = 'agentry:r9:zoom';
 	const ZMIN = 0.5;
 	const ZMAX = 1.5;
 	const ZSTEP = 0.1;
-	const BASE_WIDTH = 1440; // logical viewport handed to the dashboard
 	function loadZoom(): number {
 		const n = Number(localStorage.getItem(ZOOM_KEY) ?? '1');
 		return Number.isFinite(n) && n >= ZMIN && n <= ZMAX ? n : 1;
@@ -44,29 +42,6 @@
 	function zoomOut() { dashZoom = clampZoom(dashZoom - ZSTEP); }
 	function zoomReset() { dashZoom = 1; }
 	let zoomPct = $derived(Math.round(dashZoom * 100));
-
-	// Measure the container so we can compute the fit-to-width factor.
-	let viewport = $state<HTMLDivElement | null>(null);
-	let boxW = $state(0);
-	let boxH = $state(0);
-	$effect(() => {
-		const el = viewport;
-		if (!el) return;
-		const ro = new ResizeObserver((entries) => {
-			const r = entries[0]?.contentRect;
-			if (r) {
-				boxW = Math.round(r.width);
-				boxH = Math.round(r.height);
-			}
-		});
-		ro.observe(el);
-		return () => ro.disconnect();
-	});
-	// fit = container / BASE_WIDTH so the 1440px-wide iframe renders to box width.
-	// User zoom multiplies it. Height is set so the scaled iframe fills the box.
-	let scale = $derived(boxW > 0 ? (boxW / BASE_WIDTH) * dashZoom : dashZoom);
-	let frameW = BASE_WIDTH;
-	let frameH = $derived(scale > 0 && boxH > 0 ? Math.round(boxH / scale) : 0);
 
 	onMount(() => {
 		r9.startPolling();
@@ -244,16 +219,13 @@
 				{/if}
 			</div>
 		{:else}
-			<div bind:this={viewport} class="absolute inset-0 overflow-hidden">
+			<div class="absolute inset-0 overflow-hidden">
 				{#key reloadKey}
 					<iframe
 						title="9Router Dashboard"
 						src={DASHBOARD_URL}
-						width={frameW}
-						height={frameH}
-						scrolling="no"
-						class="border-0 bg-white origin-top-left"
-						style="width: {frameW}px; height: {frameH}px; transform: scale({scale});"
+						class="border-0 block"
+						style="width: {100 / dashZoom}%; height: {100 / dashZoom}%; zoom: {dashZoom}; color-scheme: {theme.value};"
 						sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
 					></iframe>
 				{/key}

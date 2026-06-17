@@ -73,7 +73,12 @@ export async function getRemoteStatus(): Promise<RemoteStatus> {
 		listening: (r.listening as boolean) ?? false,
 		address: (r.address as string) ?? null,
 		error: (r.error as string) ?? null,
+		enabled: (r.enabled as boolean) ?? true,
 	};
+}
+
+export async function setRemoteEnabled(enabled: boolean): Promise<void> {
+	await rpc({ cmd: 'set_remote_enabled', enabled });
 }
 
 export async function removeProject(projectId: string): Promise<void> {

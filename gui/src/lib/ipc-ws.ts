@@ -213,6 +213,7 @@ export async function getRemoteStatus(): Promise<RemoteStatus> {
 		listening: (r.listening as boolean) ?? false,
 		address: (r.address as string) ?? null,
 		error: (r.error as string) ?? null,
+		enabled: (r.enabled as boolean) ?? true,
 	};
 }
 

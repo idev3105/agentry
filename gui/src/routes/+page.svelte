@@ -28,7 +28,7 @@ import { toasts } from '$lib/stores/toasts.svelte';
 	import SquareTerminal from '@lucide/svelte/icons/square-terminal';
 	import { sessions, upsertSession, updateSession, markSessionEnding } from '$lib/stores/sessions';
 	import { profiles } from '$lib/stores/profiles';
-	import { settings, density } from '$lib/stores/settings';
+	import { settings } from '$lib/stores/settings';
 	import {
 		ui,
 		togglePalette,
@@ -623,12 +623,10 @@ import { toasts } from '$lib/stores/toasts.svelte';
 
 		<div class="flex flex-1 overflow-hidden">
 			{#if $ui.view === 'terminal'}
-				<SplitPane
+			<SplitPane
 					id="left:v2"
 					mode="fixed"
 					defaultLeft={sidebarDefault}
-					minLeft={180}
-					maxLeft={520}
 				>
 					{#snippet left()}
 						<div class="h-full w-full border-r border-border overflow-hidden">
@@ -648,10 +646,6 @@ import { toasts } from '$lib/stores/toasts.svelte';
 							id="right"
 							mode="ratio"
 							defaultLeft={99999}
-							minLeft={320}
-							minRight={280}
-							minLeftRatio={0.7}
-							maxRightWindowRatio={0.3}
 						>
 							{#snippet left()}
 								<div data-tour="terminal" class="h-full w-full overflow-hidden bg-background">
@@ -689,14 +683,14 @@ import { toasts } from '$lib/stores/toasts.svelte';
 									</div>
 								</div>
 							<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
-								<Button variant="outline" class="bg-card hover:border-accent rounded-lg p-4 h-auto flex-col items-start text-left gap-0 group"
+								<Button variant="outline" class="bg-card border-border hover:border-accent/60 hover:bg-accent/5 rounded-lg p-4 h-auto flex-col items-start text-left gap-0 group transition-colors"
 										onclick={() => quickStartDefault()}>
 									<Plus size={18} class="text-accent mb-2" />
 									<div class="text-sm font-medium">New session</div>
 									<div class="text-[11px] text-muted-foreground mt-0.5">Start with default profile</div>
 									<kbd class="mt-2 inline-block text-[10px] font-mono text-muted-foreground">{fmtChord(['mod','t'])}</kbd>
 								</Button>
-								<Button variant="outline" class="bg-card hover:border-accent rounded-lg p-4 h-auto flex-col items-start text-left gap-0"
+								<Button variant="outline" class="bg-card border-border hover:border-accent/60 hover:bg-accent/5 rounded-lg p-4 h-auto flex-col items-start text-left gap-0 transition-colors"
 										onclick={() => openPalette()}>
 									<Command size={18} class="text-gruvbox-aqua mb-2" />
 									<div class="text-sm font-medium">Command palette</div>

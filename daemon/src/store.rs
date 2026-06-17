@@ -121,8 +121,12 @@ impl Store {
 
     pub fn delete_profile(&self, id: &str) -> anyhow::Result<()> {
         let conn = self.conn.lock().unwrap();
+        // Block deletion while ANY session references this profile — not just
+        // active ones. Finished/failed sessions can still be resumed, and
+        // resume needs the profile to rebuild the agent's argv. Deleting it
+        // would orphan those rows (FK is not enforced) → "unknown_profile".
         let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM sessions WHERE profile_id=?1 AND status IN ('running','starting','queued')",
+            "SELECT COUNT(*) FROM sessions WHERE profile_id=?1",
             params![id],
             |r| r.get(0),
         )?;
@@ -370,6 +374,8 @@ impl Store {
                 .and_then(|v| v.parse().ok()).unwrap_or(30),
             ring_buffer_bytes: self.get_setting("ring_buffer_bytes")?
                 .and_then(|v| v.parse().ok()).unwrap_or(2097152),
+            remote_enabled: self.get_setting("remote_enabled")?
+                .map(|v| v != "false" && v != "0").unwrap_or(true),
         })
     }
 

@@ -16,10 +16,20 @@ function nextSeq() {
   return ++reportSeq;
 }
 
+// session.{created,updated,deleted} carry the session under `properties.info`
+// (id + title); session.{status,idle,error,compacted} carry a flat
+// `properties.sessionID`. Read both shapes so capture works on every event.
 function sessionIDFromProperties(properties) {
-  return typeof properties?.sessionID === "string" && properties.sessionID
-    ? properties.sessionID
-    : undefined;
+  const flat = properties?.sessionID;
+  if (typeof flat === "string" && flat) return flat;
+  const infoId = properties?.info?.id;
+  if (typeof infoId === "string" && infoId) return infoId;
+  return undefined;
+}
+
+function sessionNameFromProperties(properties) {
+  const title = properties?.info?.title;
+  return typeof title === "string" && title ? title : undefined;
 }
 
 function stateFromStatus(status) {
@@ -71,8 +81,13 @@ function send(method, params) {
   });
 }
 
-const reportSession = (sessionID) =>
-  sessionID ? send("pane.report_agent_session", { agent_session_id: sessionID }) : Promise.resolve();
+const reportSession = (sessionID, sessionName) =>
+  sessionID
+    ? send("pane.report_agent_session", {
+        agent_session_id: sessionID,
+        ...(sessionName ? { agent_session_name: sessionName } : {}),
+      })
+    : Promise.resolve();
 
 const reportState = (state, sessionID) => {
   const extra = sessionID ? { agent_session_id: sessionID } : {};
@@ -98,18 +113,19 @@ export const AgentryAgentStatePlugin = async () => {
       const type = event?.type;
       const props = event?.properties ?? {};
       const sessionID = sessionIDFromProperties(props);
+      const sessionName = sessionNameFromProperties(props);
 
       switch (type) {
         case "session.created":
         case "session.updated":
-          await reportSession(sessionID);
+          await reportSession(sessionID, sessionName);
           break;
         case "session.status": {
           const state = stateFromStatus(props.status);
           if (state) {
             await reportState(state, sessionID);
           } else {
-            await reportSession(sessionID);
+            await reportSession(sessionID, sessionName);
           }
           break;
         }

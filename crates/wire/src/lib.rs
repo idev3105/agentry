@@ -60,6 +60,7 @@ pub enum Cmd {
     // Settings
     GetSettings,
     SetDefaultProfile(SetDefaultProfileCmd),
+    SetRemoteEnabled(SetRemoteEnabledCmd),
     GetRemoteStatus,
 
     // Agent integrations (hook scripts that report session id + activity)
@@ -179,6 +180,11 @@ pub struct ListSessionsCmd {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetDefaultProfileCmd {
     pub profile_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetRemoteEnabledCmd {
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -350,6 +356,7 @@ pub struct GetSettingsResp {
     pub idle_threshold_s: u32,
     pub awaiting_threshold_s: u32,
     pub ring_buffer_bytes: u64,
+    pub remote_enabled: bool,
 }
 
 // ── Shared data types ─────────────────────────────────────────────────────────
@@ -437,6 +444,8 @@ pub struct ProfileInfo {
     pub params: Vec<ParamEntry>,
     pub env: Vec<EnvEntry>,
     pub start_script: Option<String>,
+    #[serde(default)]
+    pub is_builtin: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

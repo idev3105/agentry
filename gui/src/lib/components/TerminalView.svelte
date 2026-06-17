@@ -240,6 +240,6 @@
 	}
 </script>
 
-<div class="w-full h-full bg-[#282828] p-2 overflow-hidden">
+<div class="w-full h-full p-2 overflow-hidden" style="background:{THEMES[theme.value].background}">
 	<div bind:this={containerEl} class="w-full h-full"></div>
 </div>
