@@ -68,7 +68,8 @@
 	const AGENT_LABELS: Record<AgentType, { label: string; install: string }> = {
 		claude_code: { label: 'Claude Code', install: 'https://docs.anthropic.com/claude/docs/claude-code' },
 		codex:       { label: 'Codex',       install: 'https://github.com/openai/codex' },
-		open_code:   { label: 'OpenCode',    install: 'https://opencode.ai' }
+		open_code:   { label: 'OpenCode',    install: 'https://opencode.ai' },
+		hermes:      { label: 'Hermes',      install: 'https://hermes-agent.nousresearch.com/docs' }
 	};
 
 	// ── O4.3 Project ──

@@ -5,6 +5,7 @@ mod session;
 mod profile;
 mod remote;
 mod integrations;
+mod fs_access;
 #[cfg(all(unix, not(target_os = "android")))]
 mod agent_hook_server;
 #[cfg(all(unix, not(target_os = "android")))]

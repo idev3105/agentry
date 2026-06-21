@@ -36,6 +36,110 @@ impl Store {
     fn migrate(&self) -> anyhow::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute_batch(include_str!("migrations.sql"))?;
+        drop(conn);
+        self.migrate_drop_profile_fk()?;
+        self.migrate_add_session_agent_type()?;
+        Ok(())
+    }
+
+    /// Older DBs predate `sessions.agent_type`. `CREATE TABLE IF NOT EXISTS`
+    /// won't add a column to an existing table, so ALTER it in and backfill
+    /// from the binary name in `resolved_argv` (best effort — rows created
+    /// before argv was snapshotted carry '[]' and stay '').
+    fn migrate_add_session_agent_type(&self) -> anyhow::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        let has_col: bool = {
+            let mut stmt = conn.prepare("PRAGMA table_info(sessions)")?;
+            let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+            let mut found = false;
+            for name in rows {
+                if name? == "agent_type" {
+                    found = true;
+                    break;
+                }
+            }
+            found
+        };
+        if has_col {
+            return Ok(());
+        }
+        conn.execute_batch(
+            "ALTER TABLE sessions ADD COLUMN agent_type TEXT NOT NULL DEFAULT '';",
+        )?;
+        // Backfill from the argv binary so existing past sessions show the
+        // right brand. Maps binary name → wire agent_type.
+        for (bin, wire) in [("claude", "claude_code"), ("opencode", "open_code"), ("codex", "codex")] {
+            conn.execute(
+                "UPDATE sessions SET agent_type=?1
+                   WHERE agent_type='' AND resolved_argv LIKE ?2",
+                params![wire, format!("[\"{bin}\"%")],
+            )?;
+        }
+        eprintln!("migrate: added sessions.agent_type column");
+        Ok(())
+    }
+
+    /// Older DBs created `sessions.profile_id` with a FK to `agent_profiles(id)`.
+    /// Built-in default profiles live in-memory only (no DB row), so that FK
+    /// rejects every session started with a built-in profile
+    /// ("FOREIGN KEY constraint failed"). `CREATE TABLE IF NOT EXISTS` can't
+    /// drop a constraint, so rebuild the table once for existing DBs.
+    fn migrate_drop_profile_fk(&self) -> anyhow::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        // Does sessions still carry a FK referencing agent_profiles?
+        let has_profile_fk: bool = {
+            let mut stmt = conn.prepare("PRAGMA foreign_key_list(sessions)")?;
+            let rows = stmt.query_map([], |row| {
+                // columns: id, seq, table, from, to, on_update, on_delete, match
+                let table: String = row.get(2)?;
+                Ok(table)
+            })?;
+            let mut found = false;
+            for t in rows {
+                if t? == "agent_profiles" {
+                    found = true;
+                    break;
+                }
+            }
+            found
+        };
+        if !has_profile_fk {
+            return Ok(());
+        }
+
+        // SQLite table rebuild. foreign_keys must be OFF during the swap and
+        // cannot be toggled inside a transaction, so disable it first.
+        conn.execute_batch("PRAGMA foreign_keys=OFF;")?;
+        conn.execute_batch(
+            "BEGIN;
+             CREATE TABLE sessions_new (
+               id                TEXT PRIMARY KEY,
+               project_id        TEXT NOT NULL REFERENCES projects(id),
+               profile_id        TEXT NOT NULL,
+               title             TEXT,
+               cwd               TEXT NOT NULL,
+               resolved_argv     TEXT NOT NULL,
+               pid               INTEGER,
+               status            TEXT NOT NULL,
+               exit_code         INTEGER,
+               agent_session_id  TEXT,
+               agent_session_name TEXT,
+               parent_session_id TEXT REFERENCES sessions(id),
+               fail_reason       TEXT,
+               created_at        TEXT NOT NULL,
+               finished_at       TEXT
+             );
+             INSERT INTO sessions_new
+               SELECT id, project_id, profile_id, title, cwd, resolved_argv,
+                      pid, status, exit_code, agent_session_id, agent_session_name,
+                      parent_session_id, fail_reason, created_at, finished_at
+               FROM sessions;
+             DROP TABLE sessions;
+             ALTER TABLE sessions_new RENAME TO sessions;
+             COMMIT;",
+        )?;
+        conn.execute_batch("PRAGMA foreign_keys=ON;")?;
+        eprintln!("migrate: dropped sessions.profile_id FK to agent_profiles");
         Ok(())
     }
 
@@ -121,18 +225,48 @@ impl Store {
 
     pub fn delete_profile(&self, id: &str) -> anyhow::Result<()> {
         let conn = self.conn.lock().unwrap();
-        // Block deletion while ANY session references this profile — not just
-        // active ones. Finished/failed sessions can still be resumed, and
-        // resume needs the profile to rebuild the agent's argv. Deleting it
-        // would orphan those rows (FK is not enforced) → "unknown_profile".
-        let count: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM sessions WHERE profile_id=?1",
+        // Block deletion only while a session is ACTIVE (running/starting/
+        // queued) — killing the profile out from under a live PTY would orphan
+        // a process we can't rebuild argv for. Terminal sessions (done/failed/
+        // exited) are safe: resume rebuilds a minimal profile from the
+        // snapshotted resolved_argv (see server.rs resume fallback). Deleting
+        // the profile only forfeits custom env/start_script on resume — an
+        // accepted best-effort trade-off, not a hard dependency.
+        let active: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sessions \
+             WHERE profile_id=?1 AND status IN ('running','starting','queued')",
             params![id],
             |r| r.get(0),
         )?;
-        if count > 0 {
+        if active > 0 {
             anyhow::bail!("profile_in_use");
         }
+        // FK (sessions.profile_id) is enforced (PRAGMA foreign_keys=ON), and
+        // the column is NOT NULL so we can't orphan-null it. Cascade-delete the
+        // terminal sessions that reference this profile — and their session_tail
+        // children — before dropping the profile. parent_session_id self-FK is
+        // also nulled for any resume children pointing at deleted rows.
+        conn.execute(
+            "DELETE FROM session_tail WHERE session_id IN \
+             (SELECT id FROM sessions WHERE profile_id=?1)",
+            params![id],
+        )?;
+        conn.execute(
+            "DELETE FROM tracked_files WHERE session_id IN \
+             (SELECT id FROM sessions WHERE profile_id=?1)",
+            params![id],
+        )?;
+        conn.execute(
+            "DELETE FROM session_events WHERE session_id IN \
+             (SELECT id FROM sessions WHERE profile_id=?1)",
+            params![id],
+        )?;
+        conn.execute(
+            "UPDATE sessions SET parent_session_id=NULL WHERE parent_session_id IN \
+             (SELECT id FROM sessions WHERE profile_id=?1)",
+            params![id],
+        )?;
+        conn.execute("DELETE FROM sessions WHERE profile_id=?1", params![id])?;
         conn.execute("DELETE FROM agent_profiles WHERE id=?1", params![id])?;
         Ok(())
     }
@@ -178,13 +312,13 @@ impl Store {
     #[allow(clippy::too_many_arguments)]
     pub fn create_session(
         &self, id: &str, project_id: &str, profile_id: &str,
-        title: &str, cwd: &str, resolved_argv: &str,
+        title: &str, cwd: &str, resolved_argv: &str, agent_type: &str,
         status: &str, ts: &str, parent_session_id: Option<&str>,
     ) -> anyhow::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT INTO sessions (id, project_id, profile_id, title, cwd, resolved_argv, status, created_at, parent_session_id)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            params![id, project_id, profile_id, title, cwd, resolved_argv, status, ts, parent_session_id],
+            "INSERT INTO sessions (id, project_id, profile_id, title, cwd, resolved_argv, agent_type, status, created_at, parent_session_id)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            params![id, project_id, profile_id, title, cwd, resolved_argv, agent_type, status, ts, parent_session_id],
         )?;
         Ok(())
     }
@@ -248,6 +382,8 @@ impl Store {
         // reader thread races with us and tries to finish_session() after
         // the row is gone, the UPDATE simply no-ops.
         conn.execute("DELETE FROM session_tail WHERE session_id=?1", params![id]).ok();
+        conn.execute("DELETE FROM tracked_files WHERE session_id=?1", params![id]).ok();
+        conn.execute("DELETE FROM session_events WHERE session_id=?1", params![id]).ok();
         conn.execute(
             "UPDATE sessions SET parent_session_id=NULL WHERE parent_session_id=?1",
             params![id],
@@ -269,10 +405,90 @@ impl Store {
         Ok(())
     }
 
+    /// Insert a detected plan file, deduped per session by path. Returns true
+    /// if a new row was inserted, false if the path was already recorded.
+    pub fn insert_tracked_file(
+        &self,
+        session_id: &str,
+        path: &str,
+        name: &str,
+        tool: Option<&str>,
+        created_at: &str,
+    ) -> anyhow::Result<bool> {
+        let conn = self.conn.lock().unwrap();
+        let n = conn.execute(
+            "INSERT OR IGNORE INTO tracked_files (session_id, path, name, tool, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![session_id, path, name, tool, created_at],
+        )?;
+        Ok(n > 0)
+    }
+
+    pub fn insert_session_event(
+        &self,
+        session_id: &str,
+        name: &str,
+        detail: Option<&str>,
+        created_at: &str,
+    ) -> anyhow::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO session_events (session_id, name, detail, created_at)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![session_id, name, detail, created_at],
+        )?;
+        Ok(())
+    }
+
+    pub fn list_session_events(&self, session_id: &str) -> anyhow::Result<Vec<DbSessionEvent>> {
+        let conn = self.conn.lock().unwrap();
+        // Last 500 events, returned oldest-first for chronological display.
+        let mut stmt = conn.prepare(
+            "SELECT name, detail, created_at FROM (
+                 SELECT id, name, detail, created_at
+                 FROM session_events WHERE session_id=?1
+                 ORDER BY id DESC LIMIT 500
+             ) ORDER BY id ASC",
+        )?;
+        let rows = stmt.query_map(params![session_id], |row| {
+            Ok(DbSessionEvent {
+                name: row.get(0)?,
+                detail: row.get(1)?,
+                created_at: row.get(2)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    /// Distinct cwds across all sessions — used to widen the explorer allow-list.
+    pub fn all_session_cwds(&self) -> anyhow::Result<Vec<String>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT DISTINCT cwd FROM sessions")?;
+        let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+        Ok(rows.flatten().collect())
+    }
+
+    pub fn list_tracked_files(&self, session_id: &str) -> anyhow::Result<Vec<DbTrackedFile>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT path, name, tool, created_at
+             FROM tracked_files WHERE session_id=?1 ORDER BY created_at",
+        )?;
+        let rows = stmt.query_map(params![session_id], |row| {
+            Ok(DbTrackedFile {
+                path: row.get(0)?,
+                name: row.get(1)?,
+                tool: row.get(2)?,
+                created_at: row.get(3)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
     pub fn list_sessions(&self, project_id: &str) -> anyhow::Result<Vec<DbSession>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, project_id, profile_id, title, cwd, resolved_argv, pid, status, exit_code,
+            "SELECT id, project_id, profile_id, title, cwd, resolved_argv, agent_type, pid, status, exit_code,
                     agent_session_id, agent_session_name, parent_session_id, fail_reason, created_at, finished_at
              FROM sessions WHERE project_id=?1 ORDER BY created_at"
         )?;
@@ -284,15 +500,16 @@ impl Store {
                 title: row.get(3)?,
                 cwd: row.get(4)?,
                 resolved_argv: row.get(5)?,
-                pid: row.get(6)?,
-                status: row.get(7)?,
-                exit_code: row.get(8)?,
-                agent_session_id: row.get(9)?,
-                agent_session_name: row.get(10)?,
-                parent_session_id: row.get(11)?,
-                fail_reason: row.get(12)?,
-                created_at: row.get(13)?,
-                finished_at: row.get(14)?,
+                agent_type: row.get(6)?,
+                pid: row.get(7)?,
+                status: row.get(8)?,
+                exit_code: row.get(9)?,
+                agent_session_id: row.get(10)?,
+                agent_session_name: row.get(11)?,
+                parent_session_id: row.get(12)?,
+                fail_reason: row.get(13)?,
+                created_at: row.get(14)?,
+                finished_at: row.get(15)?,
             })
         })?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
@@ -301,7 +518,7 @@ impl Store {
     pub fn get_session(&self, id: &str) -> anyhow::Result<Option<DbSession>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, project_id, profile_id, title, cwd, resolved_argv, pid, status, exit_code,
+            "SELECT id, project_id, profile_id, title, cwd, resolved_argv, agent_type, pid, status, exit_code,
                     agent_session_id, agent_session_name, parent_session_id, fail_reason, created_at, finished_at
              FROM sessions WHERE id=?1"
         )?;
@@ -313,15 +530,16 @@ impl Store {
                 title: row.get(3)?,
                 cwd: row.get(4)?,
                 resolved_argv: row.get(5)?,
-                pid: row.get(6)?,
-                status: row.get(7)?,
-                exit_code: row.get(8)?,
-                agent_session_id: row.get(9)?,
-                agent_session_name: row.get(10)?,
-                parent_session_id: row.get(11)?,
-                fail_reason: row.get(12)?,
-                created_at: row.get(13)?,
-                finished_at: row.get(14)?,
+                agent_type: row.get(6)?,
+                pid: row.get(7)?,
+                status: row.get(8)?,
+                exit_code: row.get(9)?,
+                agent_session_id: row.get(10)?,
+                agent_session_name: row.get(11)?,
+                parent_session_id: row.get(12)?,
+                fail_reason: row.get(13)?,
+                created_at: row.get(14)?,
+                finished_at: row.get(15)?,
             })
         })?;
         Ok(rows.next().transpose()?)
@@ -409,6 +627,7 @@ pub struct DbSession {
     pub title: Option<String>,
     pub cwd: String,
     pub resolved_argv: String,
+    pub agent_type: String,
     pub pid: Option<i64>,
     pub status: String,
     pub exit_code: Option<i32>,
@@ -418,4 +637,17 @@ pub struct DbSession {
     pub fail_reason: Option<String>,
     pub created_at: String,
     pub finished_at: Option<String>,
+}
+
+pub struct DbTrackedFile {
+    pub path: String,
+    pub name: String,
+    pub tool: Option<String>,
+    pub created_at: String,
+}
+
+pub struct DbSessionEvent {
+    pub name: String,
+    pub detail: Option<String>,
+    pub created_at: String,
 }

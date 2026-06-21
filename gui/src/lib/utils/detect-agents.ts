@@ -13,12 +13,13 @@ export interface AgentAvailability {
 const PROBES: Record<AgentType, string> = {
 	claude_code: 'claude',
 	codex:       'codex',
-	open_code:   'opencode'
+	open_code:   'opencode',
+	hermes:      'hermes'
 };
 
 /** Run `which <bin>` and `<bin> --version` for each agent. Returns availability map. */
 export async function detectAgents(): Promise<AgentAvailability[]> {
-	const ids: AgentType[] = ['claude_code', 'codex', 'open_code'];
+	const ids: AgentType[] = ['claude_code', 'codex', 'open_code', 'hermes'];
 
 	const results = await Promise.all(ids.map(async (id) => {
 		const bin = PROBES[id];

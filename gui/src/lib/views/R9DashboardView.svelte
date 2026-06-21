@@ -112,7 +112,7 @@
 				<div class="flex items-center gap-0.5 mr-1">
 					<Button
 						variant="ghost"
-						size="icon-sm"
+						size="icon-xs"
 						title="Zoom out dashboard"
 						class="text-muted-foreground hover:text-foreground"
 						disabled={dashZoom <= ZMIN}
@@ -127,7 +127,7 @@
 					>{zoomPct}%</button>
 					<Button
 						variant="ghost"
-						size="icon-sm"
+						size="icon-xs"
 						title="Zoom in dashboard"
 						class="text-muted-foreground hover:text-foreground"
 						disabled={dashZoom >= ZMAX}
@@ -138,7 +138,7 @@
 				</div>
 				<Button
 					variant="ghost"
-					size="icon-sm"
+					size="icon-xs"
 					title="Reload dashboard"
 					class="text-muted-foreground hover:text-foreground"
 					onclick={reload}
@@ -147,7 +147,7 @@
 				</Button>
 				<Button
 					variant="ghost"
-					size="icon-sm"
+					size="icon-xs"
 					title="Open in external browser"
 					class="text-muted-foreground hover:text-foreground"
 					onclick={() => r9.openDashboard()}
@@ -156,7 +156,7 @@
 				</Button>
 				<Button
 					variant="ghost"
-					size="icon-sm"
+					size="icon-xs"
 					title="Stop 9Router"
 					class="text-muted-foreground hover:text-foreground"
 					disabled={r9.busy}
@@ -171,7 +171,7 @@
 			{:else if r9.status.resolved !== 'missing'}
 				<Button
 					variant="ghost"
-					size="icon-sm"
+					size="icon-xs"
 					title="Start 9Router"
 					class="text-muted-foreground hover:text-foreground"
 					disabled={r9.busy}

@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { projects, removeProject } from '$lib/stores/projects';
 	import { sessions } from '$lib/stores/sessions';
-	import { ui, openPalette, setView } from '$lib/stores/ui';
-	import { remote } from '$lib/stores/remote.svelte';
+	import { ui, openPalette, toggleSidebar, toggleInspector } from '$lib/stores/ui';
 	import { cn, fmtChord } from '$lib/utils/cn';
 	import { Button } from '$lib/components/ui/button';
-	import { Separator } from '$lib/components/ui/separator';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { createProject, removeProject as removeProjectCmd } from '$lib/ipc';
@@ -14,30 +12,11 @@
 	import Search from '@lucide/svelte/icons/search';
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
-	import Check from '@lucide/svelte/icons/check';
-	import RadioTower from '@lucide/svelte/icons/radio-tower';
-
-	const { connected }: { connected: boolean } = $props();
+	import PanelLeft from '@lucide/svelte/icons/panel-left';
+	import PanelRight from '@lucide/svelte/icons/panel-right';
 
 	let projectList = $derived(Array.from($projects.values()));
 	let sessionList = $derived(Array.from($sessions.values()));
-
-	let counts = $derived.by(() => {
-		let working = 0,
-			awaiting = 0,
-			queued = 0,
-			total = 0;
-		for (const s of sessionList) {
-			if (s.status === 'finished' || s.status === 'failed') continue;
-			total++;
-			if (s.status === 'queued') queued++;
-			else if (s.status === 'running') {
-				if (s.activity === 'working') working++;
-				else if (s.activity === 'awaiting_input') awaiting++;
-			}
-		}
-		return { working, awaiting, queued, total };
-	});
 
 	function liveCount(projectId: string): number {
 		let n = 0;
@@ -113,7 +92,7 @@
 	}
 </script>
 
-<div class="flex flex-col flex-shrink-0 bg-background border-b border-border">
+<div class="flex flex-col flex-shrink-0 bg-card border-b border-border">
 	<!-- Project tabs row -->
 	<div class="flex items-center min-w-0 overflow-x-auto scrollbar-none border-b border-border/50 px-1 pt-1 gap-0.5">
 		{#each projectList as p (p.id)}
@@ -168,7 +147,20 @@
 	</div>
 
 	<!-- Main toolbar row -->
-	<div class="flex items-center gap-3 px-3 py-1.5">
+	<div class="flex items-center gap-2" style="height:var(--bar-h);padding-inline:var(--pad-x)">
+		{#if $ui.view === 'terminal'}
+			<Button
+				variant="ghost"
+				size="icon-xs"
+				title={$ui.sidebarCollapsed ? 'Show session list' : 'Hide session list'}
+				aria-label="Toggle session list"
+				class={cn('flex-shrink-0', !$ui.sidebarCollapsed && 'text-foreground')}
+				onclick={() => toggleSidebar()}
+			>
+				<PanelLeft />
+			</Button>
+		{/if}
+
 		<!-- Command palette button -->
 		<Button
 			variant="outline"
@@ -182,78 +174,20 @@
 			</kbd>
 		</Button>
 
-		<!-- Status counts -->
-		<div class="flex items-center gap-2 text-xs">
-			{#if counts.working === 0 && counts.awaiting === 0 && counts.queued === 0 && counts.total > 0}
-				<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground border border-border">
-					<Check size={11} class="text-accent-ok" /> All idle
-				</span>
-			{:else if counts.total === 0}
-				<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground">
-					No sessions
-				</span>
-			{:else}
-				{#if counts.working > 0}
-					<span class="flex items-center gap-1 text-accent-ok">
-						<span class="w-1.5 h-1.5 rounded-full bg-accent-ok"></span>
-						{counts.working}
-					</span>
-				{/if}
-				{#if counts.awaiting > 0}
-					<span class="flex items-center gap-1 text-accent-error">
-						<span class="w-1.5 h-1.5 rounded-full bg-accent-error"></span>
-						{counts.awaiting} awaiting
-					</span>
-				{/if}
-				{#if counts.queued > 0}
-					<span class="flex items-center gap-1 text-accent-info">
-						<span class="w-1.5 h-1.5 rounded-full bg-accent-info"></span>
-						{counts.queued} queued
-					</span>
-				{/if}
-			{/if}
-		</div>
+		<div class="flex-1"></div>
 
-		<Separator orientation="vertical" class="h-4 self-center" />
-
-		<!-- Remote pill -->
-		<Button
-			variant="outline"
-			size="xs"
-			title={remote.status.listening ? `Remote on · ${remote.status.address}` : 'Remote off — click to configure'}
-			class={cn(
-				'flex items-center gap-1 px-2',
-				remote.status.listening
-					? 'border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10'
-					: 'border-border text-muted-foreground hover:bg-secondary'
-			)}
-			onclick={() => { setView('settings'); }}
-		>
-			<RadioTower size={11} />
-			{#if remote.status.listening}
-				<span>Remote</span>
-			{:else}
-				<span class="hidden sm:inline">Remote off</span>
-			{/if}
-		</Button>
-
-		<Separator orientation="vertical" class="h-4 self-center" />
-
-		<!-- Connection -->
-		<span
-			class={cn(
-				'flex items-center gap-1 text-xs',
-				connected ? 'text-accent-ok' : 'text-accent-error'
-			)}
-		>
-			<span
-				class={cn(
-					'w-1.5 h-1.5 rounded-full',
-					connected ? 'bg-accent-ok' : 'bg-accent-error'
-				)}
-			></span>
-			{connected ? 'online' : 'offline'}
-		</span>
+		{#if $ui.view === 'terminal'}
+			<Button
+				variant="ghost"
+				size="icon-xs"
+				title={$ui.inspectorCollapsed ? 'Show inspector' : 'Hide inspector'}
+				aria-label="Toggle inspector"
+				class={cn('flex-shrink-0', !$ui.inspectorCollapsed && 'text-foreground')}
+				onclick={() => toggleInspector()}
+			>
+				<PanelRight />
+			</Button>
+		{/if}
 	</div>
 </div>
 

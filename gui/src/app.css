@@ -10,91 +10,106 @@
 /* Tailwind v4: @theme — dark (zinc) as default base.
    data-theme="light" overrides at runtime. */
 @theme {
-  /* bg — Cursor-like: muted near-neutral, low contrast, soft borders */
-  --color-background:    #181818;
-  --color-card:          #1e1e1e;
-  --color-secondary:     #262626;
-  --color-muted:         #242424;
-  --color-border:        #2a2a2a;
-  --color-input:         #1e1e1e;
-  --color-popover:       #202020;
+    /* bg — layered depth (Cursor/Antigravity): canvas darkest, chrome +1 step */
+    --color-background: #1a1a1a; /* editor/terminal canvas */
+    --color-card: #1f1f1f; /* chrome: sidebar / topbar / headers */
+    --color-secondary: #2b2b2b; /* hover + selected fill */
+    --color-muted: #242424; /* subtle fill */
+    --color-border: rgba(255, 255, 255, 0.06); /* hairline — Apple-style alpha separator, blends on any layer */
+    --color-border-strong: rgba(255, 255, 255, 0.1); /* emphasized dividers (panel separators) */
+    --color-input: #232323;
+    --color-popover: #242424; /* elevated: menus / dialogs */
+    --color-ring: #0a84ff; /* focus — Apple system blue (dark), soft halo via low-alpha ring */
 
-  /* fg — softened whites, dimmer muted text */
-  --color-foreground:             #d4d4d4;
-  --color-card-foreground:        #d4d4d4;
-  --color-popover-foreground:     #d4d4d4;
-  --color-secondary-foreground:   #d4d4d4;
-  --color-muted-foreground:       #8a8a8a;
-  --color-accent:                 #4a8cca;
-  --color-accent-foreground:      #ffffff;
+    /* radius — small + uniform, overrides Tailwind defaults */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
 
-  /* primary — not pure white, avoids glare */
-  --color-primary:            #d4d4d4;
-  --color-primary-foreground: #1e1e1e;
+    /* fg — softened whites, dimmer muted text */
+    --color-foreground: #d4d4d4;
+    --color-card-foreground: #d4d4d4;
+    --color-popover-foreground: #d4d4d4;
+    --color-secondary-foreground: #d4d4d4;
+    --color-muted-foreground: #8a8a8a;
+    --color-accent: #4a8cca;
+    --color-accent-foreground: #ffffff;
 
-  /* semantic */
-  --color-destructive:            #c75c5c;
-  --color-destructive-foreground: #f0f0f0;
+    /* primary — not pure white, avoids glare */
+    --color-primary: #d4d4d4;
+    --color-primary-foreground: #1e1e1e;
 
-  /* accent palette — desaturated, Cursor-muted */
-  --color-gruvbox-yellow:  #c9a84c;
-  --color-gruvbox-green:   #6a9955;
-  --color-gruvbox-aqua:    #4ec9b0;
-  --color-gruvbox-blue:    #4a8cca;
-  --color-gruvbox-orange:  #ce9178;
-  --color-gruvbox-purple:  #9d7cd8;
-  --color-gruvbox-red:     #c75c5c;
-  --color-gruvbox-gray:    #6e6e6e;
+    /* semantic */
+    --color-destructive: #c75c5c;
+    --color-destructive-foreground: #f0f0f0;
 
-  /* semantic status — muted */
-  --color-accent-ok:     #6a9955;
-  --color-accent-warn:   #c9a84c;
-  --color-accent-error:  #c75c5c;
-  --color-accent-info:   #4a8cca;
+    /* accent palette — desaturated, Cursor-muted */
+    --color-gruvbox-yellow: #c9a84c;
+    --color-gruvbox-green: #6a9955;
+    --color-gruvbox-aqua: #4ec9b0;
+    --color-gruvbox-blue: #4a8cca;
+    --color-gruvbox-orange: #ce9178;
+    --color-gruvbox-purple: #9d7cd8;
+    --color-gruvbox-red: #c75c5c;
+    --color-gruvbox-gray: #6e6e6e;
+
+    /* semantic status — muted */
+    --color-accent-ok: #6a9955;
+    --color-accent-warn: #c9a84c;
+    --color-accent-error: #c75c5c;
+    --color-accent-info: #4a8cca;
 }
 
 /* Light override */
 :root[data-theme="light"] {
-  --color-background:    #f5f5f4;
-  --color-card:          #fbfbfa;
-  --color-secondary:     #eeeeec;
-  --color-muted:         #ececea;
-  --color-border:        #dededb;
-  --color-input:         #fbfbfa;
-  --color-popover:       #fbfbfa;
+    --color-background: #f5f5f4;
+    --color-card: #fbfbfa;
+    --color-secondary: #eeeeec;
+    --color-muted: #ececea;
+    --color-border: rgba(0, 0, 0, 0.08); /* Apple-style hairline — blends on any light layer */
+    --color-border-strong: rgba(0, 0, 0, 0.12);
+    --color-input: #fbfbfa;
+    --color-popover: #fbfbfa;
+    --color-ring: #007aff; /* focus — Apple system blue (light) */
 
-  --color-foreground:             #2a2a28;
-  --color-card-foreground:        #2a2a28;
-  --color-popover-foreground:     #2a2a28;
-  --color-secondary-foreground:   #2a2a28;
-  --color-muted-foreground:       #76767a;
-  --color-accent:                 #3a7bb8;
-  --color-accent-foreground:      #ffffff;
+    --color-foreground: #2a2a28;
+    --color-card-foreground: #2a2a28;
+    --color-popover-foreground: #2a2a28;
+    --color-secondary-foreground: #2a2a28;
+    --color-muted-foreground: #76767a;
+    --color-accent: #3a7bb8;
+    --color-accent-foreground: #ffffff;
 
-  --color-primary:            #2a2a28;
-  --color-primary-foreground: #fbfbfa;
+    --color-primary: #2a2a28;
+    --color-primary-foreground: #fbfbfa;
 
-  --color-destructive:            #b85454;
-  --color-destructive-foreground: #ffffff;
+    --color-destructive: #b85454;
+    --color-destructive-foreground: #ffffff;
 
-  --color-gruvbox-yellow:  #b08a2e;
-  --color-gruvbox-green:   #5a8a47;
-  --color-gruvbox-aqua:    #3a9a86;
-  --color-gruvbox-blue:    #3a7bb8;
-  --color-gruvbox-orange:  #c0764e;
-  --color-gruvbox-purple:  #8a6cc0;
-  --color-gruvbox-red:     #b85454;
-  --color-gruvbox-gray:    #76767a;
+    --color-gruvbox-yellow: #b08a2e;
+    --color-gruvbox-green: #5a8a47;
+    --color-gruvbox-aqua: #3a9a86;
+    --color-gruvbox-blue: #3a7bb8;
+    --color-gruvbox-orange: #c0764e;
+    --color-gruvbox-purple: #8a6cc0;
+    --color-gruvbox-red: #b85454;
+    --color-gruvbox-gray: #76767a;
 
-  --color-accent-ok:     #5a8a47;
-  --color-accent-warn:   #b08a2e;
-  --color-accent-error:  #b85454;
-  --color-accent-info:   #3a7bb8;
+    --color-accent-ok: #5a8a47;
+    --color-accent-warn: #b08a2e;
+    --color-accent-error: #b85454;
+    --color-accent-info: #3a7bb8;
 }
 
 :root {
-	--row-py: 0.375rem;
-	--row-gap: 0.5rem;
+    /* Density scale — Cursor-tight. Apply via tokens; stop hand-picking px. */
+    --row-py: 5px; /* list-row vertical padding */
+    --row-gap: 0.5rem;
+    --bar-h: 34px; /* unified toolbar / header / tab-strip height */
+    --status-h: 24px; /* bottom status bar height (VSCode-style) */
+    --rail-w: 48px; /* activity-bar width */
+    --pad-x: 10px; /* standard horizontal padding for bars & rows */
 }
 
 /* UI zoom + font family.
@@ -106,18 +121,18 @@
    and scales everything uniformly — including bits-ui portalled content
    (dialogs, selects, tooltips) since they still live in the document. */
 :root {
-  --app-zoom: 1;
-  --app-font-family: system-ui, -apple-system, sans-serif;
+    --app-zoom: 1;
+    --app-font-family: system-ui, -apple-system, sans-serif;
 }
 
 html {
-  zoom: var(--app-zoom);
+    zoom: var(--app-zoom);
 }
 
 @layer base {
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--app-font-family);
-  }
+    body {
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+        font-family: var(--app-font-family);
+    }
 }

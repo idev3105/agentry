@@ -56,6 +56,8 @@ pub enum Cmd {
     Focus(FocusCmd),
     ReadBuffer(ReadBufferCmd),
     ListSessions(ListSessionsCmd),
+    ListTrackedFiles(ListTrackedFilesCmd),
+    ListSessionEvents(ListSessionEventsCmd),
 
     // Settings
     GetSettings,
@@ -66,6 +68,10 @@ pub enum Cmd {
     // Agent integrations (hook scripts that report session id + activity)
     CheckIntegrations,
     InstallIntegration(InstallIntegrationCmd),
+
+    // Filesystem (read-only explorer/viewer)
+    ListDir(ListDirCmd),
+    ReadFile(ReadFileCmd),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -178,6 +184,16 @@ pub struct ListSessionsCmd {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTrackedFilesCmd {
+    pub session_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListSessionEventsCmd {
+    pub session_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetDefaultProfileCmd {
     pub profile_id: String,
 }
@@ -193,6 +209,22 @@ pub struct InstallIntegrationCmd {
     pub agent: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListDirCmd {
+    /// Absolute path of the directory to list. Daemon canonicalizes and
+    /// rejects anything outside a known project root / session cwd.
+    pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadFileCmd {
+    /// Absolute path of the file to read (same guard as ListDir).
+    pub path: String,
+    /// Hard cap on bytes returned; daemon truncates beyond this.
+    #[serde(default)]
+    pub max_bytes: Option<u64>,
+}
+
 // ── Events (Daemon → Client, push) ───────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -205,6 +237,8 @@ pub enum Event {
     SessionFinished(SessionFinishedEvent),
     SessionFailed(SessionFailedEvent),
     AgentSessionCaptured(AgentSessionCapturedEvent),
+    FileTracked(FileTrackedEvent),
+    SessionEventLogged(SessionEventLoggedEvent),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -277,6 +311,27 @@ pub struct AgentSessionCapturedEvent {
     pub ts: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileTrackedEvent {
+    pub v: u32,
+    pub session_id: String,
+    pub path: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+    pub ts: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionEventLoggedEvent {
+    pub v: u32,
+    pub session_id: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    pub ts: String,
+}
+
 // ── Responses (Daemon → Client, RPC) ─────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -304,6 +359,8 @@ pub struct ErrResp {
 pub enum RespData {
     StartSession(StartSessionResp),
     ListSessions(ListSessionsResp),
+    ListTrackedFiles(ListTrackedFilesResp),
+    ListSessionEvents(ListSessionEventsResp),
     ReadBuffer(ReadBufferResp),
     ListProjects(ListProjectsResp),
     ListProfiles(ListProfilesResp),
@@ -325,6 +382,33 @@ pub struct StartSessionResp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListSessionsResp {
     pub sessions: Vec<SessionInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTrackedFilesResp {
+    pub files: Vec<TrackedFileInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrackedFileInfo {
+    pub path: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+    pub ts: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListSessionEventsResp {
+    pub events: Vec<SessionEventInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionEventInfo {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    pub ts: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -367,6 +451,7 @@ pub enum AgentType {
     ClaudeCode,
     OpenCode,
     Codex,
+    Hermes,
 }
 
 impl AgentType {
@@ -375,6 +460,7 @@ impl AgentType {
             AgentType::ClaudeCode => "claude",
             AgentType::OpenCode => "opencode",
             AgentType::Codex => "codex",
+            AgentType::Hermes => "hermes",
         }
     }
 }
@@ -471,6 +557,10 @@ pub struct IntegrationStatus {
     pub install_path: String,
     /// Extra manual step the user must do (e.g. claude settings.json), if any.
     pub manual_step: Option<String>,
+    /// Whether the agent's config is wired to call the hook (settings.json /
+    /// config.toml). `None` when the agent needs no separate wiring (opencode).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hooks_wired: Option<bool>,
 }
 
 // ── Codec: JSON-line encode/decode ────────────────────────────────────────────

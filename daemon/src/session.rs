@@ -345,6 +345,16 @@ impl SessionManager {
                 }
             };
 
+            // Drop the slave PTY fd now that the child owns its own copy.
+            // If the parent keeps the slave open, the master never sees EOF
+            // when the child exits — the blocking reader below would hang
+            // forever, child.wait() would never run, the child would linger
+            // as a <defunct> zombie, and finish_session() would never fire,
+            // leaving the session stuck "running" in the DB (Resume then
+            // fails with "session_already_active"). This is the documented
+            // portable-pty contract: release the slave after spawning.
+            drop(pair.slave);
+
             let pid = child.process_id().unwrap_or(0);
             let _ = rt.block_on(async { store_clone.update_session_pid(&session_id_clone, pid) });
             eprintln!("[session {}] spawned pid={} argv={:?}", session_id_clone, pid, argv);
@@ -609,15 +619,31 @@ fn build_argv(profile: &DbProfile, resume_id: Option<&str>) -> (Vec<String>, Opt
             captured = Some(uuid);
         }
     } else if profile.agent_type == "codex" {
+        // Codex gates lifecycle hooks behind a per-hook trust prompt (a
+        // `trusted_hash` written to config.toml on interactive approval). Since
+        // agentry ships and manages the hook script itself, bypass that prompt
+        // so the timeline works without manual approval. This flag only affects
+        // hooks agentry already wired; it is a top-level flag and must precede
+        // the `resume` subcommand.
+        argv.push("--dangerously-bypass-hook-trust".to_string());
         if let Some(rid) = resume_id {
             argv.push("resume".to_string());
             argv.push(rid.to_string());
         }
     } else if profile.agent_type == "open_code" {
         if let Some(rid) = resume_id {
-            argv.push("run".to_string());
-            argv.push("-i".to_string());
             argv.push("-s".to_string());
+            argv.push(rid.to_string());
+        }
+    } else if profile.agent_type == "hermes" {
+        // Auto-approve the agentry-managed shell hook so the timeline works
+        // without an interactive consent prompt (analog of codex's
+        // --dangerously-bypass-hook-trust). Hermes has no --session-id flag;
+        // the session id is captured async via the on_session_start hook, so
+        // `captured` stays None here.
+        argv.push("--accept-hooks".to_string());
+        if let Some(rid) = resume_id {
+            argv.push("--resume".to_string());
             argv.push(rid.to_string());
         }
     }

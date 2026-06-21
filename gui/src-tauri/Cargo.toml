@@ -23,3 +23,4 @@ uuid         = { workspace = true }
 anyhow       = "1"
 which        = "7"
 tracing      = "0.1"
+font-kit     = "0.14"

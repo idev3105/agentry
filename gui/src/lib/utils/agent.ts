@@ -18,6 +18,7 @@ const META: Record<string, AgentMeta> = {
 	codex:       { icon: Bot,      label: 'Codex',    color: 'text-gruvbox-aqua',  brand: 'codex-color' },
 	open_code:   { icon: Code2,    label: 'OpenCode', color: 'text-gruvbox-blue',  brand: 'opencode' },
 	opencode:    { icon: Code2,    label: 'OpenCode', color: 'text-gruvbox-blue',  brand: 'opencode' },
+	hermes:      { icon: Bot,      label: 'Hermes',   color: 'text-gruvbox-purple', brand: 'hermes' },
 };
 
 export function agentMeta(t: string): AgentMeta {

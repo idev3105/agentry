@@ -206,6 +206,26 @@ async fn r9_stop(state: tauri::State<'_, AppState>) -> Result<R9StatusResp, Stri
     })
 }
 
+/// Enumerate font families installed on the host system, sorted and
+/// deduplicated. Used by the GUI font picker so users can choose any
+/// installed font instead of a fixed preset list. Best-effort: returns an
+/// empty list rather than erroring if the platform source is unavailable.
+#[tauri::command]
+fn list_system_fonts() -> Vec<String> {
+    use font_kit::source::SystemSource;
+    let source = SystemSource::new();
+    let mut names = match source.all_families() {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::warn!("font enumeration failed: {e}");
+            return Vec::new();
+        }
+    };
+    names.sort_by_key(|s| s.to_lowercase());
+    names.dedup();
+    names
+}
+
 #[tauri::command]
 async fn r9_open_dashboard(app: tauri::AppHandle) -> Result<(), String> {
     use tauri_plugin_opener::OpenerExt;
@@ -233,7 +253,8 @@ pub fn run() {
             r9_status,
             r9_start,
             r9_stop,
-            r9_open_dashboard
+            r9_open_dashboard,
+            list_system_fonts
         ])
         .setup(|app| {
             let handle = app.handle().clone();

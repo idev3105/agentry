@@ -1,6 +1,6 @@
 // Mirror của wire protocol types từ crates/wire/src/lib.rs
 
-export type AgentType = 'claude_code' | 'open_code' | 'codex';
+export type AgentType = 'claude_code' | 'open_code' | 'codex' | 'hermes';
 export type SessionStatus = 'queued' | 'starting' | 'running' | 'finished' | 'failed';
 export type ActivityState = 'working' | 'idle' | 'awaiting_input';
 
@@ -44,6 +44,36 @@ export interface SessionInfo {
 export interface BufferEntry {
 	seq: number;
 	data_b64: string;
+}
+
+export interface TrackedFileInfo {
+	path: string;
+	name: string;
+	tool?: string | null;
+	ts: string;
+}
+
+export interface DirEntry {
+	name: string;
+	path: string;
+	is_dir: boolean;
+	size: number;
+	/** Unix mtime seconds. */
+	modified: number;
+}
+
+export interface FileContent {
+	path: string;
+	data_b64: string;
+	size: number;
+	truncated: boolean;
+	is_binary: boolean;
+}
+
+export interface SessionEventInfo {
+	name: string;
+	detail?: string | null;
+	ts: string;
 }
 
 // ── Store shapes ──────────────────────────────────────────────────────────────
@@ -105,6 +135,7 @@ export interface IntegrationStatus {
 	needs_update: boolean;
 	install_path: string;
 	manual_step: string | null;
+	hooks_wired?: boolean | null;
 }
 
 // ── Wire events (from daemon via Tauri) ───────────────────────────────────────
@@ -160,5 +191,22 @@ export interface SessionFailedEvent {
 	session_id: string;
 	reason: string;
 	exit_code: number;
+	ts: string;
+}
+
+export interface FileTrackedEvent {
+	v: number;
+	session_id: string;
+	path: string;
+	name: string;
+	tool?: string | null;
+	ts: string;
+}
+
+export interface SessionEventLoggedEvent {
+	v: number;
+	session_id: string;
+	name: string;
+	detail?: string | null;
 	ts: string;
 }

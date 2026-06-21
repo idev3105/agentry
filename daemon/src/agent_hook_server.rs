@@ -24,7 +24,8 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
 
 use agentry_wire::{
-    ActivityState, AgentSessionCapturedEvent, Event, SessionActivityEvent, WIRE_VERSION,
+    ActivityState, AgentSessionCapturedEvent, Event, FileTrackedEvent,
+    SessionActivityEvent, SessionEventLoggedEvent, WIRE_VERSION,
 };
 
 use crate::server::EventTx;
@@ -156,6 +157,63 @@ async fn dispatch(
                 state: activity,
                 unread_seq,
                 ts: chrono_now(),
+            }));
+            Ok(())
+        }
+
+        // ── Report a file touched by a tool (Write/Edit/...) ──────────────
+        // The daemon records every reported file path, deduped per session.
+        // Surfaces in the Inspector "Files" tab (searchable).
+        "pane.report_file" => {
+            let path = params["path"].as_str().ok_or("missing path")?.to_string();
+            if path.is_empty() {
+                return Err("empty path".into());
+            }
+            let name = path
+                .rsplit(['/', '\\'])
+                .next()
+                .unwrap_or(&path)
+                .to_string();
+            let tool = params["tool"].as_str().map(str::to_string);
+            let ts = chrono_now();
+
+            let inserted = store
+                .insert_tracked_file(&pane_id, &path, &name, tool.as_deref(), &ts)
+                .map_err(|e| e.to_string())?;
+            // Only emit the event when a brand-new path was recorded so the UI
+            // never lists the same file twice.
+            if inserted {
+                let _ = event_tx.send(Event::FileTracked(FileTrackedEvent {
+                    v: WIRE_VERSION,
+                    session_id: pane_id,
+                    path,
+                    name,
+                    tool,
+                    ts,
+                }));
+            }
+            Ok(())
+        }
+
+        // ── Log a raw agent event (name + short detail) for the timeline ──
+        "pane.report_event" => {
+            let name = params["name"].as_str().ok_or("missing name")?.to_string();
+            if name.is_empty() {
+                return Err("empty name".into());
+            }
+            let detail = params["detail"].as_str().map(str::to_string);
+            let ts = chrono_now();
+
+            store
+                .insert_session_event(&pane_id, &name, detail.as_deref(), &ts)
+                .map_err(|e| e.to_string())?;
+
+            let _ = event_tx.send(Event::SessionEventLogged(SessionEventLoggedEvent {
+                v: WIRE_VERSION,
+                session_id: pane_id,
+                name,
+                detail,
+                ts,
             }));
             Ok(())
         }

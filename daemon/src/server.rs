@@ -22,9 +22,10 @@ pub type EventRx = broadcast::Receiver<Event>;
 const BUILTIN_CLAUDE: &str = "__default_claude_code__";
 const BUILTIN_CODEX:  &str = "__default_codex__";
 const BUILTIN_OC:     &str = "__default_open_code__";
+const BUILTIN_HERMES: &str = "__default_hermes__";
 
 fn is_builtin_profile(id: &str) -> bool {
-    matches!(id, "__default_claude_code__" | "__default_codex__" | "__default_open_code__")
+    matches!(id, "__default_claude_code__" | "__default_codex__" | "__default_open_code__" | "__default_hermes__")
 }
 
 fn builtin_to_db_profile(id: &str) -> Option<DbProfile> {
@@ -32,6 +33,7 @@ fn builtin_to_db_profile(id: &str) -> Option<DbProfile> {
         "__default_claude_code__" => ("Claude Code", "claude_code"),
         "__default_codex__"       => ("Codex",       "codex"),
         "__default_open_code__"   => ("OpenCode",    "open_code"),
+        "__default_hermes__"      => ("Hermes",      "hermes"),
         _ => return None,
     };
     Some(DbProfile {
@@ -56,6 +58,10 @@ fn builtin_profiles_json() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "id": BUILTIN_OC, "name": "OpenCode", "agent_type": "open_code",
+            "params": [], "env": [], "start_script": null, "is_builtin": true,
+        }),
+        serde_json::json!({
+            "id": BUILTIN_HERMES, "name": "Hermes", "agent_type": "hermes",
             "params": [], "env": [], "start_script": null, "is_builtin": true,
         }),
     ]
@@ -319,7 +325,7 @@ impl Server {
 
                 self.store.create_session(
                     &session_id, &c.project_id, &c.profile_id,
-                    &title, &cwd, "[]", status, &now, None,
+                    &title, &cwd, "[]", &agent, status, &now, None,
                 ).map_err(|e| e.to_string())?;
 
                 let event = Event::SessionStarted(SessionStartedEvent {
@@ -408,7 +414,7 @@ impl Server {
                     serde_json::json!({
                         "id": s.id,
                         "title": s.title.unwrap_or_else(|| "session".to_string()),
-                        "agent": agent_display_name(&s.resolved_argv),
+                        "agent": agent_display_name(&s.agent_type),
                         "status": s.status,
                         "activity": activity,
                         "cwd": s.cwd,
@@ -417,6 +423,41 @@ impl Server {
                     })
                 }).collect();
                 Ok(serde_json::json!({"ok":true, "sessions": sessions}))
+            }
+
+            Cmd::ListTrackedFiles(c) => {
+                let files: Vec<serde_json::Value> = self
+                    .store
+                    .list_tracked_files(&c.session_id)
+                    .map_err(|e| e.to_string())?
+                    .into_iter()
+                    .map(|f| {
+                        serde_json::json!({
+                            "path": f.path,
+                            "name": f.name,
+                            "tool": f.tool,
+                            "ts": f.created_at,
+                        })
+                    })
+                    .collect();
+                Ok(serde_json::json!({"ok":true, "files": files}))
+            }
+
+            Cmd::ListSessionEvents(c) => {
+                let events: Vec<serde_json::Value> = self
+                    .store
+                    .list_session_events(&c.session_id)
+                    .map_err(|e| e.to_string())?
+                    .into_iter()
+                    .map(|e| {
+                        serde_json::json!({
+                            "name": e.name,
+                            "detail": e.detail,
+                            "ts": e.created_at,
+                        })
+                    })
+                    .collect();
+                Ok(serde_json::json!({"ok":true, "events": events}))
             }
 
             Cmd::ResumeSession(c) => {
@@ -449,6 +490,7 @@ impl Server {
                             "claude" => "claude_code",
                             "opencode" => "open_code",
                             "codex" => "codex",
+                            "hermes" => "hermes",
                             _ => return Err("unknown_profile".to_string()),
                         }.to_string();
                         DbProfile {
@@ -590,11 +632,47 @@ impl Server {
                     Err(e) => Err(e),
                 }
             }
+
+            Cmd::ListDir(c) => {
+                let roots = allowed_roots(&self.store);
+                let entries = crate::fs_access::list_dir(
+                    &c.path,
+                    roots.iter().map(String::as_str),
+                )?;
+                Ok(serde_json::json!({ "ok": true, "entries": entries }))
+            }
+
+            Cmd::ReadFile(c) => {
+                let roots = allowed_roots(&self.store);
+                let content = crate::fs_access::read_file(
+                    &c.path,
+                    c.max_bytes,
+                    roots.iter().map(String::as_str),
+                )?;
+                Ok(serde_json::json!({ "ok": true, "file": content }))
+            }
         }
     }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/// Collect every directory the GUI is allowed to browse: each project path
+/// plus each session's cwd. Used as the allow-list for fs_access guard.
+fn allowed_roots(store: &std::sync::Arc<Store>) -> Vec<String> {
+    let mut roots: Vec<String> = Vec::new();
+    if let Ok(projects) = store.list_projects() {
+        for p in projects {
+            roots.push(p.path);
+        }
+    }
+    // Session cwds may sit outside the project path (user picked a subdir or
+    // a different folder at launch); include them so those files are viewable.
+    if let Ok(cwds) = store.all_session_cwds() {
+        roots.extend(cwds);
+    }
+    roots
+}
 
 fn new_id() -> String {
     uuid::Uuid::new_v4().to_string()
@@ -611,6 +689,7 @@ fn agent_type_str(at: &AgentType) -> &'static str {
         AgentType::ClaudeCode => "claude_code",
         AgentType::OpenCode => "open_code",
         AgentType::Codex => "codex",
+        AgentType::Hermes => "hermes",
     }
 }
 

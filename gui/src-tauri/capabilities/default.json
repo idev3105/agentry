@@ -6,6 +6,10 @@
   "permissions": [
     "core:default",
     "opener:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**" }]
+    },
     "dialog:default",
     "shell:allow-execute",
     "shell:allow-spawn",
@@ -15,7 +19,11 @@
       "allow": [
         { "name": "9router", "cmd": "9router", "args": true },
         { "name": "npx-9router", "cmd": "npx", "args": ["9router"] },
-        { "name": "lsof-port", "cmd": "lsof", "args": ["-t", "-iTCP:20128", "-sTCP:LISTEN"] },
+        {
+          "name": "lsof-port",
+          "cmd": "lsof",
+          "args": ["-t", "-iTCP:20128", "-sTCP:LISTEN"]
+        },
         { "name": "kill", "cmd": "kill", "args": true },
         { "name": "which", "cmd": "which", "args": true },
         { "name": "claude", "cmd": "claude", "args": ["--version"] },

@@ -8,6 +8,18 @@ export interface UiState {
 	view: View;
 	paletteOpen: boolean;
 	onboardingOpen: boolean;
+	sidebarCollapsed: boolean;
+	inspectorCollapsed: boolean;
+}
+
+function loadBool(key: string): boolean {
+	if (typeof localStorage === 'undefined') return false;
+	return localStorage.getItem(key) === '1';
+}
+
+function saveBool(key: string, val: boolean) {
+	if (typeof localStorage === 'undefined') return;
+	localStorage.setItem(key, val ? '1' : '0');
 }
 
 export const ui = writable<UiState>({
@@ -15,7 +27,9 @@ export const ui = writable<UiState>({
 	focusedSessionId: null,
 	view: 'terminal',
 	paletteOpen: false,
-	onboardingOpen: false
+	onboardingOpen: false,
+	sidebarCollapsed: loadBool('ui:sidebarCollapsed'),
+	inspectorCollapsed: loadBool('ui:inspectorCollapsed')
 });
 
 export function setView(view: View) {
@@ -35,4 +49,18 @@ export function openOnboarding() {
 }
 export function closeOnboarding() {
 	ui.update((u) => ({ ...u, onboardingOpen: false }));
+}
+export function toggleSidebar() {
+	ui.update((u) => {
+		const next = !u.sidebarCollapsed;
+		saveBool('ui:sidebarCollapsed', next);
+		return { ...u, sidebarCollapsed: next };
+	});
+}
+export function toggleInspector() {
+	ui.update((u) => {
+		const next = !u.inspectorCollapsed;
+		saveBool('ui:inspectorCollapsed', next);
+		return { ...u, inspectorCollapsed: next };
+	});
 }

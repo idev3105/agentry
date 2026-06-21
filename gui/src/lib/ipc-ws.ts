@@ -22,6 +22,8 @@ import type {
 	ProfileInfo,
 	SessionInfo,
 	RemoteStatus,
+	DirEntry,
+	FileContent,
 } from '$lib/types';
 
 const WIRE_V = 1;
@@ -289,6 +291,18 @@ export async function readBuffer(sessionId: string, fromSeq = 0, n = 1024, tail?
 		tail: tail ?? null,
 	});
 	return (r.entries as { seq: number; data_b64: string }[]) ?? [];
+}
+
+// ── Filesystem (read-only explorer/viewer) ───────────────────────────────
+
+export async function listDir(path: string): Promise<DirEntry[]> {
+	const r = await rpc({ cmd: 'list_dir', path });
+	return (r.entries as DirEntry[]) ?? [];
+}
+
+export async function readFile(path: string, maxBytes?: number): Promise<FileContent> {
+	const r = await rpc({ cmd: 'read_file', path, max_bytes: maxBytes ?? null });
+	return r.file as FileContent;
 }
 
 // ── Event listeners (same API as ipc.ts) ─────────────────────────────────────

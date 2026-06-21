@@ -17,7 +17,7 @@
 	];
 </script>
 
-<div data-tour="activity" class="flex flex-col items-center gap-1 py-2 w-16 bg-card border-r border-border flex-shrink-0">
+<div data-tour="activity" class="flex flex-col items-center gap-0.5 py-2 bg-card flex-shrink-0 border-r border-border-strong" style="width:var(--rail-w)">
 	{#each items as item (item.id)}
 		<Button
 			variant="ghost"
@@ -30,13 +30,12 @@
 			)}
 			onclick={() => setView(item.id)}
 		>
-			<item.icon size={18} />
-			<span class="text-[9px] leading-tight">{item.label}</span>
+			<item.icon size={19} />
 			{#if item.id === 'r9' && r9.status.running}
 				<span class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
 			{/if}
 			{#if $ui.view === item.id}
-				<span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-r"></span>
+				<span class="absolute left-0 top-1 bottom-1 w-[2px] bg-accent rounded-r-full"></span>
 			{/if}
 		</Button>
 	{/each}
