@@ -808,7 +808,7 @@
                         {#snippet terminalPane()}
                             <div
                                 data-tour="terminal"
-                                class="h-full w-full overflow-hidden bg-background"
+                                class="flex flex-col h-full w-full overflow-hidden bg-background"
                             >
                                 <SessionTabs onSelect={pickSession} />
                                 {#if findOpen}
@@ -817,16 +817,18 @@
                                         onClose={() => (findOpen = false)}
                                     />
                                 {/if}
-                                <TerminalView
-                                    bind:this={termRef}
-                                    bind:ctl={termCtl}
-                                    sessionId={$ui.focusedSessionId}
-                                    cwd={$ui.focusedSessionId
-                                        ? ($sessions.get($ui.focusedSessionId)
-                                              ?.cwd ?? null)
-                                        : null}
-                                    onInput={handleInput}
-                                />
+                                <div class="flex-1 min-h-0 overflow-hidden">
+                                    <TerminalView
+                                        bind:this={termRef}
+                                        bind:ctl={termCtl}
+                                        sessionId={$ui.focusedSessionId}
+                                        cwd={$ui.focusedSessionId
+                                            ? ($sessions.get($ui.focusedSessionId)
+                                                  ?.cwd ?? null)
+                                            : null}
+                                        onInput={handleInput}
+                                    />
+                                </div>
                             </div>
                         {/snippet}
                         {#snippet mainArea()}

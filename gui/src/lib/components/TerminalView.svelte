@@ -11,6 +11,7 @@
     import { resize as resizeCmd } from "$lib/ipc";
     import { setTermSize } from "$lib/stores/termsize";
     import { theme } from "$lib/stores/theme.svelte";
+    import { zoom } from "$lib/stores/font.svelte";
     import { toasts } from "$lib/stores/toasts.svelte";
 
     const FONT_KEY = "agentry:term:fontsize";
@@ -393,6 +394,9 @@
     // the agent re-renders into the full pane (instead of the 80×24 default).
     $effect(() => {
         void sessionId;
+        // CSS `zoom` changes don't alter clientHeight, so the ResizeObserver
+        // never fires on Ctrl +/-/0 — refit explicitly when zoom changes.
+        void zoom.value;
         scheduleFit();
     });
 
