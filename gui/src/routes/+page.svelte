@@ -279,7 +279,7 @@
                     q.push(bytes);
                     return;
                 }
-                termRef?.write(bytes);
+                termRef?.writeBatched(bytes);
             }),
         );
         unlisteners.push(

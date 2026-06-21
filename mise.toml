@@ -231,3 +231,41 @@ echo "Tailing logcat (Ctrl+C to stop)..."
 "$ADB" logcat | grep -E "agentry|dev\\.agentry|Tauri|Console|RustStdout|chromium"
 """
 
+[tasks.android-kill]
+description = "Kill toàn bộ Android: emulator + adb server + gradle daemon + cargo build android target"
+run = """
+#!/usr/bin/env bash
+# Best-effort — không exit khi 1 bước thất bại
+ADB="$ANDROID_HOME/platform-tools/adb"
+
+echo "==> Stop running emulators (adb emu kill)..."
+"$ADB" devices | awk '/^emulator-/{print $1}' | while read -r dev; do
+  echo "  killing $dev"
+  "$ADB" -s "$dev" emu kill 2>/dev/null || true
+done
+
+echo "==> Kill emulator/qemu processes..."
+pkill -f "qemu-system" 2>/dev/null || true
+pkill -f "emulator/emulator" 2>/dev/null || true
+pkill -f "emulator64" 2>/dev/null || true
+
+echo "==> Kill adb server..."
+"$ADB" kill-server 2>/dev/null || true
+
+echo "==> Stop Gradle daemon..."
+GRADLEW="gui/src-tauri/gen/android/gradlew"
+if [ -x "$GRADLEW" ]; then
+  ( cd gui/src-tauri/gen/android && ./gradlew --stop 2>/dev/null ) || true
+fi
+pkill -f "GradleDaemon" 2>/dev/null || true
+pkill -f "org.gradle.launcher" 2>/dev/null || true
+
+echo "==> Kill cargo/rustc builds targeting android..."
+pkill -f "tauri android" 2>/dev/null || true
+pkill -f "linux-android" 2>/dev/null || true
+
+echo "==> Done. Verify:"
+"$ADB" devices 2>/dev/null || true
+pgrep -fl "qemu-system|GradleDaemon|linux-android" 2>/dev/null && echo "(còn process trên — chạy lại nếu cần)" || echo "Sạch."
+"""
+

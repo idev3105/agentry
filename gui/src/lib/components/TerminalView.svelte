@@ -500,7 +500,27 @@
         term.options.theme = THEMES[theme.value];
     });
 
+    let writeQueue: Uint8Array[] = [];
+    let flushRaf = 0;
+
+    export function writeBatched(data: Uint8Array) {
+        writeQueue.push(data);
+        if (flushRaf) return;
+        flushRaf = requestAnimationFrame(() => {
+            flushRaf = 0;
+            if (!term || writeQueue.length === 0) return;
+            let total = 0;
+            for (const c of writeQueue) total += c.length;
+            const merged = new Uint8Array(total);
+            let off = 0;
+            for (const c of writeQueue) { merged.set(c, off); off += c.length; }
+            writeQueue = [];
+            term.write(merged);
+        });
+    }
+
     onDestroy(() => {
+        if (flushRaf) cancelAnimationFrame(flushRaf);
         term?.dispose();
     });
 

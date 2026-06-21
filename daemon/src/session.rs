@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, RwLock};
 use agentry_wire::*;
@@ -457,44 +458,97 @@ impl SessionManager {
                 }
             });
 
-            // PTY reader — blocking; one read per chunk
+            // PTY reader — blocking, coalesced (batch reads + watchdog for tail).
+            // Instead of 1 event per 4KB read, we coalesce within 64KB / 8ms windows
+            // to reduce event flood during fast output.
             let mut buf = vec![0u8; 4096];
-            let mut seq: u64 = 0;
             let rt_read = rt;
+            const COALESCE_BYTES: usize = 64 * 1024;
+            const COALESCE_MS: u128 = 8;
+
+            // Shared between reader thread and watchdog.
+            let pending = std::sync::Arc::new(std::sync::Mutex::new(Vec::<u8>::with_capacity(64 * 1024)));
+            let last_read = std::sync::Arc::new(std::sync::Mutex::new(std::time::Instant::now()));
+            let seq = std::sync::Arc::new(AtomicU64::new(0));
+
+            // Closure flush: used by both reader and watchdog.
+            // Holds pending lock briefly to take bytes, then releases before encoding/sending.
+            let do_flush = {
+                let pending = pending.clone();
+                let seq = seq.clone();
+                let inner = inner_for_reader.clone();
+                let event_tx = event_tx_clone.clone();
+                let sid = session_id_clone.clone();
+                move || {
+                    let batch = {
+                        let mut p = pending.lock().unwrap();
+                        if p.is_empty() { return; }
+                        std::mem::take(&mut *p)
+                    };
+                    let cur_seq = seq.fetch_add(1, Ordering::Relaxed);
+                    let b64 = base64::engine::general_purpose::STANDARD.encode(&batch);
+                    {
+                        let mut g = inner.lock().unwrap();
+                        g.ring_bytes += batch.len();
+                        g.ring.push_back(BufferChunk { seq: cur_seq, data: batch });
+                        while g.ring_bytes > RING_BUFFER_BYTES {
+                            if let Some(old) = g.ring.pop_front() {
+                                g.ring_bytes -= old.data.len();
+                            } else { break; }
+                        }
+                        g.last_output_at = std::time::Instant::now();
+                        g.activity = ActivityState::Working;
+                    }
+                    let _ = event_tx.send(Event::AgentOutput(AgentOutputEvent {
+                        v: WIRE_VERSION,
+                        session_id: sid.clone(),
+                        seq: cur_seq,
+                        data_b64: b64,
+                    }));
+                }
+            };
+
+            // Watchdog task — flushes "tail" when output pauses.
+            // Runs on the tokio runtime, ticks every 4ms.
+            let watchdog = {
+                let pending = pending.clone();
+                let last_read = last_read.clone();
+                let do_flush = do_flush.clone();
+                let sessions_arc = sessions_arc.clone();
+                let sid = session_id_clone.clone();
+                rt_read.spawn(async move {
+                    let mut tick = tokio::time::interval(std::time::Duration::from_millis(4));
+                    loop {
+                        tick.tick().await;
+                        if !sessions_arc.read().await.contains_key(&sid) { break; }
+                        let stale = {
+                            let p = pending.lock().unwrap();
+                            !p.is_empty()
+                        } && last_read.lock().unwrap().elapsed().as_millis() >= COALESCE_MS;
+                        if stale { do_flush(); }
+                    }
+                })
+            };
 
             loop {
                 let n = match reader.read(&mut buf) {
-                    Ok(0) => break, // EOF (process exit OR killer.kill())
+                    Ok(0) => break,
                     Ok(n) => n,
                     Err(_) => break,
                 };
-
-                let chunk = buf[..n].to_vec();
-                let b64 = base64::engine::general_purpose::STANDARD.encode(&chunk);
-
-                // Hot path: lock ONLY this session's inner, never the outer map.
                 {
-                    let mut g = inner_for_reader.lock().unwrap();
-                    g.ring.push_back(BufferChunk { seq, data: chunk.clone() });
-                    g.ring_bytes += chunk.len();
-                    // Evict old chunks if over budget
-                    while g.ring_bytes > RING_BUFFER_BYTES {
-                        if let Some(old) = g.ring.pop_front() {
-                            g.ring_bytes -= old.data.len();
-                        } else { break; }
+                    let mut p = pending.lock().unwrap();
+                    p.extend_from_slice(&buf[..n]);
+                    *last_read.lock().unwrap() = std::time::Instant::now();
+                    if p.len() >= COALESCE_BYTES {
+                        drop(p);
+                        do_flush();
                     }
-                    g.last_output_at = std::time::Instant::now();
-                    g.activity = ActivityState::Working;
                 }
-
-                let _ = event_tx_clone.send(Event::AgentOutput(AgentOutputEvent {
-                    v: WIRE_VERSION,
-                    session_id: session_id_clone.clone(),
-                    seq,
-                    data_b64: b64,
-                }));
-                seq += 1;
             }
+            // EOF: flush remaining, stop watchdog.
+            do_flush();
+            watchdog.abort();
 
             // Child exited. Once we've successfully spawned the PTY, treat any
             // exit as "finished" — non-zero exit codes (user pressed Ctrl-D /

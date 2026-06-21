@@ -7,19 +7,21 @@
    desync from the in-app theme toggle. */
 @custom-variant dark (&:where(:root:not([data-theme="light"]) *, :root:not([data-theme="light"])));
 
-/* Tailwind v4: @theme — dark (zinc) as default base.
-   data-theme="light" overrides at runtime. */
+/* Tailwind v4: @theme — Zed "One Dark" as default base.
+   data-theme="light" (Zed "One Light") overrides at runtime.
+   Palette mapped from zed-industries/zed assets/themes/one/one.json. */
 @theme {
-    /* bg — layered depth (Cursor/Antigravity): canvas darkest, chrome +1 step */
-    --color-background: #1a1a1a; /* editor/terminal canvas */
-    --color-card: #1f1f1f; /* chrome: sidebar / topbar / headers */
-    --color-secondary: #2b2b2b; /* hover + selected fill */
-    --color-muted: #242424; /* subtle fill */
-    --color-border: rgba(255, 255, 255, 0.06); /* hairline — Apple-style alpha separator, blends on any layer */
-    --color-border-strong: rgba(255, 255, 255, 0.1); /* emphasized dividers (panel separators) */
-    --color-input: #232323;
-    --color-popover: #242424; /* elevated: menus / dialogs */
-    --color-ring: #0a84ff; /* focus — Apple system blue (dark), soft halo via low-alpha ring */
+    /* bg — Zed One Dark: editor canvas is the darkest; chrome (panel/title/tab
+       bar) sits one step lighter (#2f343e), inverse of a pure-black scheme. */
+    --color-background: #282c33; /* editor/terminal canvas (editor.background) */
+    --color-card: #2f343e; /* chrome: sidebar / topbar / panels (panel.background) */
+    --color-secondary: #454a56; /* hover + selected fill (element.selected) */
+    --color-muted: #363c46; /* subtle fill / hover (element.hover) */
+    --color-border: #363c46; /* hairline (border.variant) */
+    --color-border-strong: #464b57; /* emphasized dividers (border) */
+    --color-input: #2e343e; /* element.background */
+    --color-popover: #2f343e; /* elevated: menus / dialogs (elevated_surface) */
+    --color-ring: #74ade8; /* focus — Zed accent blue (players[0].cursor) */
 
     /* radius — small + uniform, overrides Tailwind defaults */
     --radius-sm: 4px;
@@ -27,79 +29,79 @@
     --radius-lg: 8px;
     --radius-xl: 12px;
 
-    /* fg — softened whites, dimmer muted text */
-    --color-foreground: #d4d4d4;
-    --color-card-foreground: #d4d4d4;
-    --color-popover-foreground: #d4d4d4;
-    --color-secondary-foreground: #d4d4d4;
-    --color-muted-foreground: #8a8a8a;
-    --color-accent: #4a8cca;
-    --color-accent-foreground: #ffffff;
+    /* fg — Zed One Dark text ramp */
+    --color-foreground: #acb2be; /* editor.foreground */
+    --color-card-foreground: #dce0e5; /* text (chrome labels, brighter) */
+    --color-popover-foreground: #dce0e5;
+    --color-secondary-foreground: #dce0e5;
+    --color-muted-foreground: #878a98; /* text.placeholder */
+    --color-accent: #74ade8;
+    --color-accent-foreground: #282c33;
 
-    /* primary — not pure white, avoids glare */
-    --color-primary: #d4d4d4;
-    --color-primary-foreground: #1e1e1e;
+    /* primary — bright label text, avoids pure-white glare */
+    --color-primary: #dce0e5;
+    --color-primary-foreground: #282c33;
 
     /* semantic */
-    --color-destructive: #c75c5c;
+    --color-destructive: #d07277; /* error */
     --color-destructive-foreground: #f0f0f0;
 
-    /* accent palette — desaturated, Cursor-muted */
-    --color-gruvbox-yellow: #c9a84c;
-    --color-gruvbox-green: #6a9955;
-    --color-gruvbox-aqua: #4ec9b0;
-    --color-gruvbox-blue: #4a8cca;
-    --color-gruvbox-orange: #ce9178;
-    --color-gruvbox-purple: #9d7cd8;
-    --color-gruvbox-red: #c75c5c;
-    --color-gruvbox-gray: #6e6e6e;
+    /* accent palette — Zed One Dark syntax/status colors */
+    --color-gruvbox-yellow: #dec184; /* warning */
+    --color-gruvbox-green: #a1c181; /* success / string */
+    --color-gruvbox-aqua: #6eb4bf; /* type */
+    --color-gruvbox-blue: #74ade8; /* info / function */
+    --color-gruvbox-orange: #bf956a; /* number */
+    --color-gruvbox-purple: #b477cf; /* keyword */
+    --color-gruvbox-red: #d07277; /* error / property */
+    --color-gruvbox-gray: #5d636f; /* comment */
 
-    /* semantic status — muted */
-    --color-accent-ok: #6a9955;
-    --color-accent-warn: #c9a84c;
-    --color-accent-error: #c75c5c;
-    --color-accent-info: #4a8cca;
+    /* semantic status — Zed */
+    --color-accent-ok: #a1c181;
+    --color-accent-warn: #dec184;
+    --color-accent-error: #d07277;
+    --color-accent-info: #74ade8;
 }
 
-/* Light override */
+/* Light override — Zed "One Light" */
 :root[data-theme="light"] {
-    --color-background: #f5f5f4;
-    --color-card: #fbfbfa;
-    --color-secondary: #eeeeec;
-    --color-muted: #ececea;
-    --color-border: rgba(0, 0, 0, 0.08); /* Apple-style hairline — blends on any light layer */
-    --color-border-strong: rgba(0, 0, 0, 0.12);
-    --color-input: #fbfbfa;
-    --color-popover: #fbfbfa;
-    --color-ring: #007aff; /* focus — Apple system blue (light) */
+    --color-background: #fafafa; /* editor.background */
+    --color-card: #ebebec; /* panel.background */
+    --color-secondary: #cacaca; /* element.selected */
+    --color-muted: #dfdfe0; /* element.hover */
+    --color-border: #dfdfe0; /* border.variant */
+    --color-border-strong: #c9c9ca; /* border */
+    --color-input: #ebebec; /* element.background */
+    --color-popover: #ebebec; /* elevated_surface */
+    --color-ring: #5c78e2; /* Zed accent blue */
 
-    --color-foreground: #2a2a28;
-    --color-card-foreground: #2a2a28;
-    --color-popover-foreground: #2a2a28;
-    --color-secondary-foreground: #2a2a28;
-    --color-muted-foreground: #76767a;
-    --color-accent: #3a7bb8;
+    --color-foreground: #242529; /* editor.foreground / text */
+    --color-card-foreground: #242529;
+    --color-popover-foreground: #242529;
+    --color-secondary-foreground: #242529;
+    --color-muted-foreground: #7e8086; /* text.placeholder */
+    --color-accent: #5c78e2;
     --color-accent-foreground: #ffffff;
 
-    --color-primary: #2a2a28;
-    --color-primary-foreground: #fbfbfa;
+    --color-primary: #242529;
+    --color-primary-foreground: #fafafa;
 
-    --color-destructive: #b85454;
+    --color-destructive: #d36151; /* error */
     --color-destructive-foreground: #ffffff;
 
-    --color-gruvbox-yellow: #b08a2e;
-    --color-gruvbox-green: #5a8a47;
-    --color-gruvbox-aqua: #3a9a86;
-    --color-gruvbox-blue: #3a7bb8;
-    --color-gruvbox-orange: #c0764e;
-    --color-gruvbox-purple: #8a6cc0;
-    --color-gruvbox-red: #b85454;
-    --color-gruvbox-gray: #76767a;
+    --color-gruvbox-yellow: #a48819; /* warning */
+    --color-gruvbox-green: #669f59; /* success / string */
+    --color-gruvbox-aqua: #3882b7; /* type */
+    --color-gruvbox-blue: #5c78e2; /* info / function */
+    --color-gruvbox-orange: #ad6e25; /* number */
+    --color-gruvbox-purple: #a449ab; /* keyword */
+    --color-gruvbox-red: #d3604f; /* error / property */
+    --color-gruvbox-gray: #a2a3a7; /* comment */
 
-    --color-accent-ok: #5a8a47;
-    --color-accent-warn: #b08a2e;
-    --color-accent-error: #b85454;
-    --color-accent-info: #3a7bb8;
+    --color-accent-ok: #669f59;
+    --color-accent-warn: #a48819;
+    --color-accent-error: #d36151;
+    --color-accent-info: #5c78e2;
 }
 
 :root {

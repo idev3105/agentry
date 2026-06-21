@@ -46,6 +46,65 @@ fn builtin_to_db_profile(id: &str) -> Option<DbProfile> {
     })
 }
 
+/// Best-effort fallback to recover a Hermes agent session id when the
+/// `on_session_start` hook never reported one.
+///
+/// Why this is needed: the Hermes TUI front-end does not fire the
+/// `on_session_start` shell hook that the plain CLI fires, so a TUI-launched
+/// Hermes never reports its id back over `pane.report_agent_session`. A session
+/// closed before its first turn also never reports. In both cases Agentry would
+/// otherwise have no id to feed `--resume`.
+///
+/// Hermes self-generates its id (`YYYYMMDD_HHMMSS_xxxxxx`) and persists it to
+/// `~/.hermes/state.db`. We can't pre-seed it like claude_code's `--session-id`,
+/// so we recover it after the fact:
+///   - The Hermes session is created *just after* Agentry spawns the PTY child,
+///     so its `started_at` is >= the Agentry session's `created_at` (minus a
+///     small skew tolerance) and within a short window.
+///   - TUI sessions store an empty `cwd` (only the CLI path records it), so cwd
+///     can't be a hard filter. We prefer a cwd match when present, but accept a
+///     blank-cwd TUI row in the time window otherwise.
+///   - We pick the *earliest* session at/after the spawn instant — that is the
+///     one this PTY launched, not a later unrelated session.
+///
+/// Returns `None` when nothing plausible matches.
+#[cfg(all(unix, not(target_os = "android")))]
+fn resolve_hermes_session_id(cwd: &str, agentry_created_at: &str) -> Option<String> {
+    let home = std::env::var("HOME").ok()?;
+    let db_path = format!("{home}/.hermes/state.db");
+    if !std::path::Path::new(&db_path).exists() {
+        return None;
+    }
+    // Agentry stores created_at as epoch-seconds string (chrono_now()).
+    let created: f64 = agentry_created_at.trim().parse().ok()?;
+    // Tolerate a little clock skew before the spawn instant, and bound how far
+    // after it we'll still associate a session (covers a slow first turn).
+    const SKEW_BEFORE_S: f64 = 5.0;
+    const WINDOW_AFTER_S: f64 = 1800.0;
+    let lower = created - SKEW_BEFORE_S;
+    let upper = created + WINDOW_AFTER_S;
+
+    let conn = rusqlite::Connection::open_with_flags(
+        &db_path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+    ).ok()?;
+
+    // Candidate = earliest session that began at/after we spawned the PTY, has
+    // real activity, and either matches our cwd or is a blank-cwd TUI row.
+    // ORDER BY the cwd match first (exact cwd wins), then by start time so the
+    // first session launched after the spawn instant is chosen.
+    let mut stmt = conn.prepare(
+        "SELECT id FROM sessions \
+         WHERE message_count > 0 \
+           AND started_at >= ?2 AND started_at <= ?3 \
+           AND (cwd = ?1 OR cwd IS NULL OR cwd = '') \
+         ORDER BY (cwd = ?1) DESC, started_at ASC LIMIT 1",
+    ).ok()?;
+    let mut rows = stmt.query(rusqlite::params![cwd, lower, upper]).ok()?;
+    let row = rows.next().ok()??;
+    row.get::<_, String>(0).ok()
+}
+
 fn builtin_profiles_json() -> Vec<serde_json::Value> {
     vec![
         serde_json::json!({
@@ -505,13 +564,39 @@ impl Server {
                 } };
 
                 // Resume only works when we know the agent's own session id.
-                // Today only claude_code captures it (via pre-generated UUID
-                // passed as --session-id). For opencode/codex we can't pass
-                // -s/resume <id>, so spawning would just start a fresh,
-                // unrelated session — pretending to resume. Refuse loudly
-                // instead so the UI surfaces the limitation.
-                if profile.agent_type != "claude_code" && original.agent_session_id.is_none() {
-                    return Err("Session này không có agent_session_id (capture timeout). Không resume được.".to_string());
+                // claude_code pre-generates it (--session-id), so it is always
+                // known. codex/opencode/hermes capture it asynchronously via the
+                // integration hook (pane.report_agent_session). That capture can
+                // miss: the Hermes TUI front-end does not fire on_session_start
+                // shell hooks, and a session closed before its first turn never
+                // reports at all. When the id is missing we fall back to matching
+                // the agent's own session store by cwd + start time before giving
+                // up, so a real resume is still possible.
+                let mut original = original;
+                if original.agent_session_id.is_none() && profile.agent_type != "claude_code" {
+                    let recovered = if profile.agent_type == "hermes" {
+                        #[cfg(all(unix, not(target_os = "android")))]
+                        { resolve_hermes_session_id(&original.cwd, &original.created_at) }
+                        #[cfg(not(all(unix, not(target_os = "android"))))]
+                        { None }
+                    } else {
+                        None
+                    };
+                    match recovered {
+                        Some(aid) => {
+                            // Persist so the resumed session — and any later
+                            // resume — sees a stable id, and the UI reflects it.
+                            let _ = self.store.set_agent_session_id(&c.session_id, &aid);
+                            original.agent_session_id = Some(aid);
+                        }
+                        None => {
+                            return Err(
+                                "Không tìm thấy agent session id để resume (hook không báo id và \
+                                 không khớp được session nào trong store của agent). Session có thể \
+                                 đã đóng trước khi chạy turn đầu tiên.".to_string()
+                            );
+                        }
+                    }
                 }
 
                 let settings = self.store.get_settings_all().map_err(|e| e.to_string())?;

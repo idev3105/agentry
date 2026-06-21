@@ -210,6 +210,7 @@ async fn r9_stop(state: tauri::State<'_, AppState>) -> Result<R9StatusResp, Stri
 /// deduplicated. Used by the GUI font picker so users can choose any
 /// installed font instead of a fixed preset list. Best-effort: returns an
 /// empty list rather than erroring if the platform source is unavailable.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[tauri::command]
 fn list_system_fonts() -> Vec<String> {
     use font_kit::source::SystemSource;
@@ -224,6 +225,13 @@ fn list_system_fonts() -> Vec<String> {
     names.sort_by_key(|s| s.to_lowercase());
     names.dedup();
     names
+}
+
+/// Mobile stub: no system font picker on Android/iOS.
+#[cfg(any(target_os = "android", target_os = "ios"))]
+#[tauri::command]
+fn list_system_fonts() -> Vec<String> {
+    Vec::new()
 }
 
 #[tauri::command]
