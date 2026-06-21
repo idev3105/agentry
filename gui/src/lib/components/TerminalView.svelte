@@ -9,6 +9,7 @@
     import { openUrl, openPath } from "@tauri-apps/plugin-opener";
     import { homeDir } from "@tauri-apps/api/path";
     import { resize as resizeCmd } from "$lib/ipc";
+    import { setTermSize } from "$lib/stores/termsize";
     import { theme } from "$lib/stores/theme.svelte";
     import { toasts } from "$lib/stores/toasts.svelte";
 
@@ -159,6 +160,9 @@
         } catch {
             return;
         }
+        // Publish geometry so session-start call sites can spawn the PTY at the
+        // real size (avoids the 80×24 spawn → reflow that covers the input).
+        setTermSize(term.cols, term.rows);
         // Send geometry to daemon so PTY matches; ignore failure when not connected.
         resizeCmd(sessionId, term.cols, term.rows).catch(() => {});
     }

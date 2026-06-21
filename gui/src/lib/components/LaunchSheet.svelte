@@ -7,6 +7,7 @@
     import { profiles } from "$lib/stores/profiles";
     import { settings } from "$lib/stores/settings";
     import { startSession } from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import { markPendingFocus } from "$lib/stores/sessions";
     import { toasts } from "$lib/stores/toasts.svelte";
     import { agentMeta } from "$lib/utils/agent";
@@ -71,7 +72,8 @@
             const cwd = cwdOverride.trim() || undefined;
             const prompt = initialPrompt.trim() || undefined;
             markPendingFocus();
-            await startSession(selProjectId, selProfileId, cwd, prompt);
+            const sz = getTermSize();
+            await startSession(selProjectId, selProfileId, cwd, prompt, sz?.cols, sz?.rows);
             closeOnboarding();
         } catch (e) {
             toasts.error("Launch failed", String(e));

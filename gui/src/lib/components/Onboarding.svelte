@@ -9,6 +9,7 @@
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { homeDir } from '@tauri-apps/api/path';
 	import { createProject, listProjects, listProfiles, startSession, sendCmd } from '$lib/ipc';
+	import { getTermSize } from '$lib/stores/termsize';
 	import { addProject } from '$lib/stores/projects';
 	import { profiles } from '$lib/stores/profiles';
 	import { toasts } from '$lib/stores/toasts.svelte';
@@ -147,7 +148,8 @@
 
 			launch.session = 'running';
 			ui.update(u => ({ ...u, activeProjectId: proj.id, view: 'terminal' }));
-			await startSession(proj.id, profileId);
+			const sz = getTermSize();
+			await startSession(proj.id, profileId, undefined, undefined, sz?.cols, sz?.rows);
 			launch.session = 'ok';
 
 			localStorage.setItem('agentry:onboarded', '1');

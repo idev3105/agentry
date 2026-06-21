@@ -52,6 +52,7 @@
     import { r9 } from "$lib/stores/r9.svelte";
     // Transport: desktop → Tauri/Unix socket, mobile → WebSocket
     import * as ipcDesktop from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import * as ipcWs from "$lib/ipc-ws";
     const ipc = isMobile ? ipcWs : ipcDesktop;
     const {
@@ -541,7 +542,8 @@
             setView("profiles");
             return;
         }
-        await startSession(projId, def.id);
+        const sz = getTermSize();
+        await startSession(projId, def.id, undefined, undefined, sz?.cols, sz?.rows);
     }
 
     function sanitizeTitle(raw: string): string {

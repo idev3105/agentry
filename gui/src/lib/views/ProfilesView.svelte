@@ -9,6 +9,7 @@
         killSession,
         waitForSessionStart,
     } from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import { toasts } from "$lib/stores/toasts.svelte";
     import { get } from "svelte/store";
     import type { AgentType, ProfileInfo } from "$lib/types";
@@ -169,7 +170,8 @@
                 toasts.error("Test failed", "Create a project first");
                 return;
             }
-            const r = (await startSession(proj.id, p.id)) as {
+            const sz = getTermSize();
+            const r = (await startSession(proj.id, p.id, undefined, undefined, sz?.cols, sz?.rows)) as {
                 session_id: string;
             };
             const res = await waitForSessionStart(r.session_id, 3000);

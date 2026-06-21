@@ -5,6 +5,7 @@
     import { projects } from "$lib/stores/projects";
     import { profiles } from "$lib/stores/profiles";
     import { startSession, killSession, focusSession } from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import { markSessionEnding, markPendingFocus } from "$lib/stores/sessions";
     import { cn, fmtChord } from "$lib/utils/cn";
     import { Input } from "$lib/components/ui/input";
@@ -94,7 +95,8 @@
                 icon: Copy,
                 run: async () => {
                     markPendingFocus();
-                    await startSession(s.projectId, s.profileId);
+                    const sz = getTermSize();
+                    await startSession(s.projectId, s.profileId, undefined, undefined, sz?.cols, sz?.rows);
                 },
             });
         }
@@ -129,7 +131,8 @@
                     icon: Plus,
                     run: async () => {
                         markPendingFocus();
-                        await startSession(activeProj, pr.id);
+                        const sz = getTermSize();
+                        await startSession(activeProj, pr.id, undefined, undefined, sz?.cols, sz?.rows);
                     },
                 });
             }

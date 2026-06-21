@@ -24,6 +24,7 @@
         sendCmd,
         startSession,
     } from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import { cn } from "$lib/utils/cn";
     import { shellQuote } from "$lib/utils/shell";
     import { Button } from "$lib/components/ui/button";
@@ -224,7 +225,8 @@
     async function duplicate(s: SessionState) {
         try {
             markPendingFocus();
-            await startSession(s.projectId, s.profileId);
+            const sz = getTermSize();
+            await startSession(s.projectId, s.profileId, undefined, undefined, sz?.cols, sz?.rows);
             toasts.success(`Duplicated ${s.title}`);
         } catch (e) {
             toasts.error("Duplicate failed", String(e));

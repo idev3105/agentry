@@ -10,6 +10,7 @@
         resumeSession,
         sendCmd,
     } from "$lib/ipc";
+    import { getTermSize } from "$lib/stores/termsize";
     import { markSessionEnding, markPendingFocus } from "$lib/stores/sessions";
     import {
         sessionOrder,
@@ -50,7 +51,8 @@
         profId: string,
     ): Promise<{ session_id: string; status: string }> {
         markPendingFocus();
-        return startSession(pid, profId);
+        const sz = getTermSize();
+        return startSession(pid, profId, undefined, undefined, sz?.cols, sz?.rows);
     }
 
     let filter = $state("");
