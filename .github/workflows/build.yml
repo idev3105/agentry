@@ -54,7 +54,7 @@ jobs:
         working-directory: gui
         run: |
           pnpm install --frozen-lockfile
-          npx svelte-kit sync
+          pnpm exec svelte-kit sync
 
       - name: Clippy
         run: cargo clippy -p agentry-wire -p agentry-daemon -p agentry-cli -- -D warnings
